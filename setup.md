@@ -1,3 +1,10 @@
+Requirements:
+
+https://docs.docker.com/desktop/setup/install/windows-install/
+https://dotnet.microsoft.com/en-us/download
+https://nodejs.org/en/download
+
+
 per me e setup run these:
 
 me ni terminal per back: 
