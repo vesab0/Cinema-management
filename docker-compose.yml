@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./cinema-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./cinema-backend:/app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Database=marquee;User=root;Password=root1234;
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - marquee-network
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: marquee
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - marquee-network
+
+volumes:
+  mysql_data:
+
+networks:
+  marquee-network:
+    driver: bridge
