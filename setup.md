@@ -10,6 +10,8 @@ me ni terminal per back:
 docker compose up --build
 ```
 
+Backend now restores required .NET tools and applies EF migrations automatically on startup.
+
 me ni terminal per front:
 ```
 cd cinema-frontend

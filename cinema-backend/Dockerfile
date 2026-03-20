@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0
 
 WORKDIR /app
 
@@ -9,11 +9,11 @@ RUN dotnet restore
 # Copy everything else
 COPY . ./
 
-# Install dotnet-watch for hot reload
-RUN dotnet tool install --global dotnet-watch
-ENV PATH="$PATH:/root/.dotnet/tools"
-
 EXPOSE 5000
 
-# Run with hot reload
-CMD ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:5000"]
+# Copy entrypoint script and make executable
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Run migrations then start the app
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
