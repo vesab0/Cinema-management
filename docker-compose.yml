@@ -6,9 +6,12 @@ services:
       - "5000:5000"
     volumes:
       - ./cinema-backend:/app
+    env_file:
+      - ./.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=mysql;Database=marquee;User=root;Password=root1234;
+      - ConnectionStrings__DefaultConnection=${CONNECTIONSTRINGS__DEFAULTCONNECTION}
+      - Jwt__Key=${JWT__KEY}
     depends_on:
       mysql:
         condition: service_healthy
@@ -18,9 +21,11 @@ services:
   mysql:
     image: mysql:8.0
     restart: always
+    env_file:
+      - ./.env
     environment:
-      MYSQL_ROOT_PASSWORD: root1234
-      MYSQL_DATABASE: marquee
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
       - "3306:3306"
     volumes:
