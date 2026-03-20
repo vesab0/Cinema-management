@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 
 const DURATION = 1800;
-const ROD_H = 26;
+const ROD_H = 0;
 
 function ease(t: number): number {
   if (t <= 0) return 0;
@@ -107,10 +107,10 @@ function drawCurtain(
     );
     ctx.closePath();
 
-    const lum = isFront ? 1.0 : 0.45;
-    const r = Math.round(lum * 148);
-    const g = Math.round(lum * 28);
-    const b = Math.round(lum * 58);
+    const lum = isFront ? 1.0 : 0.25;
+    const r = Math.round(lum * 65);
+    const g = Math.round(lum * 1);
+    const b = Math.round(lum * 1);
 
     const grd = ctx.createLinearGradient(
       isLeft ? ax : bx, 0,
@@ -256,13 +256,6 @@ export default function CurtainOpen({
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
-
-      {/* Rod */}
-      <div className="absolute top-0 left-0 right-0 h-[26px] z-10"
-        style={{ background: "linear-gradient(180deg,#3a2020 0%,#1a0c0e 60%,#0a0608 100%)" }}
-      >
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#5a2530] opacity-50" />
-      </div>
     </div>
   );
 }
