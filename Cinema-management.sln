@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cinema-backend", "cinema-backend", "{B6E23DE0-040C-A6EB-91E2-E73A519EB0CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "backend", "cinema-backend\backend.csproj", "{A5722EFF-E5D1-151A-59E4-D3BE696AF21F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A5722EFF-E5D1-151A-59E4-D3BE696AF21F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5722EFF-E5D1-151A-59E4-D3BE696AF21F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5722EFF-E5D1-151A-59E4-D3BE696AF21F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5722EFF-E5D1-151A-59E4-D3BE696AF21F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A5722EFF-E5D1-151A-59E4-D3BE696AF21F} = {B6E23DE0-040C-A6EB-91E2-E73A519EB0CF}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1EB70412-5EA1-4C27-86C4-0FBC7D1394D9}
+	EndGlobalSection
+EndGlobal
