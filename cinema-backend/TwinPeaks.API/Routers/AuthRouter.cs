@@ -26,7 +26,7 @@ namespace TwinPeaks.API.Routers
                         return Results.BadRequest(new { message = err ?? "Invalid registration request" });
                     }
 
-                    return Results.Created($"/users/{user.Id}", new { user.Id, user.Email, user.FirstName, user.LastName });
+                    return Results.Created($"/api/users/{user.Id}", new { user.Id, user.Email, user.FirstName, user.LastName });
                 }
                 catch (Exception ex)
                 {

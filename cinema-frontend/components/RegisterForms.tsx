@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 import { useState, type FormEvent, type MouseEvent } from 'react'
-import { authApi } from '../src/api.tsx'
+import { authApi } from '../src/api'
 
 export default function RegisterForms() {
 	const [isCreateMode, setIsCreateMode] = useState(false)
