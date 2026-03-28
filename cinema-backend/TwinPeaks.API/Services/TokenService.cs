@@ -42,7 +42,11 @@ namespace TwinPeaks.API.Services
             };
 
             var identity = new ClaimsIdentity(claims);
-            foreach (var role in user.Roles ?? Enumerable.Empty<string>())
+            foreach (var role in user.UserRoles
+                .Select(ur => ur.Role?.Name)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name!)
+                .Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 identity.AddClaim(new Claim(ClaimTypes.Role, role));
             }

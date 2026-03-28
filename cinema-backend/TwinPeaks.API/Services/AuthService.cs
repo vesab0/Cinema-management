@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using TwinPeaks.API;
 
 namespace TwinPeaks.API.Services
 {
     public class AuthService
     {
+        private static readonly string[] DefaultRoles = ["user", "admin", "staff"];
         private readonly TwinPeaks.API.Data.ApplicationDbContext _db;
         private readonly TokenService _tokenService;
 
@@ -16,6 +18,8 @@ namespace TwinPeaks.API.Services
         {
             _db = db;
             _tokenService = tokenService;
+
+            EnsureDefaultRoles();
 
             if (!_db.Users.Any())
             {
@@ -29,9 +33,19 @@ namespace TwinPeaks.API.Services
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 };
-                admin.Roles.Add("Admin");
                 _db.Users.Add(admin);
                 _db.SaveChanges();
+                AssignRole(admin.Id, "admin");
+            }
+
+            var usersWithoutRole = _db.Users
+                .Where(u => !_db.UserRoles.Any(ur => ur.UserId == u.Id))
+                .Select(u => u.Id)
+                .ToList();
+
+            foreach (var userId in usersWithoutRole)
+            {
+                AssignRole(userId, "user");
             }
         }
 
@@ -60,9 +74,9 @@ namespace TwinPeaks.API.Services
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
-            user.Roles.Add("User");
             _db.Users.Add(user);
             _db.SaveChanges();
+            AssignRole(user.Id, "user");
             return (user, null);
         }
 
@@ -74,7 +88,10 @@ namespace TwinPeaks.API.Services
             }
 
             var email = req.Email.Trim().ToLowerInvariant();
-            var user = _db.Users.FirstOrDefault(u => u.Email == email);
+            var user = _db.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefault(u => u.Email == email);
             if (user == null) return (null, "Invalid credentials");
             if (!user.IsActive) return (null, "Account is inactive");
 
@@ -97,7 +114,10 @@ namespace TwinPeaks.API.Services
 
             //rotacioni tokenit
             existing.Revoked = DateTime.UtcNow;
-            var user = _db.Users.FirstOrDefault(u => u.Id == existing.UserId);
+            var user = _db.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefault(u => u.Id == existing.UserId);
             if (user == null) return (null, "User not found");
 
             var newRt = _tokenService.CreateRefreshToken(user.Id);
@@ -109,7 +129,58 @@ namespace TwinPeaks.API.Services
             return (auth, null);
         }
 
-        public User? GetByEmail(string email) => _db.Users.FirstOrDefault(u => u.Email == email.Trim().ToLowerInvariant());
+        public User? GetByEmail(string email) => _db.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .FirstOrDefault(u => u.Email == email.Trim().ToLowerInvariant());
+
+        private void EnsureDefaultRoles()
+        {
+            var existing = _db.Roles.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var toCreate = DefaultRoles
+                .Where(name => !existing.Contains(name))
+                .Select(name => new Role { Id = Guid.NewGuid(), Name = name })
+                .ToList();
+
+            if (toCreate.Count == 0) return;
+
+            _db.Roles.AddRange(toCreate);
+            _db.SaveChanges();
+        }
+
+        private void AssignRole(Guid userId, string roleName)
+        {
+            var normalizedRole = roleName.Trim().ToLowerInvariant();
+            if (!DefaultRoles.Contains(normalizedRole))
+            {
+                normalizedRole = "user";
+            }
+
+            var role = _db.Roles.FirstOrDefault(r => r.Name == normalizedRole);
+            if (role == null)
+            {
+                role = new Role { Id = Guid.NewGuid(), Name = normalizedRole };
+                _db.Roles.Add(role);
+                _db.SaveChanges();
+            }
+
+            var existing = _db.UserRoles.FirstOrDefault(ur => ur.UserId == userId);
+            if (existing != null)
+            {
+                existing.RoleId = role.Id;
+                _db.SaveChanges();
+                return;
+            }
+
+            _db.UserRoles.Add(new UserRole
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                RoleId = role.Id,
+                AssignedAt = DateTime.UtcNow
+            });
+            _db.SaveChanges();
+        }
 
         private static string HashPassword(string password)
         {

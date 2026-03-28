@@ -38,6 +38,7 @@ builder.Services.AddDbContext<TwinPeaks.API.Data.ApplicationDbContext>(options =
 
 builder.Services.AddSingleton<TwinPeaks.API.Services.TokenService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.AuthService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 
 var app = builder.Build();
 
@@ -51,6 +52,7 @@ if (app.Environment.IsDevelopment())
 
 // Map auth routes
 app.MapAuthRoutes();
+app.MapUserRoutes();
 
 if (!app.Environment.IsDevelopment())
 {

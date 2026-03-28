@@ -17,7 +17,6 @@ namespace TwinPeaks.API
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
 
-        public List<string> Roles { get; set; } = new();
         public List<RefreshToken> RefreshTokens { get; set; } = new();
         public List<UserRole> UserRoles { get; set; } = new();
     }
