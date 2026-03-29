@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using TwinPeaks.API.Routers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,10 +40,29 @@ builder.Services.AddDbContext<TwinPeaks.API.Data.ApplicationDbContext>(options =
 builder.Services.AddSingleton<TwinPeaks.API.Services.TokenService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.AuthService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 
 var app = builder.Build();
 
 app.UseCors(FrontendCorsPolicy);
+
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        Console.WriteLine($"[API] {context.Request.Method} {context.Request.Path} -> {context.Response.StatusCode}");
+    }
+});
+
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "public", "uploads");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -53,6 +73,9 @@ if (app.Environment.IsDevelopment())
 // Map auth routes
 app.MapAuthRoutes();
 app.MapUserRoutes();
+app.MapMovieRoutes();
+app.MapLookupRoutes();
+app.MapUploadRoutes();
 
 if (!app.Environment.IsDevelopment())
 {

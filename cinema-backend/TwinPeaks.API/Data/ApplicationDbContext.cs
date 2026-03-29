@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using TwinPeaks.API;
-
 namespace TwinPeaks.API.Data
 {
     public class ApplicationDbContext : DbContext
@@ -11,6 +10,11 @@ namespace TwinPeaks.API.Data
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<UserRole> UserRoles { get; set; } = null!;
+        public DbSet<Movie> Movies { get; set; } = null!;
+        public DbSet<Genre> Genres { get; set; } = null!;
+        public DbSet<CastMember> CastMembers { get; set; } = null!;
+        public DbSet<MovieGenre> MovieGenres { get; set; } = null!;
+        public DbSet<MovieCast> MovieCasts { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,16 +44,36 @@ namespace TwinPeaks.API.Data
             {
                 b.HasKey(ur => ur.Id);
                 b.HasIndex(ur => new { ur.UserId, ur.RoleId }).IsUnique();
-
                 b.HasOne(ur => ur.User)
                     .WithMany(u => u.UserRoles)
                     .HasForeignKey(ur => ur.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
-
                 b.HasOne(ur => ur.Role)
                     .WithMany(r => r.UserRoles)
                     .HasForeignKey(ur => ur.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<MovieGenre>(b =>
+            {
+                b.HasKey(mg => new { mg.MovieId, mg.GenreId });
+                b.HasOne(mg => mg.Movie)
+                    .WithMany(m => m.MovieGenres)
+                    .HasForeignKey(mg => mg.MovieId);
+                b.HasOne(mg => mg.Genre)
+                    .WithMany(g => g.MovieGenres)
+                    .HasForeignKey(mg => mg.GenreId);
+            });
+
+            modelBuilder.Entity<MovieCast>(b =>
+            {
+                b.HasKey(mc => new { mc.MovieId, mc.CastMemberId });
+                b.HasOne(mc => mc.Movie)
+                    .WithMany(m => m.MovieCasts)
+                    .HasForeignKey(mc => mc.MovieId);
+                b.HasOne(mc => mc.CastMember)
+                    .WithMany(c => c.MovieCasts)
+                    .HasForeignKey(mc => mc.CastMemberId);
             });
         }
     }

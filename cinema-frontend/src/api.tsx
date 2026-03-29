@@ -1,15 +1,20 @@
 import axios from 'axios'
 import type {
   BackendUserResponse,
+  CastMemberOption,
+  CreateMoviePayload,
+  GenreOption,
   LoginPayload,
+  MovieRow,
   RegisterPayload,
+  UpdateMoviePayload,
   UpdateUserPayload,
   UserRole,
-  UserRow,
+  UserRow
 } from './types'
 import { getAccessToken } from './auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5001'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -80,6 +85,38 @@ export const usersApi = {
       headers: getAuthHeaders(),
     })
   },
+
+  
 }
+
+export const moviesApi = {
+  list: () => api.get('/api/movies').then((r) => r.data),
+  update: (id: string, payload: UpdateMoviePayload) => api.put(`/api/movies/${id}`, payload).then((r) => r.data),
+  remove: (id: string) => api.delete(`/api/movies/${id}`),
+  create: (payload: CreateMoviePayload) => api.post('/api/movies', payload).then((r) => r.data),
+};
+
+export const genresApi = {
+  list: () => api.get<GenreOption[]>('/api/genres').then((r) => r.data),
+  create: (name: string) => api.post<GenreOption>('/api/genres', { name }).then((r) => r.data),
+};
+
+export const castMembersApi = {
+  list: () => api.get<CastMemberOption[]>('/api/cast-members').then((r) => r.data),
+  create: (fullName: string) => api.post<CastMemberOption>('/api/cast-members', { fullName }).then((r) => r.data),
+};
+
+export const uploadsApi = {
+  uploadImage: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const { data } = await api.post<{ url: string }>('/api/uploads/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    return data.url;
+  },
+};
 
 export default api

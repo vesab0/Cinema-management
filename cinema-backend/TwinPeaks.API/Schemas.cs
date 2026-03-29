@@ -24,4 +24,48 @@ namespace TwinPeaks.API
         string? Phone,
         string? Role
     );
+
+    public record MovieResponse(
+        Guid Id, string Name, string Description,
+        int DurationMinutes, DateTime ReleaseDate,
+        string Director, string AgeRating,
+        string PosterUrl, string TrailerUrl,
+        bool IsActive, string CreatedAt,
+        List<string> Genres,
+        List<CastResponse> Cast
+    );
+
+    public record CastResponse(string FullName);
+
+    public record CreateMovieRequest(
+        string Name, string Description,
+        int DurationMinutes, DateTime ReleaseDate,
+        string Director, string AgeRating,
+        string? PosterUrl, string? TrailerUrl,
+        bool? IsActive,
+        DateTime? CreatedAt,
+        List<Guid> GenreIds,
+        List<CastEntryRequest> Cast
+    );
+
+    public record UpdateMovieRequest(
+        string? Name, string? Description,
+        int? DurationMinutes, DateTime? ReleaseDate,
+        string? Director, string? AgeRating,
+        string? PosterUrl, string? TrailerUrl,
+        bool? IsActive,
+        DateTime? CreatedAt,
+        List<Guid>? GenreIds,
+        List<CastEntryRequest>? Cast
+    );
+
+    public record CastEntryRequest(string FullName);
+
+    public record GenreOptionResponse(Guid Id, string Name);
+    public record CreateGenreRequest(string Name);
+
+    public record CastMemberOptionResponse(Guid Id, string FullName);
+    public record CreateCastMemberRequest(string FullName);
+
+    public record UploadImageResponse(string Url);
 }
