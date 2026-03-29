@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import Index from '../pages/index'
 import Dashboard from '../pages/dashboard/dashboard'
 import Users from '../pages/dashboard/users'
+import Movies from  '../pages/dashboard/movies'
 import RegisterForms from '../components/RegisterForms'
 import AdminRoute from './AdminRoute'
 
@@ -26,6 +27,7 @@ export default function App() {
       <Route element={<AdminRoute />}>
         <Route path="/dashboard" element={<Dashboard />}>
           <Route index element={<Users />} />
+          <Route path="movies" element={<Movies />} />
         </Route>
       </Route>
 

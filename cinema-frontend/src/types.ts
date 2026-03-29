@@ -38,3 +38,60 @@ export type UpdateUserPayload = {
   phone?: string;
   role?: string;
 };
+
+export interface MovieRow {
+  [key: string]: unknown;
+  id: string;
+  name: string;
+  description: string;
+  durationMinutes: number;
+  releaseDate: string;
+  director: string;
+  ageRating: string;
+  posterUrl: string;
+  trailerUrl: string;
+  isActive: boolean;
+  createdAt: string;
+  genres: string[];
+  cast: { fullName: string }[];
+}
+
+export type GenreOption = {
+  id: string;
+  name: string;
+};
+
+export type CastMemberOption = {
+  id: string;
+  fullName: string;
+};
+
+export type CreateMoviePayload = {
+  name: string;
+  description: string;
+  durationMinutes: number;
+  releaseDate: string;
+  director: string;
+  ageRating: string;
+  posterUrl?: string;
+  trailerUrl?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  genreIds: string[];
+  cast: { fullName: string }[];
+};
+
+export type UpdateMoviePayload = {
+  name?: string;
+  description?: string;
+  durationMinutes?: number;
+  releaseDate?: string;
+  director?: string;
+  ageRating?: string;
+  posterUrl?: string;
+  trailerUrl?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  genreIds?: string[];
+  cast?: { fullName: string }[];
+};
