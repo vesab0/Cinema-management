@@ -28,3 +28,8 @@ docker compose up
 cd cinema-frontend
 npm run dev
 ```
+
+
+Kur ndryshoni dicka ne models.cs run this in a new terminal, Zv yourmigrationname me ni short description psh AddedMovies 
+
+dotnet ef migrations add YourMigrationName --output-dir TwinPeaks.API/Data/Migrations

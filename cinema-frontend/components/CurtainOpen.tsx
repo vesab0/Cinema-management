@@ -131,13 +131,6 @@ function drawCurtain(
     ctx.stroke();
   }
 
-  const edgeX = topAnchors[isLeft ? numPleats : 0];
-  const dir = isLeft ? 1 : -1;
-  const shadG = ctx.createLinearGradient(edgeX, 0, edgeX + dir * 28, 0);
-  shadG.addColorStop(0, "rgba(0,0,0,0.5)");
-  shadG.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = shadG;
-  ctx.fillRect(edgeX, ROD_H, dir * 28, H);
 }
 
 interface CurtainOpenProps {
@@ -245,7 +238,7 @@ export default function CurtainOpen({
       {/* Backdrop / revealed content */}
       <div
         ref={backdropRef}
-        className="absolute inset-0 opacity-0 transition-opacity duration-[1100ms] ease-in-out flex flex-col items-center justify-center"
+        className="absolute inset-0 opacity-0 transition-opacity duration-[1100ms] ease-in-out flex flex-col items-center justify-start pt-3"
         style={{ background: "radial-gradient(ellipse 70% 60% at 50% 55%, #1c0d14 0%, #080408 100%)" }}
       >
         {children}

@@ -1,14 +1,14 @@
+import SecondaryNav from "../components/Secondarynav";
 import CurtainOpen from "../components/CurtainOpen";
+import Hero from "../components/Hero";
 
 export default function Index() {
   return (
-    <div className="h-[70vh] w-full">
+    <div className="h-screen w-full">
       <CurtainOpen>
-        <div>test</div>
+        <SecondaryNav/>
+        <Hero></Hero>  
       </CurtainOpen>
-
-
-    <img></img> 
 
 
 
