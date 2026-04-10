@@ -44,6 +44,39 @@ builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TwinPeaks.API.Data.ApplicationDbContext>();
+    var migrated = false;
+
+    for (var attempt = 1; attempt <= 10; attempt++)
+    {
+        try
+        {
+            db.Database.Migrate();
+            app.Logger.LogInformation("Database migrations applied successfully.");
+            migrated = true;
+            break;
+        }
+        catch (Exception ex)
+        {
+            if (attempt == 10)
+            {
+                app.Logger.LogError(ex, "Failed to apply database migrations after {Attempts} attempts.", attempt);
+                throw;
+            }
+
+            app.Logger.LogWarning(ex, "Database migration attempt {Attempt} failed. Retrying in 3 seconds...", attempt);
+            Thread.Sleep(TimeSpan.FromSeconds(3));
+        }
+    }
+
+    if (!migrated)
+    {
+        throw new InvalidOperationException("Database migration did not complete successfully.");
+    }
+}
+
 app.UseCors(FrontendCorsPolicy);
 
 app.Use(async (context, next) =>

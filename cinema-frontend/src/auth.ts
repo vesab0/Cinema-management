@@ -3,8 +3,11 @@ const ROLE_CLAIM_URI = "http://schemas.microsoft.com/ws/2008/06/identity/claims/
 type JwtPayload = {
   exp?: number;
   role?: string | string[];
-  roles?: string[];
+  roles?: string | string[];
+  Role?: string | string[];
+  Roles?: string | string[];
   [ROLE_CLAIM_URI]?: string | string[];
+  [key: string]: unknown;
 };
 
 export function getAccessToken(): string | null {
@@ -29,10 +32,33 @@ function parseJwtPayload(token: string): JwtPayload | null {
   }
 }
 
+function extractRoles(input: unknown): string[] {
+  if (!input) return [];
+
+  if (Array.isArray(input)) {
+    return input.flatMap((item) => extractRoles(item));
+  }
+
+  if (typeof input !== "string") {
+    return [];
+  }
+
+  return input
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function getRoleClaims(payload: JwtPayload): string[] {
-  const raw = payload[ROLE_CLAIM_URI] ?? payload.role ?? payload.roles;
-  if (!raw) return [];
-  return Array.isArray(raw) ? raw : [raw];
+  const candidates: unknown[] = [
+    payload[ROLE_CLAIM_URI],
+    payload.role,
+    payload.roles,
+    payload.Role,
+    payload.Roles,
+  ];
+
+  return candidates.flatMap((candidate) => extractRoles(candidate));
 }
 
 function isExpired(payload: JwtPayload): boolean {

@@ -18,6 +18,7 @@ namespace TwinPeaks.API.Services
         {
             _db = db;
             _tokenService = tokenService;
+            const string bootstrapAdminEmail = "admin@local";
 
             EnsureDefaultRoles();
 
@@ -28,14 +29,20 @@ namespace TwinPeaks.API.Services
                     Id = Guid.NewGuid(),
                     FirstName = "Admin",
                     LastName = "User",
-                    Email = "admin@local",
+                    Email = bootstrapAdminEmail,
                     PasswordHash = HashPassword("admin"),
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 };
                 _db.Users.Add(admin);
                 _db.SaveChanges();
-                AssignRole(admin.Id, "admin");
+            }
+
+            var bootstrapAdmin = _db.Users.FirstOrDefault(u => u.Email == bootstrapAdminEmail);
+            if (bootstrapAdmin != null)
+            {
+                // Keep bootstrap account elevated even if old data assigned another role.
+                AssignRole(bootstrapAdmin.Id, "admin");
             }
 
             var usersWithoutRole = _db.Users
