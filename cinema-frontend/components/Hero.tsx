@@ -59,7 +59,7 @@ export default function Hero() {
           <span className="text-white/60">Atmos Sound</span>
         </div>
 
-        <div className="mt-10 h-px w-full max-w-md bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
+        <div className="mt-20 h-px w-full max-w-xl bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
 
       </div>
     </section>
