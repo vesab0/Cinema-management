@@ -119,4 +119,14 @@ export const uploadsApi = {
   },
 };
 
+export const roomsApi = {
+  list: () => api.get<RoomRow[]>('/api/rooms', { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<RoomWithSeats>(`/api/rooms/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  create: (payload: CreateRoomPayload) => api.post<RoomWithSeats>('/api/rooms', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  update: (id: string, payload: UpdateRoomPayload) => api.put<RoomRow>(`/api/rooms/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
+  remove: (id: string) => api.delete(`/api/rooms/${id}`, { headers: getAuthHeaders() }),
+  updateSeat: (roomId: string, seatId: string, payload: UpdateSeatPayload) =>
+    api.patch(`/api/rooms/${roomId}/seats/${seatId}`, payload, { headers: getAuthHeaders() }),
+};
+
 export default api

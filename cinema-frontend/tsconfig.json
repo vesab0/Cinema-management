@@ -8,6 +8,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "jsx": "react-jsx",
+    "types": ["vite/client"],
     "allowJs": true,
     "paths": {
       "@/*": ["./src/*"]

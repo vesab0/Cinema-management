@@ -1,13 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using System.Text.Json.Serialization;
 using TwinPeaks.API.Routers;
 
 var builder = WebApplication.CreateBuilder(args);
 const string FrontendCorsPolicy = "FrontendCors";
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
@@ -23,9 +26,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Database and auth services
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionStrings:DefaultConnection"]; // fallback to env style
+    ?? builder.Configuration["ConnectionStrings:DefaultConnection"];
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException("Connection string 'DefaultConnection' is missing. Set ConnectionStrings__DefaultConnection in environment.");
@@ -33,7 +35,6 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 builder.Services.AddDbContext<TwinPeaks.API.Data.ApplicationDbContext>(options =>
 {
-    // Requires Pomelo.EntityFrameworkCore.MySql package
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
@@ -41,6 +42,7 @@ builder.Services.AddSingleton<TwinPeaks.API.Services.TokenService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.AuthService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 
 var app = builder.Build();
 
@@ -97,19 +99,17 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// Map auth routes
 app.MapAuthRoutes();
 app.MapUserRoutes();
 app.MapMovieRoutes();
 app.MapLookupRoutes();
 app.MapUploadRoutes();
-
+app.MapRoomRoutes();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

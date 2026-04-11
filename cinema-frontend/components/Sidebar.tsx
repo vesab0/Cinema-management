@@ -44,7 +44,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         onClick={() => setOpen((o) => !o)}
         type="button"
@@ -56,16 +55,13 @@ export default function Sidebar() {
         </svg>
       </button>
 
-      {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 z-40 w-64 h-full bg-gray-900 transition-transform sm:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Logo area */}
         <div className="flex items-center px-5 py-5 border-b border-gray-700">
           <span className="text-white font-semibold text-lg tracking-tight">Admin</span>
         </div>
 
-        {/* Nav */}
         <nav className="px-3 py-4">
           <ul className="space-y-1">
             {links.map(({ label, to, icon }) => (
