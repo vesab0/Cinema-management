@@ -95,3 +95,43 @@ export type UpdateMoviePayload = {
   genreIds?: string[];
   cast?: { fullName: string }[];
 };
+
+export type SeatType = "Standard" | "VIP" | "Wheelchair";
+
+export type SeatResponse = {
+  id: string;
+  rowLabel: string;
+  colNumber: number;
+  seatType: SeatType;
+  isActive: boolean;
+};
+
+export type RoomRow = {
+  [key: string]: unknown;
+  id: string;
+  name: string;
+  rows: number;
+  cols: number;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type RoomWithSeats = RoomRow & {
+  seats: SeatResponse[];
+};
+
+export type CreateRoomPayload = {
+  name: string;
+  rows: number;
+  cols: number;
+};
+
+export type UpdateRoomPayload = {
+  name?: string;
+  isActive?: boolean;
+};
+
+export type UpdateSeatPayload = {
+  seatType?: SeatType;
+  isActive?: boolean;
+};

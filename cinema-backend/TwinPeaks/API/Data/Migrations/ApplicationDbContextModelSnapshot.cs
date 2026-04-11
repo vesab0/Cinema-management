@@ -182,6 +182,65 @@ namespace backend.TwinPeaks.API.Data.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("TwinPeaks.API.Room", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Cols")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<int>("Rows")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("TwinPeaks.API.Seat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("ColNumber")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("RowLabel")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
+                    b.Property<int>("SeatType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId", "RowLabel", "ColNumber")
+                        .IsUnique();
+
+                    b.ToTable("Seats");
+                });
+
             modelBuilder.Entity("TwinPeaks.API.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -304,6 +363,17 @@ namespace backend.TwinPeaks.API.Data.Migrations
                         .HasForeignKey("UserId1");
                 });
 
+            modelBuilder.Entity("TwinPeaks.API.Seat", b =>
+                {
+                    b.HasOne("TwinPeaks.API.Room", "Room")
+                        .WithMany("Seats")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
             modelBuilder.Entity("TwinPeaks.API.UserRole", b =>
                 {
                     b.HasOne("TwinPeaks.API.Role", "Role")
@@ -343,6 +413,11 @@ namespace backend.TwinPeaks.API.Data.Migrations
             modelBuilder.Entity("TwinPeaks.API.Role", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("TwinPeaks.API.Room", b =>
+                {
+                    b.Navigation("Seats");
                 });
 
             modelBuilder.Entity("TwinPeaks.API.User", b =>

@@ -101,4 +101,35 @@ namespace TwinPeaks.API
         public Guid CastMemberId { get; set; }
         public CastMember CastMember { get; set; } = null!;
     }
+
+        public class Room
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Rows { get; set; }
+        public int Cols { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Seat> Seats { get; set; } = new List<Seat>();
+    }
+
+    public class Seat
+    {
+        public Guid Id { get; set; }
+        public Guid RoomId { get; set; }
+        public Room Room { get; set; } = null!;
+
+        public string RowLabel { get; set; } = string.Empty;
+        public int ColNumber { get; set; }
+        public SeatType SeatType { get; set; } = SeatType.Standard;
+        public bool IsActive { get; set; } = true;
+    }
+
+    public enum SeatType
+    {
+        Standard,
+        VIP,
+        Wheelchair
+    }
 }

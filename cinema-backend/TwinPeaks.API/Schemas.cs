@@ -68,4 +68,11 @@ namespace TwinPeaks.API
     public record CreateCastMemberRequest(string FullName);
 
     public record UploadImageResponse(string Url);
+    public record CreateRoomRequest(string Name, int Rows, int Cols);
+    public record UpdateRoomRequest(string? Name, bool? IsActive);
+    public record RoomResponse(Guid Id, string Name, int Rows, int Cols, bool IsActive, string CreatedAt);
+    public record RoomWithSeatsResponse(Guid Id, string Name, int Rows, int Cols, bool IsActive, string CreatedAt, List<SeatResponse> Seats);
+
+    public record UpdateSeatRequest(SeatType? SeatType, bool? IsActive);
+    public record SeatResponse(Guid Id, string RowLabel, int ColNumber, SeatType SeatType, bool IsActive);
 }

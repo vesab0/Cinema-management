@@ -15,6 +15,8 @@ namespace TwinPeaks.API.Data
         public DbSet<CastMember> CastMembers { get; set; } = null!;
         public DbSet<MovieGenre> MovieGenres { get; set; } = null!;
         public DbSet<MovieCast> MovieCasts { get; set; } = null!;
+        public DbSet<Room> Rooms { get; set; } = null!;
+        public DbSet<Seat> Seats { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,6 +76,23 @@ namespace TwinPeaks.API.Data
                 b.HasOne(mc => mc.CastMember)
                     .WithMany(c => c.MovieCasts)
                     .HasForeignKey(mc => mc.CastMemberId);
+            });
+
+            modelBuilder.Entity<Room>(b =>
+            {
+                b.HasKey(r => r.Id);
+                b.Property(r => r.Name).IsRequired().HasMaxLength(128);
+                b.HasMany(r => r.Seats)
+                    .WithOne(s => s.Room)
+                    .HasForeignKey(s => s.RoomId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Seat>(b =>
+            {
+                b.HasKey(s => s.Id);
+                b.Property(s => s.RowLabel).IsRequired().HasMaxLength(8);
+                b.HasIndex(s => new { s.RoomId, s.RowLabel, s.ColNumber }).IsUnique();
             });
         }
     }
