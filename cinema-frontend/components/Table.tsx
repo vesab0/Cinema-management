@@ -18,6 +18,7 @@ type TableProps<T extends Record<string, unknown>> = {
   onSave?: (row: T) => void;
   onDelete?: (row: T) => void;
   onCreate?: (row: T) => void;
+  onCreateClick?: () => void;
   defaultRow?: Partial<T>;
   showCreate?: boolean;
   onEditOverride?: (row: T) => void; 
@@ -31,6 +32,7 @@ export default function Table<T extends Record<string, unknown>>({
   onSave,
   onDelete,
   onCreate,
+  onCreateClick,
   defaultRow = {},
   showCreate = true,
   onEditOverride,
@@ -103,7 +105,7 @@ export default function Table<T extends Record<string, unknown>>({
           <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">{title}</h1>
           {showCreate && (
             <button
-              onClick={openCreateModal}
+              onClick={onCreateClick ?? openCreateModal}
               className="text-sm font-medium bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
             >
               + Create
