@@ -1,9 +1,27 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using System.Text.Json.Serialization;
 using TwinPeaks.API.Routers;
 
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console(
+        theme: AnsiConsoleTheme.Code,
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+        applyThemeToRedirectedOutput: true)
+    .CreateBootstrapLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, services, config) => config
+    .ReadFrom.Configuration(ctx.Configuration)
+    .ReadFrom.Services(services)
+    .WriteTo.Console(
+        theme: AnsiConsoleTheme.Code,
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+        applyThemeToRedirectedOutput: true));
 const string FrontendCorsPolicy = "FrontendCors";
 
 builder.Services.AddOpenApi();
@@ -81,14 +99,12 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors(FrontendCorsPolicy);
 
-app.Use(async (context, next) =>
+app.UseSerilogRequestLogging(opts =>
 {
-    await next();
-
-    if (context.Request.Path.StartsWithSegments("/api"))
-    {
-        Console.WriteLine($"[API] {context.Request.Method} {context.Request.Path} -> {context.Response.StatusCode}");
-    }
+    opts.GetLevel = (ctx, _, ex) =>
+        ex is not null || ctx.Response.StatusCode >= 500 ? LogEventLevel.Error :
+        ctx.Response.StatusCode >= 400 ? LogEventLevel.Warning :
+        LogEventLevel.Information;
 });
 
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "public", "uploads");
