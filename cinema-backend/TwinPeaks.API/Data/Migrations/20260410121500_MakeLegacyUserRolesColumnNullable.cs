@@ -1,9 +1,13 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using TwinPeaks.API.Data;
 
 #nullable disable
 
 namespace backend.TwinPeaks.API.Data.Migrations
 {
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260410121500_MakeLegacyUserRolesColumnNullable")]
     /// <inheritdoc />
     public partial class MakeLegacyUserRolesColumnNullable : Migration
     {
