@@ -10,7 +10,6 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/users");
 
-            // GET /api/users
             group.MapGet("/", (UsersService users) =>
             {
                 try
@@ -24,7 +23,6 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            // GET /api/users/{id}
             group.MapGet("/{id:guid}", (Guid id, UsersService users) =>
             {
                 try
@@ -39,7 +37,6 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            // PUT /api/users/{id}
             group.MapPut("/{id:guid}", (Guid id, UpdateUserRequest req, UsersService users) =>
             {
                 try
@@ -54,7 +51,6 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            // DELETE /api/users/{id}
             group.MapDelete("/{id:guid}", (Guid id, UsersService users) =>
             {
                 try

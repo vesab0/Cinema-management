@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import DataTable, { type Column } from "../../components/Table";
-import { roomsApi } from "../../src/api";
-import type { RoomRow, RoomWithSeats, SeatResponse, SeatType } from "../../src/types";
+import { roomsApi } from "../../api";
+import type { RoomRow, RoomWithSeats, SeatResponse, SeatType } from "../../types";
 
 const SEAT_TYPES: SeatType[] = ["Standard", "VIP", "Wheelchair"];
 
@@ -43,24 +43,25 @@ export default function Rooms() {
     await roomsApi.remove(row.id);
   };
 
-  const handleCreate = async (name: string, rows: number, cols: number) => {
-    const room = await roomsApi.create({ name, rows, cols });
+  const handleCreate = async (name: string, numRows: number, numCols: number) => {
+    const room = await roomsApi.create({ name, rows: numRows, cols: numCols });
     setRows((prev) => [...prev, room]);
     setShowCreate(false);
     setEditRoom(room);
   };
 
-  const handleRoomSave = async (id: string, name: string) => {
-    await roomsApi.update(id, { name });
-    setRows((prev) => prev.map((r) => r.id === id ? { ...r, name } : r));
-    setEditRoom((prev) => prev ? { ...prev, name } : prev);
-  };
-
   const handleSeatToggle = async (roomId: string, seat: SeatResponse) => {
-    await roomsApi.updateSeat(roomId, seat.id, { isActive: !seat.isActive });
     setEditRoom((prev) =>
       prev ? { ...prev, seats: prev.seats.map((s) => s.id === seat.id ? { ...s, isActive: !s.isActive } : s) } : prev
     );
+    try {
+      await roomsApi.updateSeat(roomId, seat.id, { isActive: !seat.isActive });
+    } catch {
+      setEditRoom((prev) =>
+        prev ? { ...prev, seats: prev.seats.map((s) => s.id === seat.id ? { ...s, isActive: seat.isActive } : s) } : prev
+      );
+      setError("Failed to update seat.");
+    }
   };
 
   const handleSeatType = async (roomId: string, seat: SeatResponse, seatType: SeatType) => {
@@ -88,6 +89,7 @@ export default function Rooms() {
         title="Rooms"
         columns={columns}
         rows={rows}
+        keyField="id"
         onDelete={handleDelete}
         onEditOverride={openEditor}
         onCreateClick={() => setShowCreate(true)}
@@ -214,7 +216,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
   onSeatToggle: (roomId: string, seat: SeatResponse) => void;
   onSeatTypeChange: (roomId: string, seat: SeatResponse, type: SeatType) => void;
 }) {
-  const [selectedId, setSelectedId]   = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selected = selectedId ? room.seats.find((s) => s.id === selectedId) ?? null : null;
 
@@ -245,100 +247,97 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
   };
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-        <div
-          className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">{room.name}</h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {room.rows} rows × {room.cols} cols · {room.seats.filter(s => s.isActive).length} active seats
-              </p>
-            </div>
-            <div className="flex items-center">
-              <button onClick={onClose} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">{room.name}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {room.rows} rows × {room.cols} cols · {room.seats.filter(s => s.isActive).length} active seats
+            </p>
           </div>
-
-          <div className="flex gap-4 mb-4 text-xs text-gray-500 mt-3">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-700 inline-block" /> Standard</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-300 inline-block" /> VIP</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-100 border border-blue-300 inline-block" /> Wheelchair</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 inline-block" /> Removed</span>
+          <div className="flex items-center">
+            <button onClick={onClose} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
+        </div>
 
-          <div className="text-center mb-4">
-            <div className="mx-auto h-1.5 w-48 bg-gray-300 rounded-full" />
-            <span className="text-xs text-gray-400 tracking-widest uppercase mt-1 block">Screen</span>
-          </div>
+        <div className="flex gap-4 mb-4 text-xs text-gray-500 mt-3">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-700 inline-block" /> Standard</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-300 inline-block" /> VIP</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-100 border border-blue-300 inline-block" /> Wheelchair</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 inline-block" /> Removed</span>
+        </div>
 
-          <div className="space-y-1.5 overflow-x-auto pb-2 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-            {Object.keys(grouped).sort().map((label) => (
-              <div key={label} className="flex items-center justify-center gap-3 w-full">
-                <span className="text-xs text-gray-400 w-4 text-right">{label}</span>
-                <div className="flex gap-1 flex-wrap justify-center">
-                  {grouped[label].sort((a, b) => a.colNumber - b.colNumber).map((seat) => (
-                    <button
-                      key={seat.id}
-                      onClick={() => setSelectedId(selectedId === seat.id ? null : seat.id)}
-                      title={`${seat.rowLabel}${seat.colNumber} · ${seat.seatType}`}
-                      className={`w-6 h-6 rounded-sm text-[10px] font-medium transition-all active:scale-90
-                        ${seatColor(seat)}
-                        ${selectedId === seat.id ? `ring-2 ring-offset-1 ${seatActiveRing(seat)} scale-110` : ""}
-                      `}
-                    >
-                      {seat.colNumber}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="text-center mb-4">
+          <div className="mx-auto h-1.5 w-48 bg-gray-300 rounded-full" />
+          <span className="text-xs text-gray-400 tracking-widest uppercase mt-1 block">Screen</span>
+        </div>
 
-          {selected && (
-            <div className="mt-5 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
-                Seat {selected.rowLabel}{selected.colNumber} · {selected.seatType}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onSeatToggle(room.id, selected)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all active:scale-95
-                    ${selected.isActive
-                      ? "border-red-200 text-red-600 hover:bg-red-50"
-                      : "border-green-200 text-green-600 hover:bg-green-50"}`}
-                >
-                  {selected.isActive ? "Remove seat" : "Restore seat"}
-                </button>
-                {selected.isActive && SEAT_TYPES.map((type) => (
+        <div className="space-y-1.5 overflow-x-auto pb-2 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+          {Object.keys(grouped).sort().map((label) => (
+            <div key={label} className="flex items-center justify-center gap-3 w-full">
+              <span className="text-xs text-gray-400 w-4 text-right">{label}</span>
+              <div className="flex gap-1 flex-wrap justify-center">
+                {grouped[label].sort((a, b) => a.colNumber - b.colNumber).map((seat) => (
                   <button
-                    key={type}
-                    onClick={() => onSeatTypeChange(room.id, selected, type)}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all active:scale-95
-                      ${seatTypeButtonClass(type, selected.seatType)}`}
+                    key={seat.id}
+                    onClick={() => setSelectedId(selectedId === seat.id ? null : seat.id)}
+                    title={`${seat.rowLabel}${seat.colNumber} · ${seat.seatType}`}
+                    className={`w-6 h-6 rounded-sm text-[10px] font-medium transition-all active:scale-90
+                      ${seatColor(seat)}
+                      ${selectedId === seat.id ? `ring-2 ring-offset-1 ${seatActiveRing(seat)} scale-110` : ""}
+                    `}
                   >
-                    {type}
+                    {seat.colNumber}
                   </button>
                 ))}
               </div>
             </div>
-          )}
+          ))}
+        </div>
 
-          <div className="flex justify-end mt-5">
-            <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 active:scale-95 transition-all">
-              Done
-            </button>
+        {selected && (
+          <div className="mt-5 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+              Seat {selected.rowLabel}{selected.colNumber} · {selected.seatType}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => onSeatToggle(room.id, selected)}
+                className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all active:scale-95
+                  ${selected.isActive
+                    ? "border-red-200 text-red-600 hover:bg-red-50"
+                    : "border-green-200 text-green-600 hover:bg-green-50"}`}
+              >
+                {selected.isActive ? "Remove seat" : "Restore seat"}
+              </button>
+              {selected.isActive && SEAT_TYPES.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => onSeatTypeChange(room.id, selected, type)}
+                  className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all active:scale-95
+                    ${seatTypeButtonClass(type, selected.seatType)}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+
+        <div className="flex justify-end mt-5">
+          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 active:scale-95 transition-all">
+            Done
+          </button>
         </div>
       </div>
-
-    </>
+    </div>
   );
 }

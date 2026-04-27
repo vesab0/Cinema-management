@@ -3,11 +3,16 @@ import type {
   BackendUserResponse,
   CastMemberOption,
   CreateMoviePayload,
+  CreateRoomPayload,
   GenreOption,
   LoginPayload,
   MovieRow,
   RegisterPayload,
+  RoomRow,
+  RoomWithSeats,
   UpdateMoviePayload,
+  UpdateRoomPayload,
+  UpdateSeatPayload,
   UpdateUserPayload,
   UserRole,
   UserRow
@@ -51,7 +56,6 @@ function toUpdatePayload(row: UserRow): UpdateUserPayload {
   const parts = row.fullName.trim().split(/\s+/).filter(Boolean)
   const firstName = parts[0] ?? ''
   const lastName = parts.slice(1).join(' ')
-
   return {
     firstName,
     lastName,
@@ -85,8 +89,6 @@ export const usersApi = {
       headers: getAuthHeaders(),
     })
   },
-
-  
 }
 
 export const moviesApi = {
@@ -94,30 +96,28 @@ export const moviesApi = {
   update: (id: string, payload: UpdateMoviePayload) => api.put(`/api/movies/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/api/movies/${id}`),
   create: (payload: CreateMoviePayload) => api.post('/api/movies', payload).then((r) => r.data),
-};
+}
 
 export const genresApi = {
   list: () => api.get<GenreOption[]>('/api/genres').then((r) => r.data),
   create: (name: string) => api.post<GenreOption>('/api/genres', { name }).then((r) => r.data),
-};
+}
 
 export const castMembersApi = {
   list: () => api.get<CastMemberOption[]>('/api/cast-members').then((r) => r.data),
   create: (fullName: string) => api.post<CastMemberOption>('/api/cast-members', { fullName }).then((r) => r.data),
-};
+}
 
 export const uploadsApi = {
   uploadImage: async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
+    const formData = new FormData()
+    formData.append('file', file)
     const { data } = await api.post<{ url: string }>('/api/uploads/image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-    });
-
-    return data.url;
+    })
+    return data.url
   },
-};
+}
 
 export const roomsApi = {
   list: () => api.get<RoomRow[]>('/api/rooms', { headers: getAuthHeaders() }).then(r => r.data),
@@ -127,6 +127,6 @@ export const roomsApi = {
   remove: (id: string) => api.delete(`/api/rooms/${id}`, { headers: getAuthHeaders() }),
   updateSeat: (roomId: string, seatId: string, payload: UpdateSeatPayload) =>
     api.patch(`/api/rooms/${roomId}/seats/${seatId}`, payload, { headers: getAuthHeaders() }),
-};
+}
 
 export default api

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import DataTable, { type Column } from "../../components/Table";
-import { castMembersApi, genresApi, moviesApi, uploadsApi } from "../../src/api";
-import type { CastMemberOption, GenreOption, MovieRow } from "../../src/types";
+import { castMembersApi, genresApi, moviesApi, uploadsApi } from "../../api";
+import type { CastMemberOption, GenreOption, MovieRow } from "../../types";
 
 const inputClass = "w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all";
 
 function MultiSelect({
-  ids, options, labelKey, onChangeIds, onCreateNew, createPlaceholder,
+  ids: initialIds, options, labelKey, onChangeIds, onCreateNew, createPlaceholder,
 }: {
   ids: string[];
   options: { id: string; [key: string]: string }[];
@@ -15,10 +15,20 @@ function MultiSelect({
   onCreateNew: (name: string) => Promise<void>;
   createPlaceholder: string;
 }) {
+  const [ids, setIds] = useState<string[]>(() => initialIds.length ? initialIds : [""]);
   const [newName, setNewName] = useState("");
-  const update = (index: number, val: string) => onChangeIds(ids.map((id, i) => (i === index ? val : id)));
-  const add = () => onChangeIds([...ids, ""]);
-  const remove = (index: number) => onChangeIds(ids.filter((_, i) => i !== index));
+
+  const update = (index: number, val: string) => {
+    const newIds = ids.map((id, i) => (i === index ? val : id));
+    setIds(newIds);
+    onChangeIds(newIds.filter(Boolean));
+  };
+  const add = () => setIds((prev) => [...prev, ""]);
+  const remove = (index: number) => {
+    const newIds = ids.filter((_, i) => i !== index);
+    setIds(newIds);
+    onChangeIds(newIds.filter(Boolean));
+  };
   const create = async () => {
     if (!newName.trim()) return;
     await onCreateNew(newName.trim());
@@ -66,6 +76,7 @@ export default function Movies() {
 
   const columns: Column<MovieRow>[] = [
     { key: "name",            label: "Name" },
+    { key: "description",     label: "Description", hideInTable: true },
     { key: "director",        label: "Director" },
     { key: "durationMinutes", label: "Duration (min)", type: "number" },
     { key: "ageRating",       label: "Age Rating" },
@@ -159,12 +170,38 @@ export default function Movies() {
     },
   ];
 
-  const handleSave = async (row: MovieRow) => { await moviesApi.update(row.id, row); await loadData(); };
-  const handleDelete = async (row: MovieRow) => { await moviesApi.remove(row.id); await loadData(); };
-  const handleCreate = async (row: MovieRow) => { await moviesApi.create(row); await loadData(); };
+  const toGenreIds = (genres: string[]) =>
+    genres.map((name) => genreOptions.find((g) => g.name === name)?.id ?? "").filter(Boolean);
+
+  const handleSave = async (row: MovieRow) => {
+    try {
+      await moviesApi.update(row.id, { ...row, genreIds: toGenreIds(row.genres) });
+      await loadData();
+    } catch (e) { setError(String(e)); }
+  };
+  const handleDelete = async (row: MovieRow) => {
+    try { await moviesApi.remove(row.id); await loadData(); }
+    catch (e) { setError(String(e)); }
+  };
+  const handleCreate = async (row: MovieRow) => {
+    try {
+      const { id: _id, createdAt: _createdAt, genres, ...rest } = row;
+      await moviesApi.create({ ...rest, genreIds: toGenreIds(genres) });
+      await loadData();
+    } catch (e) { setError(String(e)); }
+  };
 
   if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
   if (error)   return <div className="p-8 text-red-500">Error: {error}</div>;
+
+  const validateMovie = (row: MovieRow): string | null => {
+    if (!String(row.name ?? "").trim()) return "Name is required";
+    if (!String(row.description ?? "").trim()) return "Description is required";
+    if (!String(row.director ?? "").trim()) return "Director is required";
+    if (!String(row.ageRating ?? "").trim()) return "Age rating is required";
+    if (!Number(row.durationMinutes)) return "Duration must be greater than 0";
+    return null;
+  };
 
   return (
     <DataTable<MovieRow>
@@ -172,6 +209,8 @@ export default function Movies() {
       title="Movies"
       columns={columns}
       rows={rows}
+      keyField="id"
+      validate={validateMovie}
       defaultRow={{
         name: "", description: "", durationMinutes: 0,
         releaseDate: new Date().toISOString().split("T")[0],

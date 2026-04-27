@@ -16,8 +16,6 @@
   },
   "include": [
     "src",
-    "components",
-    "pages",
     "vite.config.ts",
     "*.ts",
     "*.tsx",

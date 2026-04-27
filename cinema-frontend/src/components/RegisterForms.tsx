@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 import { useState, type FormEvent, type MouseEvent } from 'react'
-import { authApi } from '../src/api'
+import { authApi } from '../api'
 
 export default function RegisterForms() {
 	const [isCreateMode, setIsCreateMode] = useState(false)
@@ -156,7 +156,7 @@ export default function RegisterForms() {
                 <span className="w-1/5 border-b border-gold/30 lg:w-1/5"></span>
 
                 <a href="#" className="text-xs text-center text-gold/70 uppercase">
-                    or login with 
+                    or login with
                 </a>
 
                 <span className="w-1/5 border-b border-gold/30 lg:w-1/5"></span>
