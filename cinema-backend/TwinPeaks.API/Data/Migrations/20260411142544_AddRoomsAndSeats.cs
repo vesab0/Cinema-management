@@ -1,14 +1,10 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using TwinPeaks.API.Data;
 
 #nullable disable
 
 namespace backend.TwinPeaks.API.Data.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260411142544_AddRoomsAndSeats")]
     public partial class AddRoomsAndSeats : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

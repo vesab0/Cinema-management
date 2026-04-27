@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
-const links = [
+type NavLink = { label: string; to: string; disabled?: boolean; icon: React.ReactNode };
+
+const links: NavLink[] = [
   {
     label: "Users",
     to: "/dashboard",
@@ -26,6 +28,7 @@ const links = [
   {
     label: "Scheduling",
     to: "/dashboard/scheduling",
+    disabled: true,
     icon: (
       <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm0 5h16M9 10v6m0 0H7m2 0h2" />
     ),
@@ -33,6 +36,7 @@ const links = [
   {
     label: "Financials",
     to: "/dashboard/financials",
+    disabled: true,
     icon: (
       <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 17.345a4.76 4.76 0 0 0 2.558 1.618c2.274.589 4.512-.446 4.999-2.31.487-1.866-1.273-3.9-3.546-4.49-2.273-.59-4.034-2.623-3.547-4.488.486-1.865 2.724-2.899 4.998-2.31.982.236 1.87.8 2.322 1.584m-3.36 13.19V21m0-18v2.069" />
     ),
@@ -64,23 +68,33 @@ export default function Sidebar() {
 
         <nav className="px-3 py-4">
           <ul className="space-y-1">
-            {links.map(({ label, to, icon }) => (
+            {links.map(({ label, to, disabled, icon }) => (
               <li key={label}>
-                <NavLink
-                  to={to}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-gray-700 text-white"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                    }`
-                  }
-                >
-                  <svg className="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    {icon}
-                  </svg>
-                  {label}
-                </NavLink>
+                {disabled ? (
+                  <span className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 cursor-not-allowed select-none">
+                    <svg className="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      {icon}
+                    </svg>
+                    {label}
+                    <span className="ml-auto text-[10px] font-semibold tracking-wider uppercase bg-gray-700 text-gray-400 px-1.5 py-0.5 rounded">Soon</span>
+                  </span>
+                ) : (
+                  <NavLink
+                    to={to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-gray-700 text-white"
+                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                      }`
+                    }
+                  >
+                    <svg className="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      {icon}
+                    </svg>
+                    {label}
+                  </NavLink>
+                )}
               </li>
             ))}
           </ul>

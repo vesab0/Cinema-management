@@ -21,7 +21,9 @@ type TableProps<T extends Record<string, unknown>> = {
   onCreateClick?: () => void;
   defaultRow?: Partial<T>;
   showCreate?: boolean;
-  onEditOverride?: (row: T) => void; 
+  onEditOverride?: (row: T) => void;
+  keyField?: keyof T;
+  validate?: (row: T) => string | null;
 };
 
 
@@ -36,6 +38,8 @@ export default function Table<T extends Record<string, unknown>>({
   defaultRow = {},
   showCreate = true,
   onEditOverride,
+  keyField,
+  validate,
 }: TableProps<T>) {
   const [rows, setRows] = useState<T[]>(initialRows);
   const [editingRow, setEditingRow] = useState<T | null>(null);
@@ -96,11 +100,11 @@ export default function Table<T extends Record<string, unknown>>({
   };
 
   const tableColumns = columns.filter((col) => !col.hideInTable);
-  const modalColumns = columns.filter((col) => !col.hideInModal && col.type !== "select");
+  const modalColumns = columns.filter((col) => !col.hideInModal);
 
   return (
     <>
-      <div className="min-h-screen bg-gray-100 p-8">
+      <div className="p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">{title}</h1>
           {showCreate && (
@@ -134,7 +138,7 @@ export default function Table<T extends Record<string, unknown>>({
                 </tr>
               ) : (
                 rows.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="border-b border-gray-100 last:border-0 even:bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <tr key={keyField ? String(row[keyField]) : rowIndex} className="border-b border-gray-100 last:border-0 even:bg-gray-50 hover:bg-gray-100 transition-colors">
                     {tableColumns.map((col) => (
                       <td key={String(col.key)} className="px-5 py-2.5">
                         {col.type === "select" ? (
@@ -203,6 +207,7 @@ export default function Table<T extends Record<string, unknown>>({
           onCancel={closeCreateModal}
           onConfirm={handleCreateSave}
           confirmLabel="Create"
+          validate={validate}
         />
       )}
     </>
@@ -217,11 +222,23 @@ type ModalProps<T extends Record<string, unknown>> = {
   onCancel: () => void;
   onConfirm: () => void;
   confirmLabel: string;
+  validate?: (row: T) => string | null;
 };
 
 function Modal<T extends Record<string, unknown>>({
-  title, columns, row, onChange, onCancel, onConfirm, confirmLabel,
+  title, columns, row, onChange, onCancel, onConfirm, confirmLabel, validate,
 }: ModalProps<T>) {
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleConfirm = () => {
+    if (validate) {
+      const err = validate(row);
+      if (err) { setValidationError(err); return; }
+    }
+    setValidationError(null);
+    onConfirm();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onCancel}>
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
@@ -242,6 +259,16 @@ function Modal<T extends Record<string, unknown>>({
               </label>
               {col.renderField ? (
                 col.renderField(row[col.key], (val) => onChange(col.key, val))
+              ) : col.type === "select" ? (
+                <select
+                  value={String(row[col.key] ?? "")}
+                  onChange={(e) => onChange(col.key, e.target.value)}
+                  className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all"
+                >
+                  {(col.options ?? []).map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               ) : (
                 <input
                   type={col.type ?? "text"}
@@ -254,11 +281,15 @@ function Modal<T extends Record<string, unknown>>({
           ))}
         </div>
 
+        {validationError && (
+          <p className="mt-4 text-sm text-red-500">{validationError}</p>
+        )}
+
         <div className="flex justify-end gap-2 mt-6">
           <button onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
             Cancel
           </button>
-          <button onClick={onConfirm} className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 active:scale-95 transition-all">
+          <button onClick={handleConfirm} className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 active:scale-95 transition-all">
             {confirmLabel}
           </button>
         </div>

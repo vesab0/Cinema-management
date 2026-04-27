@@ -38,7 +38,7 @@ export default function Hero() {
         </div>
 
         <p className="mt-8 max-w-md text-sm text-white/70 sm:text-base">
-          Located in the heart of Prishtina, Twin Peaks Cinema brings the world’s finest films to you.
+          Located in the heart of Prishtina, Twin Peaks Cinema brings the world's finest films to you.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60 sm:gap-6">

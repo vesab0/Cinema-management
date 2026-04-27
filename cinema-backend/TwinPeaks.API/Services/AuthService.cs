@@ -41,7 +41,6 @@ namespace TwinPeaks.API.Services
             var bootstrapAdmin = _db.Users.FirstOrDefault(u => u.Email == bootstrapAdminEmail);
             if (bootstrapAdmin != null)
             {
-                // Keep bootstrap account elevated even if old data assigned another role.
                 AssignRole(bootstrapAdmin.Id, "admin");
             }
 
@@ -119,7 +118,6 @@ namespace TwinPeaks.API.Services
             if (existing == null) return (null, "Invalid refresh token");
             if (existing.Revoked != null || existing.Expires < DateTime.UtcNow) return (null, "Refresh token expired");
 
-            //rotacioni tokenit
             existing.Revoked = DateTime.UtcNow;
             var user = _db.Users
                 .Include(u => u.UserRoles)

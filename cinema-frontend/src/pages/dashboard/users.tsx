@@ -1,8 +1,7 @@
-// pages/dashboard/Users.tsx
 import { useEffect, useState } from "react";
 import DataTable, { type Column } from "../../components/Table";
-import { usersApi } from "../../src/api";
-import type { UserRow } from "../../src/types";
+import { usersApi } from "../../api";
+import type { UserRow } from "../../types";
 
 const columns: Column<UserRow>[] = [
   { key: "fullName",  label: "Full Name"  },
@@ -26,21 +25,14 @@ export default function Users() {
   }, []);
 
   const handleSave = async (row: UserRow) => {
-    await usersApi.update(row);
+    try { await usersApi.update(row); }
+    catch (e) { setError(String(e)); }
   };
 
   const handleDelete = async (row: UserRow) => {
-    await usersApi.remove(row.id);
+    try { await usersApi.remove(row.id); }
+    catch (e) { setError(String(e)); }
   };
-
-  const handleAdd = () => ({
-    id: "",
-    fullName: "",
-    email: "",
-    phone: "",
-    role: "user" as const,
-    createdAt: new Date().toISOString().split("T")[0],
-  });
 
   if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
   if (error)   return <div className="p-8 text-red-500">Error: {error}</div>;
@@ -51,6 +43,7 @@ export default function Users() {
       title="Users"
       columns={columns}
       rows={rows}
+      keyField="id"
       onSave={handleSave}
       onDelete={handleDelete}
     />

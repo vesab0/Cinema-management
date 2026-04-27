@@ -1,10 +1,10 @@
+import type { Config } from 'tailwindcss'
+
 export default {
   darkMode: ['class'],
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-    './pages/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
@@ -50,12 +50,11 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
-fontFamily: {
-  sans: ["Inter", "ui-sans-serif", "system-ui"],
-  display: ["Bebas Neue", "sans-serif"],
-},
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        display: ['Bebas Neue', 'sans-serif'],
+      },
     },
   },
   plugins: [],
-}
-
+} satisfies Config

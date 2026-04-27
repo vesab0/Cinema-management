@@ -134,13 +134,9 @@ function drawCurtain(
 }
 
 interface CurtainOpenProps {
-  /** Content revealed behind the curtain */
   children?: React.ReactNode;
-  /** Extra classes on the outer wrapper */
   className?: string;
-  /** Called when the curtain finishes opening */
   onOpened?: () => void;
-  /** Delay in ms before the animation starts (default 300) */
   delay?: number;
 }
 
@@ -235,7 +231,6 @@ export default function CurtainOpen({
       ref={stageRef}
       className={`relative w-full h-full overflow-hidden bg-[#080408] ${className}`}
     >
-      {/* Backdrop / revealed content */}
       <div
         ref={backdropRef}
         className="absolute inset-0 opacity-0 transition-opacity duration-[1100ms] ease-in-out flex flex-col items-center justify-start pt-3"
@@ -244,7 +239,6 @@ export default function CurtainOpen({
         {children}
       </div>
 
-      {/* Canvas — curtain drawn here */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"

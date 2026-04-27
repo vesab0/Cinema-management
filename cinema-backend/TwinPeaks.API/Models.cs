@@ -102,7 +102,7 @@ namespace TwinPeaks.API
         public CastMember CastMember { get; set; } = null!;
     }
 
-        public class Room
+    public class Room
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
