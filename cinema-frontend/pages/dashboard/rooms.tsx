@@ -84,22 +84,14 @@ export default function Rooms() {
   return (
     <>
       <DataTable<RoomRow>
+        showCreate
         title="Rooms"
         columns={columns}
         rows={rows}
         onDelete={handleDelete}
         onEditOverride={openEditor}
-        showCreate={false}
+        onCreateClick={() => setShowCreate(true)}
       />
-
-      <div className="fixed bottom-6 right-6">
-        <button
-          onClick={() => setShowCreate(true)}
-          className="text-sm font-medium bg-gray-800 text-white px-5 py-2.5 rounded-xl shadow-lg hover:bg-gray-700 active:scale-95 transition-all"
-        >
-          + New Room
-        </button>
-      </div>
 
       {showCreate && (
         <RoomFormModal
@@ -187,8 +179,8 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
           </div>
           <div className="space-y-1.5 overflow-x-auto">
             {rowLabels.map((label) => (
-              <div key={label} className="flex items-center gap-1.5">
-                <span className="text-xs text-gray-400 w-4 text-right shrink-0">{label}</span>
+              <div key={label} className="flex items-center justify-center gap-3">
+                <span className="text-xs text-gray-400 w-4 text-right">{label}</span>
                 <div className="flex gap-1">
                   {Array.from({ length: cols }, (_, c) => (
                     <div key={c} className="w-5 h-5 rounded-sm bg-gray-200" />
@@ -289,9 +281,9 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
 
           <div className="space-y-1.5 overflow-x-auto pb-2 flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
             {Object.keys(grouped).sort().map((label) => (
-              <div key={label} className="flex items-center gap-1.5 justify-center w-full">
-                <span className="text-xs text-gray-400 w-4 text-right shrink-0">{label}</span>
-                <div className="flex gap-1 flex-wrap">
+              <div key={label} className="flex items-center justify-center gap-3 w-full">
+                <span className="text-xs text-gray-400 w-4 text-right">{label}</span>
+                <div className="flex gap-1 flex-wrap justify-center">
                   {grouped[label].sort((a, b) => a.colNumber - b.colNumber).map((seat) => (
                     <button
                       key={seat.id}
