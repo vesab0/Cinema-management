@@ -75,4 +75,32 @@ namespace TwinPeaks.API
 
     public record UpdateSeatRequest(SeatType? SeatType, bool? IsActive);
     public record SeatResponse(Guid Id, string RowLabel, int ColNumber, SeatType SeatType, bool IsActive);
+
+    public record MovieScheduleResponse(
+        Guid Id,
+        Guid MovieId,
+        string MovieName,
+        Guid RoomId,
+        string RoomName,
+        DateTime ScheduleDay,
+        string StartTime,
+        string CreatedAt,
+        bool IsActive
+    );
+
+    public record CreateMovieScheduleRequest(
+        Guid MovieId,
+        Guid RoomId,
+        DateTime ScheduleDay,
+        TimeSpan StartTime,
+        bool? IsActive
+    );
+
+    public record UpdateMovieScheduleRequest(
+        Guid? MovieId,
+        Guid? RoomId,
+        DateTime? ScheduleDay,
+        TimeSpan? StartTime,
+        bool? IsActive
+    );
 }
