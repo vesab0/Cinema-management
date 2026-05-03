@@ -135,3 +135,43 @@ export type UpdateSeatPayload = {
   seatType?: SeatType;
   isActive?: boolean;
 };
+
+export type ScheduleRow = {
+  [key: string]: unknown;
+  id: string;
+  movieId: string;
+  movieName: string;
+  roomId: string;
+  roomName: string;
+  scheduleDay: string;
+  startTime: string;
+  createdAt: string;
+  isActive: boolean;
+};
+
+export type CreateSchedulePayload = {
+  movieId: string;
+  roomId: string;
+  scheduleDay: string;
+  startTime: string;
+  isActive?: boolean;
+};
+
+export type UpdateSchedulePayload = {
+  movieId?: string;
+  roomId?: string;
+  scheduleDay?: string;
+  startTime?: string;
+  isActive?: boolean;
+};
+
+export type MovieOption = {
+  id: string;
+  name: string;
+};
+
+export type RoomOption = {
+  id: string;
+  name: string;
+};
+

@@ -61,6 +61,7 @@ builder.Services.AddScoped<TwinPeaks.API.Services.AuthService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
 
 var app = builder.Build();
 
@@ -126,6 +127,7 @@ app.MapMovieRoutes();
 app.MapLookupRoutes();
 app.MapUploadRoutes();
 app.MapRoomRoutes();
+app.MapScheduleRoutes();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

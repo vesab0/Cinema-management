@@ -132,4 +132,19 @@ namespace TwinPeaks.API
         VIP,
         Wheelchair
     }
+
+    public class MovieSchedule
+    {
+        public Guid Id { get; set; }
+        public Guid MovieId { get; set; }
+        public Movie Movie { get; set; } = null!;
+
+        public Guid RoomId { get; set; }
+        public Room Room { get; set; } = null!;
+
+        public DateTime ScheduleDay { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsActive { get; set; } = true;
+    }
 }

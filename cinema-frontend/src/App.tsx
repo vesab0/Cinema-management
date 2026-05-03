@@ -5,6 +5,7 @@ import Dashboard from './pages/dashboard/dashboard'
 import Users from './pages/dashboard/users'
 import Movies from './pages/dashboard/movies'
 import Rooms from './pages/dashboard/rooms'
+import Schedules from './pages/dashboard/schedule'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
 
@@ -33,6 +34,7 @@ export default function App() {
           <Route index element={<Users />} />
           <Route path="movies" element={<Movies />} />
           <Route path="rooms" element={<Rooms />} />
+          <Route path="schedules" element={<Schedules />} />
         </Route>
       </Route>
 
