@@ -8,6 +8,8 @@ import Rooms from './pages/dashboard/rooms'
 import Schedules from './pages/dashboard/schedule'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
+import NotFound from './components/NotFound'
+
 
 function PublicLayout() {
   return (
@@ -37,6 +39,9 @@ export default function App() {
           <Route path="schedules" element={<Schedules />} />
         </Route>
       </Route>
+
+
+      <Route path="*" element={<NotFound/>} />
 
     </Routes>
   )
