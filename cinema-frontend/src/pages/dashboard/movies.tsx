@@ -210,10 +210,12 @@ export default function Movies() {
       ),
       renderField: (val, onChange) => {
         const selected = (val as { fullName: string }[]) ?? [];
-        const ids = selected.map((entry) => castOptions.find((c) => c.fullName === entry.fullName)?.id ?? "").filter(Boolean);
+        const ids = selected
+          .map((entry) => castOptions.find((c) => c.fullName === entry.fullName)?.id ?? "")
+          .filter(Boolean);
         return (
-          <MultiSelect
-            ids={ids.length ? ids : [""]}
+          <SearchSelect
+            selectedIds={ids}
             options={castOptions as { id: string; [key: string]: string }[]}
             labelKey="fullName"
             onChangeIds={(newIds) => {
