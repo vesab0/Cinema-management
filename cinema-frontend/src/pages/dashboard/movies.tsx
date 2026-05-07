@@ -1,54 +1,136 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DataTable, { type Column } from "../../components/Table";
 import { castMembersApi, genresApi, moviesApi, uploadsApi } from "../../api";
 import type { CastMemberOption, GenreOption, MovieRow } from "../../types";
 
 const inputClass = "w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all";
 
-function MultiSelect({
-  ids: initialIds, options, labelKey, onChangeIds, onCreateNew, createPlaceholder,
+function SearchSelect({
+  selectedIds,
+  options,
+  labelKey,
+  onChangeIds,
+  onCreateNew,
+  placeholder,
 }: {
-  ids: string[];
+  selectedIds: string[];
   options: { id: string; [key: string]: string }[];
   labelKey: string;
   onChangeIds: (ids: string[]) => void;
   onCreateNew: (name: string) => Promise<void>;
-  createPlaceholder: string;
+  placeholder: string;
 }) {
-  const [ids, setIds] = useState<string[]>(() => initialIds.length ? initialIds : [""]);
-  const [newName, setNewName] = useState("");
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const update = (index: number, val: string) => {
-    const newIds = ids.map((id, i) => (i === index ? val : id));
-    setIds(newIds);
-    onChangeIds(newIds.filter(Boolean));
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = options.filter(
+    (o) =>
+      !selectedIds.includes(o.id) &&
+      o[labelKey].toLowerCase().includes(query.toLowerCase())
+  );
+
+  const selectedOptions = options.filter((o) => selectedIds.includes(o.id));
+
+  const select = (id: string) => {
+    onChangeIds([...selectedIds, id]);
+    setQuery("");
+    setOpen(false);
   };
-  const add = () => setIds((prev) => [...prev, ""]);
-  const remove = (index: number) => {
-    const newIds = ids.filter((_, i) => i !== index);
-    setIds(newIds);
-    onChangeIds(newIds.filter(Boolean));
+
+  const remove = (id: string) => {
+    onChangeIds(selectedIds.filter((x) => x !== id));
   };
-  const create = async () => {
-    if (!newName.trim()) return;
-    await onCreateNew(newName.trim());
-    setNewName("");
+
+  const exactMatch = options.some(
+    (o) => o[labelKey].toLowerCase() === query.trim().toLowerCase()
+  );
+  const canCreate = query.trim().length > 0 && !exactMatch;
+
+  const handleCreate = async () => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setCreating(true);
+    await onCreateNew(trimmed);
+    setQuery("");
+    setOpen(false);
+    setCreating(false);
   };
+
   return (
-    <div className="space-y-2">
-      {ids.map((id, index) => (
-        <div key={index} className="flex gap-2">
-          <select value={id} onChange={(e) => update(index, e.target.value)} className={inputClass}>
-            <option value="">Select...</option>
-            {options.map((o) => <option key={o.id} value={o.id}>{o[labelKey]}</option>)}
-          </select>
-          <button type="button" onClick={() => remove(index)} className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">-</button>
+    <div ref={containerRef} className="space-y-2">
+      {/* Selected chips */}
+      {selectedOptions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selectedOptions.map((o) => (
+            <span
+              key={o.id}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-800 text-white"
+            >
+              {o[labelKey]}
+              <button
+                type="button"
+                onClick={() => remove(o.id)}
+                className="ml-0.5 hover:text-gray-300 leading-none text-base"
+              >
+                ×
+              </button>
+            </span>
+          ))}
         </div>
-      ))}
-      <button type="button" onClick={add} className="text-sm px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">+ Add row</button>
-      <div className="flex gap-2 mt-1">
-        <input placeholder={createPlaceholder} value={newName} onChange={(e) => setNewName(e.target.value)} className={inputClass} />
-        <button type="button" onClick={create} className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">Add</button>
+      )}
+
+      {/* Search input */}
+      <div className="relative">
+        <input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder}
+          className={inputClass}
+        />
+
+        {/* Dropdown */}
+        {open && (query.length > 0 || filtered.length > 0) && (
+          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {filtered.length === 0 && !canCreate && (
+              <div className="px-3 py-2 text-sm text-gray-400">No results</div>
+            )}
+            {filtered.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); select(o.id); }}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {o[labelKey]}
+              </button>
+            ))}
+            {canCreate && (
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); handleCreate(); }}
+                disabled={creating}
+                className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-100 disabled:opacity-40"
+              >
+                {creating ? "Creating…" : `+ Create "${query.trim()}"`}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -97,21 +179,25 @@ export default function Movies() {
       ),
       renderField: (val, onChange) => {
         const selected = (val as string[]) ?? [];
-        const ids = selected.map((name) => genreOptions.find((g) => g.name === name)?.id ?? "").filter(Boolean);
+        const ids = selected
+          .map((name) => genreOptions.find((g) => g.name === name)?.id ?? "")
+          .filter(Boolean);
         return (
-          <MultiSelect
-            ids={ids.length ? ids : [""]}
+          <SearchSelect
+            selectedIds={ids}
             options={genreOptions as { id: string; [key: string]: string }[]}
             labelKey="name"
             onChangeIds={(newIds) => {
-              const names = newIds.map((id) => genreOptions.find((g) => g.id === id)?.name ?? "").filter(Boolean);
+              const names = newIds
+                .map((id) => genreOptions.find((g) => g.id === id)?.name ?? "")
+                .filter(Boolean);
               onChange(names);
             }}
             onCreateNew={async (name) => {
               const genre = await genresApi.create(name);
               setGenreOptions((prev) => [...prev, genre]);
             }}
-            createPlaceholder="New genre name"
+            placeholder="Search or create genre…"
           />
         );
       },
@@ -141,7 +227,7 @@ export default function Movies() {
               const member = await castMembersApi.create(name);
               setCastOptions((prev) => [...prev, member]);
             }}
-            createPlaceholder="New cast member name"
+            placeholder="Search or create cast member…"
           />
         );
       },
