@@ -98,6 +98,7 @@ export const usersApi = {
 
 export const moviesApi = {
   list: () => api.get('/api/movies').then((r) => r.data),
+  getById: (id: string) => api.get(`/api/movies/${id}`).then((r) => r.data),
   update: (id: string, payload: UpdateMoviePayload) => api.put(`/api/movies/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/api/movies/${id}`),
   create: (payload: CreateMoviePayload) => api.post('/api/movies', payload).then((r) => r.data),

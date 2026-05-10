@@ -10,6 +10,7 @@ import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
 import NotFound from './components/NotFound'
 import MoviesPage from './pages/MoviesPage'
+import MovieDetailsPage from './pages/moviedetails'
 
 function PublicLayout() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/" element={<Index />} />
         <Route path="/register" element={<RegisterForms />} />
         <Route path="/movies" element={<MoviesPage />} />
+        <Route path="/movies/:id" element={<MovieDetailsPage />} />
       </Route>
       <Route element={<AdminRoute />}>
         <Route path="/dashboard" element={<Dashboard />}>
