@@ -54,7 +54,27 @@ export interface MovieRow {
   createdAt: string;
   genres: string[];
   cast: { fullName: string }[];
+  tmdbId?: number;
 }
+
+export type PredictorMovie = {
+  movieLensId: number;
+  tmdbId: number;
+  title: string;
+  genres: string[];
+  releaseDate: string;
+  voteAverage: number;
+  posterPath: string;
+  posterUrl: string;
+};
+
+export type FavoriteMovieResponse = {
+  favoriteId: string;
+  tmdbId: number;
+  movieTitle: string;
+  posterPath: string;
+  addedAt: string;
+};
 
 export type GenreOption = {
   id: string;

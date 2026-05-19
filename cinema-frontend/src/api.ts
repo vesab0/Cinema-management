@@ -5,6 +5,7 @@ import type {
   CreateMoviePayload,
   CreateRoomPayload,
   CreateSchedulePayload,
+  FavoriteMovieResponse,
   GenreOption,
   LoginPayload,
   MovieRow,
@@ -24,7 +25,13 @@ import type {
 } from './types'
 import { getAccessToken } from './auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? ''
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8001'
+
+export const predictorApi = axios.create({
+  baseURL: PREDICTOR_URL,
+  headers: { 'Content-Type': 'application/json' },
+})
 
 export const api = axios.create({
   baseURL: API_BASE_URL || undefined,
@@ -142,6 +149,20 @@ export const schedulesApi = {
   update: (id: string, payload: UpdateSchedulePayload) => api.put<ScheduleRow>(`/api/schedules/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
   remove: (id: string) => api.delete(`/api/schedules/${id}`, { headers: getAuthHeaders() }),
   getByDate: (date: string) => api.get<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
+}
+
+export const movieSearchApi = {
+  search: (q: string, limit = 20) =>
+    predictorApi.get<import('./types').PredictorMovie[]>('/search', { params: { q, limit } }).then(r => r.data),
+}
+
+export const favoritesApi = {
+  list: (userId: string) =>
+    api.get<FavoriteMovieResponse[]>(`/api/users/${userId}/favorites`, { headers: getAuthHeaders() }).then(r => r.data),
+  add: (userId: string, tmdbId: number, movieTitle: string, posterPath: string) =>
+    api.post<FavoriteMovieResponse>(`/api/users/${userId}/favorites`, { tmdbId, movieTitle, posterPath }, { headers: getAuthHeaders() }).then(r => r.data),
+  remove: (userId: string, tmdbId: number) =>
+    api.delete(`/api/users/${userId}/favorites/${tmdbId}`, { headers: getAuthHeaders() }),
 }
 
 export default api

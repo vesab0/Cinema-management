@@ -32,7 +32,8 @@ namespace TwinPeaks.API
         string PosterUrl, string TrailerUrl,
         bool IsActive, string CreatedAt,
         List<string> Genres,
-        List<CastResponse> Cast
+        List<CastResponse> Cast,
+        int? TmdbId = null
     );
 
     public record CastResponse(string FullName);
@@ -45,7 +46,8 @@ namespace TwinPeaks.API
         bool? IsActive,
         DateTime? CreatedAt,
         List<Guid> GenreIds,
-        List<CastEntryRequest> Cast
+        List<CastEntryRequest> Cast,
+        int? TmdbId = null
     );
 
     public record UpdateMovieRequest(
@@ -56,7 +58,18 @@ namespace TwinPeaks.API
         bool? IsActive,
         DateTime? CreatedAt,
         List<Guid>? GenreIds,
-        List<CastEntryRequest>? Cast
+        List<CastEntryRequest>? Cast,
+        int? TmdbId = null
+    );
+
+    public record AddFavoriteRequest(int TmdbId, string MovieTitle, string PosterPath);
+
+    public record FavoriteMovieResponse(
+        Guid FavoriteId,
+        int TmdbId,
+        string MovieTitle,
+        string PosterPath,
+        DateTime AddedAt
     );
 
     public record CastEntryRequest(string FullName);

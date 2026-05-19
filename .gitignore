@@ -521,3 +521,6 @@ cinema-backend/TwinPeaks.API/Data/Migrations/**/*.Designer.cs
 cinema-backend/TwinPeaks.API/Data/Migrations/*Snapshot.cs
 cinema-frontend/node_modules/
 cinema-frontend/dist/
+
+# Secrets — never commit
+cinema-backend/appsettings.Development.json

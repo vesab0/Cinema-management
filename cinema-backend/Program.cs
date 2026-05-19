@@ -62,6 +62,9 @@ builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
+builder.Services.AddSingleton<TwinPeaks.API.Services.IEmailService, TwinPeaks.API.Services.SendGridEmailService>();
+builder.Services.AddSingleton<TwinPeaks.API.Services.MovieNotificationService>();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -124,6 +127,7 @@ if (app.Environment.IsDevelopment())
 app.MapAuthRoutes();
 app.MapUserRoutes();
 app.MapMovieRoutes();
+app.MapFavoritesRoutes();
 app.MapLookupRoutes();
 app.MapUploadRoutes();
 app.MapRoomRoutes();

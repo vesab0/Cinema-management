@@ -8,9 +8,11 @@ import Rooms from './pages/dashboard/rooms'
 import Schedules from './pages/dashboard/schedule'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
-import NotFound from './components/NotFound'
+import MoviesPage from './pages/moviespage'
+import ProfilePage from './pages/profile'
 import MoviesPage from './pages/MoviesPage'
 import MovieDetailsPage from './pages/moviedetails'
+
 
 function PublicLayout() {
   return (
@@ -30,6 +32,7 @@ export default function App() {
         <Route path="/" element={<Index />} />
         <Route path="/register" element={<RegisterForms />} />
         <Route path="/movies" element={<MoviesPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/movies/:id" element={<MovieDetailsPage />} />
       </Route>
       <Route element={<AdminRoute />}>
