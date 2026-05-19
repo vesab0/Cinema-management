@@ -7,8 +7,13 @@ using System.Text.Json.Serialization;
 
 namespace TwinPeaks.API.Routers
 {
-    // Matches the JSON shape returned by the Python predictor API
-    record PredictorResult(int MovieId, string Title, double FinalScore, int? TmdbId);
+    // Matches the JSON shape returned by the Python predictor API (snake_case → PascalCase)
+    record PredictorResult(
+        [property: JsonPropertyName("movie_id")]  int MovieId,
+        [property: JsonPropertyName("title")]     string Title,
+        [property: JsonPropertyName("final_score")] double FinalScore,
+        [property: JsonPropertyName("tmdb_id")]   int? TmdbId
+    );
 
     record InjectMoviePayload(
         string Title,

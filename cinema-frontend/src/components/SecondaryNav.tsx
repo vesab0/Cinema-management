@@ -6,6 +6,8 @@ export default function SecondaryNav() {
         <Link to="/" className="hover:text-white transition-colors">Home</Link>
         <Link to="/schedule" className="hover:text-white transition-colors">Schedule</Link>
         <Link to="/movies" className="hover:text-white transition-colors">Movies</Link>
+        <Link to="/discover" className="hover:text-white transition-colors">Discover</Link>
+        <Link to="/favorites" className="hover:text-white transition-colors">My Favorites</Link>
       </div>
     </div>
   )

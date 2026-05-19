@@ -78,3 +78,15 @@ export function isAdminAuthenticated(): boolean {
   const token = getAccessToken();
   return token ? isAdminToken(token) : false;
 }
+
+export function getUserId(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = parseJwtPayload(token);
+  if (!payload || isExpired(payload)) return null;
+  return typeof payload.sub === 'string' ? payload.sub : null;
+}
+
+export function isAuthenticated(): boolean {
+  return getUserId() !== null;
+}
