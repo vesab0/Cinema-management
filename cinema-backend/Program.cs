@@ -63,6 +63,7 @@ builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
 builder.Services.AddSingleton<TwinPeaks.API.Services.IEmailService, TwinPeaks.API.Services.SendGridEmailService>();
+builder.Services.AddSingleton<TwinPeaks.API.Services.MovieNotificationService>();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
