@@ -19,6 +19,7 @@ namespace TwinPeaks.API
 
         public List<RefreshToken> RefreshTokens { get; set; } = new();
         public List<UserRole> UserRoles { get; set; } = new();
+        public ICollection<UserFavoriteMovie> FavoriteMovies { get; set; } = new List<UserFavoriteMovie>();
     }
 
     public class Role
@@ -34,6 +35,7 @@ namespace TwinPeaks.API
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
+        public User User { get; set; } = null!;
         public string Token { get; set; } = string.Empty;
         public DateTime Expires { get; set; }
         public DateTime Created { get; set; }
@@ -63,6 +65,7 @@ namespace TwinPeaks.API
         public string TrailerUrl { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int? TmdbId { get; set; }
 
         public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
         public ICollection<MovieCast> MovieCasts { get; set; } = new List<MovieCast>();
@@ -146,5 +149,16 @@ namespace TwinPeaks.API
         public TimeSpan StartTime { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
+    }
+
+    public class UserFavoriteMovie
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public int TmdbId { get; set; }
+        public string MovieTitle { get; set; } = string.Empty;
+        public string PosterPath { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public User User { get; set; } = null!;
     }
 }

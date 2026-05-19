@@ -60,7 +60,8 @@ namespace TwinPeaks.API.Services
                 PosterUrl = req.PosterUrl?.Trim() ?? string.Empty,
                 TrailerUrl = req.TrailerUrl?.Trim() ?? string.Empty,
                 IsActive = req.IsActive ?? true,
-                CreatedAt = req.CreatedAt ?? DateTime.UtcNow
+                CreatedAt = req.CreatedAt ?? DateTime.UtcNow,
+                TmdbId = req.TmdbId
             };
 
             foreach (var genreId in req.GenreIds ?? [])
@@ -111,6 +112,7 @@ namespace TwinPeaks.API.Services
             if (req.ReleaseDate.HasValue)     movie.ReleaseDate = req.ReleaseDate.Value;
             if (req.IsActive.HasValue)        movie.IsActive = req.IsActive.Value;
             if (req.CreatedAt.HasValue)       movie.CreatedAt = req.CreatedAt.Value;
+            if (req.TmdbId.HasValue)          movie.TmdbId = req.TmdbId.Value;
 
             if (req.GenreIds != null)
             {
@@ -170,7 +172,8 @@ namespace TwinPeaks.API.Services
             m.IsActive,
             m.CreatedAt.ToString("yyyy-MM-dd"),
             m.MovieGenres.Select(mg => mg.Genre.Name).ToList(),
-            m.MovieCasts.Select(mc => new CastResponse(mc.CastMember.FullName)).ToList()
+            m.MovieCasts.Select(mc => new CastResponse(mc.CastMember.FullName)).ToList(),
+            m.TmdbId
         );
     }
 }
