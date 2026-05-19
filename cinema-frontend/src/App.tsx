@@ -9,8 +9,7 @@ import Schedules from './pages/dashboard/schedule'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
 import MoviesPage from './pages/moviespage'
-import FavoritesPage from './pages/favorites'
-import DiscoverPage from './pages/discover'
+import ProfilePage from './pages/profile'
 
 function PublicLayout() {
   return (
@@ -31,8 +30,7 @@ export default function App() {
         <Route path="/" element={<Index />} />
         <Route path="/register" element={<RegisterForms />} />
         <Route path="/movies" element={<MoviesPage />} />
-        <Route path="/discover" element={<DiscoverPage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       <Route element={<AdminRoute />}>
