@@ -24,10 +24,10 @@ import type {
 } from './types'
 import { getAccessToken } from './auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || undefined,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -98,6 +98,7 @@ export const usersApi = {
 
 export const moviesApi = {
   list: () => api.get('/api/movies').then((r) => r.data),
+  getById: (id: string) => api.get(`/api/movies/${id}`).then((r) => r.data),
   update: (id: string, payload: UpdateMoviePayload) => api.put(`/api/movies/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/api/movies/${id}`),
   create: (payload: CreateMoviePayload) => api.post('/api/movies', payload).then((r) => r.data),
