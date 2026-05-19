@@ -1,3 +1,4 @@
+using System;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
@@ -13,9 +14,24 @@ namespace TwinPeaks.API.Services
 
         public SendGridEmailService(IConfiguration config, ILogger<SendGridEmailService> logger)
         {
-            _apiKey    = config["SendGrid:ApiKey"]    ?? string.Empty;
-            _fromEmail = config["SendGrid:FromEmail"] ?? string.Empty;
-            _fromName  = config["SendGrid:FromName"]  ?? "Twin Peaks Cinema";
+            var envApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+                            ?? Environment.GetEnvironmentVariable("SendGrid__ApiKey");
+            _apiKey = !string.IsNullOrWhiteSpace(envApiKey)
+                ? envApiKey
+                : config["SendGrid:ApiKey"] ?? string.Empty;
+
+            var envFromEmail = Environment.GetEnvironmentVariable("SENDGRID_FROM_EMAIL")
+                                ?? Environment.GetEnvironmentVariable("SendGrid__FromEmail");
+            _fromEmail = !string.IsNullOrWhiteSpace(envFromEmail)
+                ? envFromEmail
+                : config["SendGrid:FromEmail"] ?? string.Empty;
+
+            var envFromName = Environment.GetEnvironmentVariable("SENDGRID_FROM_NAME")
+                               ?? Environment.GetEnvironmentVariable("SendGrid__FromName");
+            _fromName = !string.IsNullOrWhiteSpace(envFromName)
+                ? envFromName
+                : config["SendGrid:FromName"] ?? "Twin Peaks Cinema";
+
             _configured = !string.IsNullOrWhiteSpace(_apiKey) && !string.IsNullOrWhiteSpace(_fromEmail);
             _logger = logger;
         }
