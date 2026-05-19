@@ -29,9 +29,11 @@ export default function MovieDetails({ movieId: propId }: Props) {
   if (loading) return <div className="p-6">Loading...</div>
   if (!movie) return <div className="p-6">Movie not found.</div>
 
-  const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+  const apiBase = import.meta.env.VITE_API_URL ?? ''
   const posterPath = movie.posterUrl ?? ''
-  const posterSrc = posterPath.startsWith('http') ? posterPath : `${apiBase.replace(/\/$/, '')}/${posterPath.replace(/^\//, '')}`
+  const posterSrc = posterPath.startsWith('http')
+    ? posterPath
+    : (apiBase ? `${apiBase.replace(/\/$/, '')}/${posterPath.replace(/^\//, '')}` : posterPath)
 
   return (
     <div className="max-w-5xl mx-auto p-6 flex flex-col md:flex-row gap-10 items-start">
