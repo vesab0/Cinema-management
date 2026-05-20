@@ -139,6 +139,21 @@ namespace TwinPeaks.API.Services
             .ThenInclude(ur => ur.Role)
             .FirstOrDefault(u => u.Email == email.Trim().ToLowerInvariant());
 
+        public User? GetById(Guid id) => _db.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .FirstOrDefault(u => u.Id == id);
+
+        public void RevokeRefreshToken(string token)
+        {
+            var rt = _db.RefreshTokens.FirstOrDefault(rt => rt.Token == token);
+            if (rt != null)
+            {
+                rt.Revoked = DateTime.UtcNow;
+                _db.SaveChanges();
+            }
+        }
+
         private void EnsureDefaultRoles()
         {
             var existing = _db.Roles.Select(r => r.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);

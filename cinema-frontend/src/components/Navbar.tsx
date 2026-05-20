@@ -1,56 +1,50 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RegisterForms from "./RegisterForms";
-import { getAccessToken, isAdminToken } from "../auth";
-
-function getUserName(token: string): string | null {
-    try {
-        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-        const first = payload["given_name"] ?? payload["firstName"] ?? "";
-        const last = payload["family_name"] ?? payload["lastName"] ?? "";
-        const full = `${first} ${last}`.trim();
-        return full || payload["email"] || null;
-    } catch {
-        return null;
-    }
-}
+import { getAccessToken, getUser, logout } from "../auth";
 
 export default function Navbar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [authToken, setAuthToken] = useState<string | null>(getAccessToken);
+    const [userName, setUserName] = useState<string | null>(() => {
+        const user = getUser();
+        return user ? `${user.firstName} ${user.lastName}`.trim() || user.email : null;
+    });
+    const [isAdminUser, setIsAdminUser] = useState(() => {
+        const user = getUser();
+        return !!user?.roles.map(r => r.toLowerCase()).includes('admin');
+    });
     const navigate = useNavigate();
 
+    const authToken = getAccessToken();
     const isLoggedIn = !!authToken;
-    const isAdmin = authToken ? isAdminToken(authToken) : false;
-    const userName = authToken ? getUserName(authToken) : null;
 
     const handleLoginSuccess = () => {
         setIsModalOpen(false);
-        setAuthToken(getAccessToken());
+        const user = getUser();
+        if (user) {
+            setUserName(`${user.firstName} ${user.lastName}`.trim() || user.email);
+            setIsAdminUser(user.roles.map(r => r.toLowerCase()).includes('admin'));
+        }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        setAuthToken(null);
+    const handleLogout = async () => {
+        await logout();
+        setUserName(null);
+        setIsAdminUser(false);
         navigate("/");
     };
 
     return (
         <>
             <nav className="relative bg-wine p-4 flex items-center">
-
-                {/* Left side - Dashboard for admins */}
                 <div className="flex-1 flex items-center">
-                    {isAdmin && (
+                    {isAdminUser && (
                         <Link to="/dashboard" className="text-sm font-semibold text-gold hover:text-gold/70 transition-colors">
                             Dashboard
                         </Link>
                     )}
                 </div>
 
-                {/* Centered logo */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
                     <Link to="/" className="flex items-center gap-2">
                         <img src="/logo.png" alt="Logo" className="h-10" />
@@ -58,7 +52,6 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                {/* Right side - auth */}
                 <div className="ml-auto flex items-center gap-4">
                     {isLoggedIn ? (
                         <>
