@@ -61,7 +61,22 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const url = originalRequest.url || '';
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (
+        url.includes('/auth/me') ||
+        url.includes('/auth/refresh') ||
+        url.includes('/auth/login') ||
+        url.includes('/auth/register')
+      ) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve) => {
           addRefreshSubscriber((token: string) => {
@@ -150,7 +165,7 @@ function toUpdatePayload(row: UserRow): UpdateUserPayload {
 
 export const usersApi = {
   async list(): Promise<UserRow[]> {
-    const { data } = await api.get<<BackendUserResponse[]>('/api/users', {
+    const { data } = await api.get<BackendUserResponse[]>('/api/users', {
       headers: getAuthHeaders(),
     })
     return data.map(toUserRow)
@@ -178,13 +193,13 @@ export const moviesApi = {
 }
 
 export const genresApi = {
-  list: () => api.get<<GenreOption[]>('/api/genres').then((r) => r.data),
-  create: (name: string) => api.post<<GenreOption>('/api/genres', { name }).then((r) => r.data),
+  list: () => api.get<GenreOption[]>('/api/genres').then((r) => r.data),
+  create: (name: string) => api.post<GenreOption>('/api/genres', { name }).then((r) => r.data),
 }
 
 export const castMembersApi = {
-  list: () => api.get<<CastMemberOption[]>('/api/cast-members').then((r) => r.data),
-  create: (fullName: string) => api.post<<CastMemberOption>('/api/cast-members', { fullName }).then((r) => r.data),
+  list: () => api.get<CastMemberOption[]>('/api/cast-members').then((r) => r.data),
+  create: (fullName: string) => api.post<CastMemberOption>('/api/cast-members', { fullName }).then((r) => r.data),
 }
 
 export const uploadsApi = {
@@ -199,20 +214,20 @@ export const uploadsApi = {
 }
 
 export const roomsApi = {
-  list: () => api.get<<RoomRow[]>('/api/rooms', { headers: getAuthHeaders() }).then(r => r.data),
-  getById: (id: string) => api.get<<RoomWithSeats>(`/api/rooms/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
-  create: (payload: CreateRoomPayload) => api.post<<RoomWithSeats>('/api/rooms', payload, { headers: getAuthHeaders() }).then(r => r.data),
-  update: (id: string, payload: UpdateRoomPayload) => api.put<<RoomRow>(`/api/rooms/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
+  list: () => api.get<RoomRow[]>('/api/rooms', { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<RoomWithSeats>(`/api/rooms/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  create: (payload: CreateRoomPayload) => api.post<RoomWithSeats>('/api/rooms', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  update: (id: string, payload: UpdateRoomPayload) => api.put<RoomRow>(`/api/rooms/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
   remove: (id: string) => api.delete(`/api/rooms/${id}`, { headers: getAuthHeaders() }),
   updateSeat: (roomId: string, seatId: string, payload: UpdateSeatPayload) =>
     api.patch(`/api/rooms/${roomId}/seats/${seatId}`, payload, { headers: getAuthHeaders() }),
 }
 
 export const schedulesApi = {
-  list: () => api.get<<ScheduleRow[]>('/api/schedules', { headers: getAuthHeaders() }).then(r => r.data),
-  getById: (id: string) => api.get<<ScheduleRow>(`/api/schedules/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
-  create: (payload: CreateSchedulePayload) => api.post<<ScheduleRow>('/api/schedules', payload, { headers: getAuthHeaders() }).then(r => r.data),
-  update: (id: string, payload: UpdateSchedulePayload) => api.put<<ScheduleRow>(`/api/schedules/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
+  list: () => api.get<ScheduleRow[]>('/api/schedules', { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<ScheduleRow>(`/api/schedules/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  create: (payload: CreateSchedulePayload) => api.post<ScheduleRow>('/api/schedules', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  update: (id: string, payload: UpdateSchedulePayload) => api.put<ScheduleRow>(`/api/schedules/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
   remove: (id: string) => api.delete(`/api/schedules/${id}`, { headers: getAuthHeaders() }),
   getByDate: (date: string) => api.get<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
   getByMovie: (movieId: string) => api.get<ScheduleRow[]>(`/api/schedules/movie/${movieId}`, { headers: getAuthHeaders() }).then(r => r.data),

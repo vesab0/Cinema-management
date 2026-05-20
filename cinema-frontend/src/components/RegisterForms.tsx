@@ -22,7 +22,7 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 		setSuccessMessage('')
 	}
 
-	const handleSubmit = async (event: FormEvent<<HTMLFormElement>) => {
+	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		resetMessages()
 
@@ -32,11 +32,14 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 		}
 
 		if (isCreateMode && (!firstName.trim() || !lastName.trim())) {
-			setErrorMessage('First name and last name are required for account creation.')
+			setErrorMessage(
+				'First name and last name are required for account creation.'
+			)
 			return
 		}
 
 		setIsSubmitting(true)
+
 		try {
 			if (isCreateMode) {
 				await authApi.register({
@@ -45,14 +48,20 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 					email: email.trim(),
 					password,
 				})
+
 				setSuccessMessage('Account created! You can sign in now.')
 				setIsCreateMode(false)
 				setPassword('')
 			} else {
-				await authApi.login({
+				const loginResponse = await authApi.login({
 					email: email.trim(),
 					password,
 				})
+
+				// If your backend returns a token
+				if (loginResponse.data?.accessToken) {
+					setAccessToken(loginResponse.data.accessToken)
+				}
 
 				const { data: user } = await authApi.me()
 				setUser(user)
@@ -61,16 +70,21 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 			}
 		} catch (error: unknown) {
 			const apiMessage = isAxiosError(error)
-				? error.response?.data?.message || error.response?.data?.error || error.response?.data?.detail || error.response?.data?.title
+				? error.response?.data?.message ||
+				  error.response?.data?.error ||
+				  error.response?.data?.detail ||
+				  error.response?.data?.title
 				: ''
+
 			setErrorMessage(apiMessage || 'Request failed. Please try again.')
 		} finally {
 			setIsSubmitting(false)
 		}
 	}
 
-	const toggleMode = (event: MouseEvent<<HTMLAnchorElement>) => {
+	const toggleMode = (event: MouseEvent<HTMLAnchorElement>) => {
 		event.preventDefault()
+
 		setIsCreateMode((current) => !current)
 		setPassword('')
 		resetMessages()
@@ -79,7 +93,11 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 	return (
 		<div className="w-full max-w-sm p-6 m-auto mx-auto bg-wine rounded-lg shadow-md border border-gold/30">
 			<div className="flex justify-center mx-auto">
-				<img className="w-auto h-7 sm:h-8" src="/logo.png" alt="Logo" />
+				<img
+					className="w-auto h-7 sm:h-8"
+					src="/logo.png"
+					alt="Logo"
+				/>
 			</div>
 
 			<h2 className="mt-4 text-center text-gold font-semibold text-lg">
@@ -90,7 +108,13 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 				{isCreateMode && (
 					<>
 						<div>
-							<label htmlFor="firstName" className="block text-sm text-gold">First Name</label>
+							<label
+								htmlFor="firstName"
+								className="block text-sm text-gold"
+							>
+								First Name
+							</label>
+
 							<input
 								id="firstName"
 								type="text"
@@ -99,8 +123,15 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 								className="block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring"
 							/>
 						</div>
+
 						<div className="mt-4">
-							<label htmlFor="lastName" className="block text-sm text-gold">Last Name</label>
+							<label
+								htmlFor="lastName"
+								className="block text-sm text-gold"
+							>
+								Last Name
+							</label>
+
 							<input
 								id="lastName"
 								type="text"
@@ -113,7 +144,13 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 				)}
 
 				<div className={isCreateMode ? 'mt-4' : ''}>
-					<label htmlFor="email" className="block text-sm text-gold">Email</label>
+					<label
+						htmlFor="email"
+						className="block text-sm text-gold"
+					>
+						Email
+					</label>
+
 					<input
 						id="email"
 						type="email"
@@ -125,11 +162,23 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 
 				<div className="mt-4">
 					<div className="flex items-center justify-between">
-						<label htmlFor="password" className="block text-sm text-gold">Password</label>
+						<label
+							htmlFor="password"
+							className="block text-sm text-gold"
+						>
+							Password
+						</label>
+
 						{!isCreateMode && (
-							<a href="#" className="text-xs text-gold/80 hover:text-gold hover:underline">Forgot Password?</a>
+							<a
+								href="#"
+								className="text-xs text-gold/80 hover:text-gold hover:underline"
+							>
+								Forgot Password?
+							</a>
 						)}
 					</div>
+
 					<input
 						id="password"
 						type="password"
@@ -140,10 +189,15 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 				</div>
 
 				{errorMessage && (
-					<p className="mt-3 text-xs text-red-300">{errorMessage}</p>
+					<p className="mt-3 text-xs text-red-300">
+						{errorMessage}
+					</p>
 				)}
+
 				{successMessage && (
-					<p className="mt-3 text-xs text-green-300">{successMessage}</p>
+					<p className="mt-3 text-xs text-green-300">
+						{successMessage}
+					</p>
 				)}
 
 				<div className="mt-6">
@@ -152,29 +206,53 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 						disabled={isSubmitting}
 						className="w-full px-6 py-2.5 text-sm font-medium tracking-wide text-stage capitalize transition-colors duration-300 transform bg-gold rounded-lg hover:bg-gold/90 focus:outline-none focus:ring focus:ring-gold/40 disabled:opacity-60"
 					>
-						{isSubmitting ? 'Please wait...' : isCreateMode ? 'Create Account' : 'Sign In'}
+						{isSubmitting
+							? 'Please wait...'
+							: isCreateMode
+							? 'Create Account'
+							: 'Sign In'}
 					</button>
 				</div>
 			</form>
 
 			<div className="flex items-center justify-between mt-4">
 				<span className="w-1/5 border-b border-gold/30" />
-				<span className="text-xs text-center text-gold/70 uppercase">or</span>
+
+				<span className="text-xs text-center text-gold/70 uppercase">
+					or
+				</span>
+
 				<span className="w-1/5 border-b border-gold/30" />
 			</div>
 
 			<div className="flex items-center mt-4 -mx-2">
-				<button type="button" className="flex items-center justify-center w-full px-6 py-2 mx-2 text-sm font-medium text-gold transition-colors duration-300 transform bg-stage border border-gold/40 rounded-lg hover:bg-stage/80 focus:outline-none">
-					<<svg className="w-4 h-4 mx-2 fill-current" viewBox="0 0 24 24">
-						<<path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" />
+				<button
+					type="button"
+					className="flex items-center justify-center w-full px-6 py-2 mx-2 text-sm font-medium text-gold transition-colors duration-300 transform bg-stage border border-gold/40 rounded-lg hover:bg-stage/80 focus:outline-none"
+				>
+					<svg
+						className="w-4 h-4 mx-2 fill-current"
+						viewBox="0 0 24 24"
+					>
+						<path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" />
 					</svg>
-					<span className="hidden mx-2 sm:inline">Sign in with Google</span>
+
+					<span className="hidden mx-2 sm:inline">
+						Sign in with Google
+					</span>
 				</button>
 			</div>
 
 			<p className="mt-6 text-xs font-light text-center text-gold/70">
-				{isCreateMode ? 'Already have an account? ' : "Don't have an account? "}
-				<a href="#" onClick={toggleMode} className="font-medium text-gold hover:underline">
+				{isCreateMode
+					? 'Already have an account? '
+					: "Don't have an account? "}
+
+				<a
+					href="#"
+					onClick={toggleMode}
+					className="font-medium text-gold hover:underline"
+				>
 					{isCreateMode ? 'Sign In' : 'Create One'}
 				</a>
 			</p>

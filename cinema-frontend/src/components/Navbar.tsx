@@ -1,40 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RegisterForms from "./RegisterForms";
-import { getAccessToken, getUser, fetchCurrentUser, logout } from "../auth";
+import { getAccessToken, getUser, logout } from "../auth";
 
 export default function Navbar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [authToken, setAuthToken] = useState<string | null>(getAccessToken());
-    const [userName, setUserName] = useState<string | null>(null);
-    const [isAdminUser, setIsAdminUser] = useState(false);
+    const [userName, setUserName] = useState<string | null>(() => {
+        const user = getUser();
+        return user ? `${user.firstName} ${user.lastName}`.trim() || user.email : null;
+    });
+    const [isAdminUser, setIsAdminUser] = useState(() => {
+        const user = getUser();
+        return !!user?.roles.map(r => r.toLowerCase()).includes('admin');
+    });
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            const token = getAccessToken();
-            if (token) {
-                const user = await fetchCurrentUser();
-                if (user) {
-                    setAuthToken(token);
-                    setUserName(`${user.firstName} ${user.lastName}`.trim() || user.email);
-                    setIsAdminUser(user.roles.map(r => r.toLowerCase()).includes('admin'));
-                } else {
-                    setAuthToken(null);
-                    setUserName(null);
-                    setIsAdminUser(false);
-                }
-            }
-        };
-        checkAuth();
-    }, []);
-
+    const authToken = getAccessToken();
     const isLoggedIn = !!authToken;
 
     const handleLoginSuccess = () => {
         setIsModalOpen(false);
-        const token = getAccessToken();
-        setAuthToken(token);
         const user = getUser();
         if (user) {
             setUserName(`${user.firstName} ${user.lastName}`.trim() || user.email);
@@ -44,7 +29,6 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         await logout();
-        setAuthToken(null);
         setUserName(null);
         setIsAdminUser(false);
         navigate("/");
