@@ -49,6 +49,48 @@ namespace TwinPeaks.API.Services
             return new CreatePaymentIntentResult(intent.ClientSecret, intent.Id, amountInCents);
         }
 
+        public async Task<CreatePaymentIntentResult> CreateMultiPaymentIntentAsync(List<Guid> ticketIds, Guid userId)
+        {
+            if (ticketIds == null || ticketIds.Count == 0)
+                throw new ArgumentException("At least one ticket is required");
+
+            var tickets = await _db.Tickets
+                .Include(t => t.Schedule)
+                    .ThenInclude(s => s.Movie)
+                .Include(t => t.Seat)
+                .Where(t => ticketIds.Contains(t.Id))
+                .ToListAsync();
+
+            if (tickets.Count != ticketIds.Count)
+                throw new ArgumentException("One or more tickets not found");
+
+            if (tickets.Any(t => t.Status != TicketStatus.Available))
+                throw new ArgumentException("One or more tickets are no longer available");
+
+            var totalCents = (long)(tickets.Sum(t => t.Price) * 100);
+            var movie = tickets[0].Schedule.Movie.Name;
+            var seats = string.Join(", ", tickets.Select(t => $"{t.Seat.RowLabel}{t.Seat.ColNumber}"));
+
+            var options = new PaymentIntentCreateOptions
+            {
+                Amount = totalCents,
+                Currency = "usd",
+                PaymentMethodTypes = new List<string> { "card" },
+                Metadata = new Dictionary<string, string>
+                {
+                    ["ticketIds"] = string.Join(",", ticketIds),
+                    ["userId"] = userId.ToString(),
+                    ["movie"] = movie,
+                    ["seats"] = seats,
+                }
+            };
+
+            var service = new PaymentIntentService();
+            var intent = await service.CreateAsync(options);
+
+            return new CreatePaymentIntentResult(intent.ClientSecret, intent.Id, totalCents);
+        }
+
         public async Task<PaymentIntent> GetPaymentIntentAsync(string paymentIntentId)
         {
             var service = new PaymentIntentService();

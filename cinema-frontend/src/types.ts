@@ -222,6 +222,7 @@ export interface UserTicketRow {
   userEmail: string;
   ticketId: string;
   movieName: string;
+  durationMinutes: number;
   scheduleDay: string;
   startTime: string;
   roomName: string;
@@ -248,5 +249,22 @@ export type UpdateTicketPayload = {
 export type PurchaseTicketPayload = {
   userId: string;
   ticketId: string;
+};
+
+export type CreateMultiPaymentIntentPayload = {
+  ticketIds: string[];
+  userId: string;
+};
+
+export type MultiPaymentIntentResponse = {
+  clientSecret: string;
+  paymentIntentId: string;
+  amountInCents: number;
+};
+
+export type PurchaseMultiTicketPayload = {
+  userId: string;
+  ticketIds: string[];
+  paymentIntentId: string;
 };
 

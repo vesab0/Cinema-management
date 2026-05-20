@@ -67,6 +67,23 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
+            group.MapPost("/purchase-multi", async (PurchaseMultiTicketRequest req, UserTicketService userTicketService) =>
+            {
+                try
+                {
+                    var results = await userTicketService.PurchaseMultiAsync(req);
+                    return Results.Ok(results);
+                }
+                catch (ArgumentException ex)
+                {
+                    return Results.BadRequest(new { message = ex.Message });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Failed to purchase tickets", detail: ex.Message, statusCode: 500);
+                }
+            });
+
             group.MapPatch("/{id:guid}/mark-used", (Guid id, UserTicketService userTicketService) =>
             {
                 try

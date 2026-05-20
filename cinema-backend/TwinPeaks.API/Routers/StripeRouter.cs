@@ -40,6 +40,36 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
+            // POST /api/stripe/create-multi-payment-intent
+            // Body: { "ticketIds": ["guid1","guid2"], "userId": "guid" }
+            group.MapPost("/create-multi-payment-intent", async (
+                CreateMultiPaymentIntentRequest req,
+                StripeService stripeService) =>
+            {
+                try
+                {
+                    var result = await stripeService.CreateMultiPaymentIntentAsync(req.TicketIds, req.UserId);
+                    return Results.Ok(new
+                    {
+                        result.ClientSecret,
+                        result.PaymentIntentId,
+                        result.AmountInCents
+                    });
+                }
+                catch (ArgumentException ex)
+                {
+                    return Results.BadRequest(new { message = ex.Message });
+                }
+                catch (StripeException ex)
+                {
+                    return Results.Problem(title: "Stripe error", detail: ex.Message, statusCode: 502);
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Failed to create payment intent", detail: ex.Message, statusCode: 500);
+                }
+            });
+
             // POST /api/stripe/webhook
             // Stripe webhook endpoint — set in Stripe dashboard
             group.MapPost("/webhook", async (

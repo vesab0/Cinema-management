@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { favoritesApi, movieSearchApi } from "../api";
-import type { FavoriteMovieResponse, PredictorMovie } from "../types";
+import { favoritesApi, movieSearchApi, userTicketsApi } from "../api";
+import type { FavoriteMovieResponse, PredictorMovie, UserTicketRow } from "../types";
 import SecondaryNav from "../components/SecondaryNav";
 import { getUserId, getUserName, getUserEmail } from "../auth";
 
@@ -14,6 +14,10 @@ export default function ProfilePage() {
   const userId = getUserId();
   const userName = getUserName();
   const userEmail = getUserEmail();
+
+  // Tickets state
+  const [tickets, setTickets] = useState<UserTicketRow[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
 
   // Favorites state
   const [favorites, setFavorites] = useState<FavoriteMovieResponse[]>([]);
@@ -33,11 +37,27 @@ export default function ProfilePage() {
   const favoriteTmdbIds = new Set(favorites.map((f) => f.tmdbId));
 
   useEffect(() => {
-    if (!userId) { setFavsLoading(false); return; }
+    if (!userId) { setFavsLoading(false); setTicketsLoading(false); return; }
     favoritesApi.list(userId)
       .then(setFavorites)
       .catch((e: unknown) => setFavsError(String(e)))
       .finally(() => setFavsLoading(false));
+    userTicketsApi.list()
+      .then((all) => {
+        const now = Date.now()
+        const active = all.filter((t) => {
+          if (t.userId !== userId) return false
+          const day = t.scheduleDay?.split('T')[0] ?? ''
+          const [hh, mm] = (t.startTime ?? '00:00').split(':').map(Number)
+          const start = new Date(day)
+          start.setHours(hh, mm, 0, 0)
+          const end = new Date(start.getTime() + (t.durationMinutes ?? 0) * 60_000)
+          return end.getTime() > now
+        })
+        setTickets(active)
+      })
+      .catch(() => {})
+      .finally(() => setTicketsLoading(false));
   }, [userId]);
 
   // Search debounce
@@ -127,6 +147,65 @@ export default function ProfilePage() {
               {userEmail && (
                 <p className="text-white/60 text-sm">{userEmail}</p>
               )}
+            </div>
+          )}
+
+          {/* My Tickets section */}
+          {userId && (
+            <div className="mb-12">
+              <h2 className="text-white text-xl uppercase tracking-widest font-semibold mb-6">
+                My Tickets
+              </h2>
+              {ticketsLoading && (
+                <p className="text-white/50 text-sm tracking-wide">Loading...</p>
+              )}
+              {!ticketsLoading && tickets.length === 0 && (
+                <p className="text-white/50 text-sm tracking-wide">No tickets yet.</p>
+              )}
+              <div className="flex flex-wrap gap-4">
+                {tickets.map((t) => (
+                  <div
+                    key={t.id}
+                    className="bg-[#141414] border border-white/10 rounded p-5 w-[280px] flex flex-col gap-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-[#f5c518] text-sm leading-snug">{t.movieName}</p>
+                        <p className="text-white/50 text-xs mt-0.5">{t.roomName}</p>
+                      </div>
+                      {t.isUsed && (
+                        <span className="text-[10px] uppercase tracking-widest text-white/30 bg-white/5 border border-white/10 rounded px-2 py-0.5 shrink-0">Used</span>
+                      )}
+                    </div>
+
+                    <div className="border-t border-white/10" />
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-sm bg-white/10 text-xs font-bold flex items-center justify-center text-white/70">
+                          {t.rowLabel}{t.colNumber}
+                        </span>
+                        <span className="text-sm text-white/60">
+                          {t.seatType !== 'Standard'
+                            ? <span className="text-[#f5c518]/80">{t.seatType}</span>
+                            : 'Standard'}
+                        </span>
+                      </div>
+                      <span className="font-bold text-white/80">${t.price.toFixed(2)}</span>
+                    </div>
+
+                    <p className="text-xs text-white/40">
+                      {t.scheduleDay?.split('T')[0]} · {t.startTime}
+                    </p>
+
+                    <div className="border-t border-white/10" />
+
+                    <p className="text-[10px] font-mono text-white/30 tracking-widest">
+                      #{t.confirmationCode}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
