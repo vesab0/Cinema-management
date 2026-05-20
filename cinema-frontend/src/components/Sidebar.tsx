@@ -33,6 +33,13 @@ const links: NavLink[] = [
     ),
   },
   {
+    label: "Bookings",
+    to: "/dashboard/user-tickets",
+    icon: (
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.5 4h-13m13 16h-13M8 20v-3.333a2 2 0 0 1 .4-1.2L10 12.6a1 1 0 0 0 0-1.2L8.4 8.533A2 2 0 0 1 8 7.333V4h8v3.333a2 2 0 0 1-.4 1.2L13.975 11.4a1 1 0 0 0 0 1.2l1.625 2.867c.254.411.4.893.4 1.4V20H8Z" />
+    ),
+  },
+  {
     label: "Financials",
     to: "/dashboard/financials",
     disabled: true,

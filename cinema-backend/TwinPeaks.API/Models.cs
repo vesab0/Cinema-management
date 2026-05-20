@@ -161,4 +161,31 @@ namespace TwinPeaks.API
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public User User { get; set; } = null!;
     }
+
+    public enum TicketStatus { Available, Sold }
+
+    public class Ticket
+    {
+        public Guid Id { get; set; }
+        public Guid ScheduleId { get; set; }
+        public MovieSchedule Schedule { get; set; } = null!;
+        public Guid SeatId { get; set; }
+        public Seat Seat { get; set; } = null!;
+        public decimal Price { get; set; }
+        public TicketStatus Status { get; set; } = TicketStatus.Available;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public UserTicket? UserTicket { get; set; }
+    }
+
+    public class UserTicket
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public User User { get; set; } = null!;
+        public Guid TicketId { get; set; }
+        public Ticket Ticket { get; set; } = null!;
+        public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
+        public bool IsUsed { get; set; } = false;
+        public string ConfirmationCode { get; set; } = string.Empty;
+    }
 }

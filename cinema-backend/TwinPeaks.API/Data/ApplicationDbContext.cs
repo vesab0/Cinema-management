@@ -19,6 +19,8 @@ namespace TwinPeaks.API.Data
         public DbSet<Seat> Seats { get; set; } = null!;
         public DbSet<MovieSchedule> MovieSchedules { get; set; } = null!;
         public DbSet<UserFavoriteMovie> UserFavoriteMovies { get; set; } = null!;
+        public DbSet<Ticket> Tickets { get; set; } = null!;
+        public DbSet<UserTicket> UserTickets { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -124,6 +126,38 @@ namespace TwinPeaks.API.Data
                     .OnDelete(DeleteBehavior.Cascade);
                 b.Property(uf => uf.MovieTitle).IsRequired().HasMaxLength(512);
                 b.Property(uf => uf.PosterPath).HasMaxLength(512);
+            });
+
+            modelBuilder.Entity<Ticket>(b =>
+            {
+                b.HasKey(t => t.Id);
+                b.HasOne(t => t.Schedule)
+                    .WithMany()
+                    .HasForeignKey(t => t.ScheduleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(t => t.Seat)
+                    .WithMany()
+                    .HasForeignKey(t => t.SeatId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(t => new { t.ScheduleId, t.SeatId }).IsUnique();
+                b.Property(t => t.Price).HasPrecision(10, 2);
+                b.Property(t => t.Status).HasConversion<string>().HasMaxLength(32);
+            });
+
+            modelBuilder.Entity<UserTicket>(b =>
+            {
+                b.HasKey(ut => ut.Id);
+                b.HasOne(ut => ut.Ticket)
+                    .WithOne(t => t.UserTicket)
+                    .HasForeignKey<UserTicket>(ut => ut.TicketId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(ut => ut.User)
+                    .WithMany()
+                    .HasForeignKey(ut => ut.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(ut => ut.TicketId).IsUnique();
+                b.HasIndex(ut => ut.ConfirmationCode).IsUnique();
+                b.Property(ut => ut.ConfirmationCode).IsRequired().HasMaxLength(64);
             });
         }
     }
