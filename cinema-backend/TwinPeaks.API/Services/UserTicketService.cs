@@ -1,15 +1,18 @@
 using TwinPeaks.API.Data;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 
 namespace TwinPeaks.API.Services
 {
     public class UserTicketService
     {
         private readonly ApplicationDbContext _db;
+        private readonly StripeService _stripeService;
 
-        public UserTicketService(ApplicationDbContext db)
+        public UserTicketService(ApplicationDbContext db, StripeService stripeService)
         {
             _db = db;
+            _stripeService = stripeService;
         }
 
         public List<UserTicketResponse> GetAll()
@@ -42,10 +45,11 @@ namespace TwinPeaks.API.Services
             return ut == null ? null : ToResponse(ut);
         }
 
-        public UserTicketResponse Purchase(PurchaseTicketRequest req)
+        public async Task<UserTicketResponse> PurchaseAsync(PurchaseTicketRequest req)
         {
             if (req.UserId == Guid.Empty) throw new ArgumentException("UserId is required");
             if (req.TicketId == Guid.Empty) throw new ArgumentException("TicketId is required");
+            if (string.IsNullOrWhiteSpace(req.PaymentIntentId)) throw new ArgumentException("PaymentIntentId is required");
 
             var user = _db.Users.FirstOrDefault(u => u.Id == req.UserId);
             if (user == null) throw new ArgumentException("User not found");
@@ -55,13 +59,76 @@ namespace TwinPeaks.API.Services
             if (ticket.Status != TicketStatus.Available)
                 throw new ArgumentException("Ticket is no longer available");
 
+            PaymentIntent intent;
+            try
+            {
+                intent = await _stripeService.GetPaymentIntentAsync(req.PaymentIntentId);
+            }
+            catch (StripeException ex)
+            {
+                throw new ArgumentException($"Failed to verify payment: {ex.Message}");
+            }
+
+            if (intent.Status != "succeeded")
+                throw new ArgumentException($"Payment has not been completed. Status: {intent.Status}");
+
+            if (!intent.Metadata.TryGetValue("ticketId", out var intentTicketId)
+                || intentTicketId != req.TicketId.ToString())
+                throw new ArgumentException("Payment intent does not match the requested ticket");
+
+            return CreateUserTicket(req.UserId, req.TicketId, ticket);
+        }
+
+        public async Task<List<UserTicketResponse>> PurchaseMultiAsync(PurchaseMultiTicketRequest req)
+        {
+            if (req.UserId == Guid.Empty) throw new ArgumentException("UserId is required");
+            if (req.TicketIds == null || req.TicketIds.Count == 0) throw new ArgumentException("At least one TicketId is required");
+            if (string.IsNullOrWhiteSpace(req.PaymentIntentId)) throw new ArgumentException("PaymentIntentId is required");
+
+            var user = _db.Users.FirstOrDefault(u => u.Id == req.UserId);
+            if (user == null) throw new ArgumentException("User not found");
+
+            PaymentIntent intent;
+            try { intent = await _stripeService.GetPaymentIntentAsync(req.PaymentIntentId); }
+            catch (StripeException ex) { throw new ArgumentException($"Failed to verify payment: {ex.Message}"); }
+
+            if (intent.Status != "succeeded")
+                throw new ArgumentException($"Payment has not been completed. Status: {intent.Status}");
+
+            if (!intent.Metadata.TryGetValue("ticketIds", out var metaIds))
+                throw new ArgumentException("Payment intent does not contain ticketIds metadata");
+
+            var metaSet = new HashSet<string>(metaIds.Split(','));
+            if (!req.TicketIds.All(id => metaSet.Contains(id.ToString())))
+                throw new ArgumentException("Payment intent does not match the requested tickets");
+
+            var tickets = _db.Tickets.Where(t => req.TicketIds.Contains(t.Id)).ToList();
+            if (tickets.Count != req.TicketIds.Count) throw new ArgumentException("One or more tickets not found");
+            if (tickets.Any(t => t.Status != TicketStatus.Available)) throw new ArgumentException("One or more tickets are no longer available");
+
+            var results = tickets.Select(t => CreateUserTicket(req.UserId, t.Id, t)).ToList();
+            return results;
+        }
+
+        public void FinalizeFromWebhook(Guid userId, Guid ticketId, string paymentIntentId)
+        {
+            var ticket = _db.Tickets.FirstOrDefault(t => t.Id == ticketId);
+            if (ticket == null || ticket.Status != TicketStatus.Available) return;
+
+            if (_db.UserTickets.Any(ut => ut.TicketId == ticketId)) return;
+
+            CreateUserTicket(userId, ticketId, ticket);
+        }
+
+        private UserTicketResponse CreateUserTicket(Guid userId, Guid ticketId, Ticket ticket)
+        {
             ticket.Status = TicketStatus.Sold;
 
             var userTicket = new UserTicket
             {
                 Id = Guid.NewGuid(),
-                UserId = req.UserId,
-                TicketId = req.TicketId,
+                UserId = userId,
+                TicketId = ticketId,
                 PurchasedAt = DateTime.UtcNow,
                 IsUsed = false,
                 ConfirmationCode = Guid.NewGuid().ToString("N").ToUpperInvariant()[..12]
@@ -119,6 +186,7 @@ namespace TwinPeaks.API.Services
                 UserEmail: ut.User.Email,
                 TicketId: ut.TicketId,
                 MovieName: ut.Ticket.Schedule.Movie.Name,
+                DurationMinutes: ut.Ticket.Schedule.Movie.DurationMinutes,
                 ScheduleDay: ut.Ticket.Schedule.ScheduleDay,
                 StartTime: ut.Ticket.Schedule.StartTime.ToString(@"hh\:mm"),
                 RoomName: ut.Ticket.Schedule.Room.Name,
