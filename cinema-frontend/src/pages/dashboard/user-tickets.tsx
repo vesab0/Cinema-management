@@ -4,23 +4,23 @@ import { userTicketsApi, ticketsApi, schedulesApi, usersApi, moviesApi } from ".
 import type { UserTicketRow, TicketRow, ScheduleRow, UserRow, MovieRow } from "../../types";
 
 const columns: Column<UserTicketRow>[] = [
-  { key: "confirmationCode", label: "Code" },
-  { key: "userFullName",     label: "User" },
-  { key: "userEmail",        label: "Email" },
-  { key: "movieName",        label: "Movie" },
-  { key: "scheduleDay",      label: "Date", renderCell: (v) => <span>{String(v).split("T")[0]}</span> },
-  { key: "startTime",        label: "Time" },
-  { key: "roomName",         label: "Room" },
-  { key: "rowLabel",         label: "Row" },
-  { key: "colNumber",        label: "Seat" },
-  { key: "seatType",         label: "Type" },
-  { key: "price",            label: "Price (€)" },
-  { key: "isUsed",           label: "Used", renderCell: (v) => (
+  { key: "confirmationCode", label: "Code",       width: "130px" },
+  { key: "userFullName",     label: "User",       width: "140px" },
+  { key: "userEmail",        label: "Email",      width: "170px", hideInTable: true },
+  { key: "movieName",        label: "Movie",      width: "160px" },
+  { key: "scheduleDay",      label: "Date",       width: "100px", renderCell: (v) => <span className="text-sm text-gray-700">{String(v).split("T")[0]}</span> },
+  { key: "startTime",        label: "Time",       width: "70px" },
+  { key: "roomName",         label: "Room",       width: "90px" },
+  { key: "rowLabel",         label: "Row",        width: "55px" },
+  { key: "colNumber",        label: "Seat",       width: "55px" },
+  { key: "seatType",         label: "Type",       width: "90px" },
+  { key: "price",            label: "Price (€)",  width: "80px" },
+  { key: "isUsed",           label: "Used",       width: "60px", renderCell: (v) => (
     <span className={`px-2 py-0.5 rounded text-xs font-medium ${v ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
       {v ? "Yes" : "No"}
     </span>
   )},
-  { key: "purchasedAt", label: "Purchased At" },
+  { key: "purchasedAt", label: "Purchased At", width: "100px", renderCell: (v) => <span className="text-sm text-gray-700">{String(v).split("T")[0]}</span> },
 ];
 
 // ── Booking creation modal ────────────────────────────────────────────────────
@@ -349,11 +349,11 @@ export default function UserTickets() {
       <DataTable<UserTicketRow>
         title="Bookings"
         showCreate
+        noEdit
         onCreateClick={() => setShowModal(true)}
         columns={columns}
         rows={rows}
         keyField="id"
-        onSave={async () => {}}
         onDelete={handleDelete}
       />
 

@@ -17,7 +17,7 @@ function SearchSelect({
   options: { id: string; [key: string]: string }[];
   labelKey: string;
   onChangeIds: (ids: string[]) => void;
-  onCreateNew: (name: string) => Promise<void>;
+  onCreateNew: (name: string) => Promise<{ id: string }>;
   placeholder: string;
 }) {
   const [query, setQuery] = useState("");
@@ -64,9 +64,8 @@ function SearchSelect({
     const trimmed = query.trim();
     if (!trimmed) return;
     setCreating(true);
-    await onCreateNew(trimmed);
-    setQuery("");
-    setOpen(false);
+    const created = await onCreateNew(trimmed);
+    select(created.id);
     setCreating(false);
   };
 
@@ -157,16 +156,24 @@ export default function Movies() {
   }, []);
 
   const columns: Column<MovieRow>[] = [
-    { key: "name",            label: "Name" },
-    { key: "description",     label: "Description", hideInTable: true },
-    { key: "director",        label: "Director" },
-    { key: "durationMinutes", label: "Duration (min)", type: "number" },
-    { key: "ageRating",       label: "Age Rating" },
-    { key: "isActive",        label: "Active", type: "select", options: ["true", "false"] },
-    { key: "createdAt",       label: "Created At", hideInModal: true },
+    { key: "name",            label: "Name",           width: "180px" },
+    { key: "description",     label: "Description",    hideInTable: true },
+    { key: "director",        label: "Director",       width: "140px" },
+    { key: "durationMinutes", label: "Duration (min)", width: "110px", type: "number" },
+    { key: "ageRating",       label: "Age Rating",     width: "90px" },
+    { key: "isActive",        label: "Active",         width: "80px", type: "select", options: ["true", "false"] },
+    {
+      key: "createdAt",
+      label: "Created At",
+      width: "110px",
+      hideInModal: true,
+      renderCell: (v) => <span className="text-sm text-gray-700 px-1.5">{String(v).split("T")[0]}</span>,
+    },
     {
       key: "releaseDate",
       label: "Release Date",
+      width: "110px",
+      renderCell: (v) => <span className="text-sm text-gray-700 px-1.5">{String(v).split("T")[0]}</span>,
       renderField: (val, onChange) => (
         <input type="date" value={String(val ?? "").split("T")[0]} onChange={(e) => onChange(e.target.value)} className={inputClass} />
       ),
@@ -196,6 +203,7 @@ export default function Movies() {
             onCreateNew={async (name) => {
               const genre = await genresApi.create(name);
               setGenreOptions((prev) => [...prev, genre]);
+              return genre;
             }}
             placeholder="Search or create genre…"
           />
@@ -228,6 +236,7 @@ export default function Movies() {
             onCreateNew={async (name) => {
               const member = await castMembersApi.create(name);
               setCastOptions((prev) => [...prev, member]);
+              return member;
             }}
             placeholder="Search or create cast member…"
           />
