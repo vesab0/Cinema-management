@@ -54,7 +54,27 @@ export interface MovieRow {
   createdAt: string;
   genres: string[];
   cast: { fullName: string }[];
+  tmdbId?: number;
 }
+
+export type PredictorMovie = {
+  movieLensId: number;
+  tmdbId: number;
+  title: string;
+  genres: string[];
+  releaseDate: string;
+  voteAverage: number;
+  posterPath: string;
+  posterUrl: string;
+};
+
+export type FavoriteMovieResponse = {
+  favoriteId: string;
+  tmdbId: number;
+  movieTitle: string;
+  posterPath: string;
+  addedAt: string;
+};
 
 export type GenreOption = {
   id: string;
@@ -154,6 +174,7 @@ export type CreateSchedulePayload = {
   roomId: string;
   scheduleDay: string;
   startTime: string;
+  ticketPrice: number;
   isActive?: boolean;
 };
 
@@ -173,5 +194,59 @@ export type MovieOption = {
 export type RoomOption = {
   id: string;
   name: string;
+};
+
+export type TicketStatus = "Available" | "Sold";
+
+export interface TicketRow {
+  [key: string]: unknown;
+  id: string;
+  scheduleId: string;
+  movieName: string;
+  scheduleDay: string;
+  startTime: string;
+  seatId: string;
+  rowLabel: string;
+  colNumber: number;
+  seatType: string;
+  price: number;
+  status: TicketStatus;
+  createdAt: string;
+}
+
+export interface UserTicketRow {
+  [key: string]: unknown;
+  id: string;
+  userId: string;
+  userFullName: string;
+  userEmail: string;
+  ticketId: string;
+  movieName: string;
+  scheduleDay: string;
+  startTime: string;
+  roomName: string;
+  rowLabel: string;
+  colNumber: number;
+  seatType: string;
+  price: number;
+  confirmationCode: string;
+  isUsed: boolean;
+  purchasedAt: string;
+}
+
+export type CreateTicketPayload = {
+  scheduleId: string;
+  seatId: string;
+  price: number;
+};
+
+export type UpdateTicketPayload = {
+  price?: number;
+  status?: TicketStatus;
+};
+
+export type PurchaseTicketPayload = {
+  userId: string;
+  ticketId: string;
 };
 

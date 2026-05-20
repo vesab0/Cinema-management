@@ -7,6 +7,7 @@ import Users from './pages/dashboard/users'
 import Movies from './pages/dashboard/movies'
 import Rooms from './pages/dashboard/rooms'
 import Schedules from './pages/dashboard/schedule'
+import UserTickets from './pages/dashboard/user-tickets'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
 import ProfilePage from './pages/profile'
@@ -47,27 +48,24 @@ function PublicLayout() {
 
 export default function App() {
   return (
-    <>
-      <AuthInit />
-      <Routes>
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/register" element={<RegisterForms />} />
-          <Route path="/movies" element={<MoviesPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/movies/:id" element={<MovieDetailsPage />} />
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Index />} />
+        <Route path="/register" element={<RegisterForms />} />
+        <Route path="/movies" element={<MoviesPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/movies/:id" element={<MovieDetailsPage />} />
+      </Route>
+      <Route element={<AdminRoute />}>
+        <Route path="/dashboard" element={<Dashboard />}>
+          <Route index element={<Users />} />
+          <Route path="movies" element={<Movies />} />
+          <Route path="rooms" element={<Rooms />} />
+          <Route path="schedules" element={<Schedules />} />
+          <Route path="user-tickets" element={<UserTickets />} />
         </Route>
-        <Route element={<AdminRoute />}>
-          <Route path="/dashboard" element={<Dashboard />}>
-            <Route index element={<Users />} />
-            <Route path="movies" element={<Movies />} />
-            <Route path="rooms" element={<Rooms />} />
-            <Route path="schedules" element={<Schedules />} />
-          </Route>
-        </Route>
-        <Route path="*" element={<NotFound/>} />
-      </Routes>
-    </>
+      </Route>
+      <Route path="*" element={<NotFound/>} />
+    </Routes>
   )
 }
-

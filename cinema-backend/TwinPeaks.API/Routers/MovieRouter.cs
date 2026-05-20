@@ -1,6 +1,4 @@
 using TwinPeaks.API.Services;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 
 namespace TwinPeaks.API.Routers
 {
@@ -37,11 +35,12 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPost("/", (CreateMovieRequest req, MovieService movies) =>
+            group.MapPost("/", (CreateMovieRequest req, MovieService movies, MovieNotificationService notifications) =>
             {
                 try
                 {
                     var movie = movies.Create(req);
+                    notifications.NotifyOnNewMovie(movie);
                     return Results.Created($"/api/movies/{movie.Id}", movie);
                 }
                 catch (ArgumentException ex)

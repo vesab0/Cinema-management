@@ -74,13 +74,16 @@ namespace TwinPeaks.API.Services
             if (req.MovieId == Guid.Empty) throw new ArgumentException("MovieId is required");
             if (req.RoomId == Guid.Empty) throw new ArgumentException("RoomId is required");
             if (req.ScheduleDay == default) throw new ArgumentException("ScheduleDay is required");
+            if (req.TicketPrice < 0) throw new ArgumentException("TicketPrice must be non-negative");
 
             // Validate that movie exists
             var movie = _db.Movies.FirstOrDefault(m => m.Id == req.MovieId);
             if (movie == null) throw new ArgumentException("Movie not found");
 
-            // Validate that room exists
-            var room = _db.Rooms.FirstOrDefault(r => r.Id == req.RoomId);
+            // Validate that room exists and load its seats
+            var room = _db.Rooms
+                .Include(r => r.Seats)
+                .FirstOrDefault(r => r.Id == req.RoomId);
             if (room == null) throw new ArgumentException("Room not found");
 
             // Check uniqueness constraint
@@ -105,6 +108,22 @@ namespace TwinPeaks.API.Services
             };
 
             _db.MovieSchedules.Add(schedule);
+
+            // Auto-generate one ticket per active seat in the room
+            var tickets = room.Seats
+                .Where(s => s.IsActive)
+                .Select(s => new Ticket
+                {
+                    Id = Guid.NewGuid(),
+                    ScheduleId = schedule.Id,
+                    SeatId = s.Id,
+                    Price = req.TicketPrice,
+                    Status = TicketStatus.Available,
+                    CreatedAt = DateTime.UtcNow
+                })
+                .ToList();
+
+            _db.Tickets.AddRange(tickets);
             _db.SaveChanges();
 
             return GetById(schedule.Id)!;

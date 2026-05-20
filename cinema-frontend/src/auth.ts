@@ -4,6 +4,10 @@ const ROLE_CLAIM_URI = "http://schemas.microsoft.com/ws/2008/06/identity/claims/
 
 type JwtPayload = {
   exp?: number;
+  sub?: string;
+  email?: string;
+  given_name?: string;
+  family_name?: string;
   role?: string | string[];
   roles?: string | string[];
   Role?: string | string[];
@@ -146,4 +150,34 @@ export async function logout(): Promise<void> {
   }
   _accessToken = null;
   _user = null;
+}
+
+export function getUserId(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = parseJwtPayload(token);
+  if (!payload || isExpired(payload)) return null;
+  return typeof payload.sub === 'string' ? payload.sub : null;
+}
+
+export function isAuthenticated(): boolean {
+  return getUserId() !== null;
+}
+
+export function getUserName(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = parseJwtPayload(token);
+  if (!payload || isExpired(payload)) return null;
+  const given = typeof payload.given_name === 'string' ? payload.given_name : '';
+  const family = typeof payload.family_name === 'string' ? payload.family_name : '';
+  return `${given} ${family}`.trim() || null;
+}
+
+export function getUserEmail(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = parseJwtPayload(token);
+  if (!payload || isExpired(payload)) return null;
+  return typeof payload.email === 'string' ? payload.email : null;
 }

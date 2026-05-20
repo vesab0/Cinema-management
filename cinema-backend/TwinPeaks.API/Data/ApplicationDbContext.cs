@@ -18,6 +18,9 @@ namespace TwinPeaks.API.Data
         public DbSet<Room> Rooms { get; set; } = null!;
         public DbSet<Seat> Seats { get; set; } = null!;
         public DbSet<MovieSchedule> MovieSchedules { get; set; } = null!;
+        public DbSet<UserFavoriteMovie> UserFavoriteMovies { get; set; } = null!;
+        public DbSet<Ticket> Tickets { get; set; } = null!;
+        public DbSet<UserTicket> UserTickets { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,7 +29,10 @@ namespace TwinPeaks.API.Data
             modelBuilder.Entity<User>(b =>
             {
                 b.HasKey(u => u.Id);
-                b.HasMany<RefreshToken>().WithOne().HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(u => u.RefreshTokens)
+                    .WithOne(r => r.User)
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
                 b.Property(u => u.Email).IsRequired().HasMaxLength(256);
                 b.Property(u => u.PasswordHash).IsRequired();
             });
@@ -108,6 +114,50 @@ namespace TwinPeaks.API.Data
                     .HasForeignKey(ms => ms.RoomId)
                     .OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(ms => new { ms.MovieId, ms.RoomId, ms.ScheduleDay, ms.StartTime }).IsUnique();
+            });
+
+            modelBuilder.Entity<UserFavoriteMovie>(b =>
+            {
+                b.HasKey(uf => uf.Id);
+                b.HasIndex(uf => new { uf.UserId, uf.TmdbId }).IsUnique();
+                b.HasOne(uf => uf.User)
+                    .WithMany(u => u.FavoriteMovies)
+                    .HasForeignKey(uf => uf.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                b.Property(uf => uf.MovieTitle).IsRequired().HasMaxLength(512);
+                b.Property(uf => uf.PosterPath).HasMaxLength(512);
+            });
+
+            modelBuilder.Entity<Ticket>(b =>
+            {
+                b.HasKey(t => t.Id);
+                b.HasOne(t => t.Schedule)
+                    .WithMany()
+                    .HasForeignKey(t => t.ScheduleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(t => t.Seat)
+                    .WithMany()
+                    .HasForeignKey(t => t.SeatId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(t => new { t.ScheduleId, t.SeatId }).IsUnique();
+                b.Property(t => t.Price).HasPrecision(10, 2);
+                b.Property(t => t.Status).HasConversion<string>().HasMaxLength(32);
+            });
+
+            modelBuilder.Entity<UserTicket>(b =>
+            {
+                b.HasKey(ut => ut.Id);
+                b.HasOne(ut => ut.Ticket)
+                    .WithOne(t => t.UserTicket)
+                    .HasForeignKey<UserTicket>(ut => ut.TicketId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne(ut => ut.User)
+                    .WithMany()
+                    .HasForeignKey(ut => ut.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(ut => ut.TicketId).IsUnique();
+                b.HasIndex(ut => ut.ConfirmationCode).IsUnique();
+                b.Property(ut => ut.ConfirmationCode).IsRequired().HasMaxLength(64);
             });
         }
     }

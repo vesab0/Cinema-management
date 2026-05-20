@@ -5,26 +5,38 @@ import type {
   CreateMoviePayload,
   CreateRoomPayload,
   CreateSchedulePayload,
+  CreateTicketPayload,
+  FavoriteMovieResponse,
   GenreOption,
   LoginPayload,
   MovieRow,
   MovieOption,
+  PurchaseTicketPayload,
   RegisterPayload,
   RoomOption,
   RoomRow,
   RoomWithSeats,
   ScheduleRow,
+  TicketRow,
   UpdateMoviePayload,
   UpdateRoomPayload,
   UpdateSchedulePayload,
   UpdateSeatPayload,
+  UpdateTicketPayload,
   UpdateUserPayload,
   UserRole,
-  UserRow
+  UserRow,
+  UserTicketRow,
 } from './types'
 import { getAccessToken, setAccessToken, setUser } from './auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8001'
+
+export const predictorApi = axios.create({
+  baseURL: PREDICTOR_URL,
+  headers: { 'Content-Type': 'application/json' },
+})
 
 export const api = axios.create({
   baseURL: API_BASE_URL || undefined,
@@ -159,6 +171,7 @@ export const usersApi = {
 
 export const moviesApi = {
   list: () => api.get('/api/movies').then((r) => r.data),
+  getById: (id: string) => api.get(`/api/movies/${id}`).then((r) => r.data),
   update: (id: string, payload: UpdateMoviePayload) => api.put(`/api/movies/${id}`, payload).then((r) => r.data),
   remove: (id: string) => api.delete(`/api/movies/${id}`),
   create: (payload: CreateMoviePayload) => api.post('/api/movies', payload).then((r) => r.data),
@@ -201,12 +214,32 @@ export const schedulesApi = {
   create: (payload: CreateSchedulePayload) => api.post<<ScheduleRow>('/api/schedules', payload, { headers: getAuthHeaders() }).then(r => r.data),
   update: (id: string, payload: UpdateSchedulePayload) => api.put<<ScheduleRow>(`/api/schedules/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
   remove: (id: string) => api.delete(`/api/schedules/${id}`, { headers: getAuthHeaders() }),
-  getByDate: (date: string) => api.get<<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
+  getByDate: (date: string) => api.get<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
+  getByMovie: (movieId: string) => api.get<ScheduleRow[]>(`/api/schedules/movie/${movieId}`, { headers: getAuthHeaders() }).then(r => r.data),
 }
 
 export const movieSearchApi = {
   search: (q: string, limit = 20) =>
-    predictorApi.get<<import('./types').PredictorMovie[]>('/search', { params: { q, limit } }).then(r => r.data),
+    predictorApi.get<import('./types').PredictorMovie[]>('/search', { params: { q, limit } }).then(r => r.data),
+}
+
+export const ticketsApi = {
+  list: () => api.get<TicketRow[]>('/api/tickets', { headers: getAuthHeaders() }).then(r => r.data),
+  getBySchedule: (scheduleId: string) => api.get<TicketRow[]>(`/api/tickets/schedule/${scheduleId}`, { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<TicketRow>(`/api/tickets/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  create: (payload: CreateTicketPayload) => api.post<TicketRow>('/api/tickets', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  generate: (scheduleId: string, price: number) => api.post<{ created: number }>(`/api/tickets/generate/${scheduleId}?price=${price}`, null, { headers: getAuthHeaders() }).then(r => r.data),
+  update: (id: string, payload: UpdateTicketPayload) => api.put<TicketRow>(`/api/tickets/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
+  remove: (id: string) => api.delete(`/api/tickets/${id}`, { headers: getAuthHeaders() }),
+}
+
+export const userTicketsApi = {
+  list: () => api.get<UserTicketRow[]>('/api/user-tickets', { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<UserTicketRow>(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  getByConfirmationCode: (code: string) => api.get<UserTicketRow>(`/api/user-tickets/confirm/${code}`, { headers: getAuthHeaders() }).then(r => r.data),
+  purchase: (payload: PurchaseTicketPayload) => api.post<UserTicketRow>('/api/user-tickets/purchase', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  markUsed: (id: string) => api.patch(`/api/user-tickets/${id}/mark-used`, null, { headers: getAuthHeaders() }),
+  cancel: (id: string) => api.delete(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }),
 }
 
 export const favoritesApi = {

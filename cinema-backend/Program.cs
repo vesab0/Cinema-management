@@ -22,7 +22,6 @@ builder.Host.UseSerilog((ctx, services, config) => config
         theme: AnsiConsoleTheme.Code,
         outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
         applyThemeToRedirectedOutput: true));
-
 const string FrontendCorsPolicy = "FrontendCors";
 
 builder.Services.AddOpenApi();
@@ -76,6 +75,10 @@ builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.TicketService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.UserTicketService>();
+builder.Services.AddSingleton<TwinPeaks.API.Services.IEmailService, TwinPeaks.API.Services.SendGridEmailService>();
+builder.Services.AddSingleton<TwinPeaks.API.Services.MovieNotificationService>();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
@@ -139,11 +142,13 @@ if (app.Environment.IsDevelopment())
 app.MapAuthRoutes();
 app.MapUserRoutes();
 app.MapMovieRoutes();
+app.MapFavoritesRoutes();
 app.MapLookupRoutes();
 app.MapUploadRoutes();
 app.MapRoomRoutes();
 app.MapScheduleRoutes();
-
+app.MapTicketRoutes();
+app.MapUserTicketRoutes();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
