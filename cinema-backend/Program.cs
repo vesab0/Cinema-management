@@ -22,6 +22,7 @@ builder.Host.UseSerilog((ctx, services, config) => config
         theme: AnsiConsoleTheme.Code,
         outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
         applyThemeToRedirectedOutput: true));
+
 const string FrontendCorsPolicy = "FrontendCors";
 
 builder.Services.AddOpenApi();
@@ -29,6 +30,18 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+builder.Services.AddAuthentication()
+    .AddCookie("RefreshTokenCookie", options =>
+    {
+        options.Cookie.Name = "refresh_token";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+    });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
@@ -40,7 +53,8 @@ builder.Services.AddCors(options =>
                 return uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
             })
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -62,6 +76,7 @@ builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -128,6 +143,7 @@ app.MapLookupRoutes();
 app.MapUploadRoutes();
 app.MapRoomRoutes();
 app.MapScheduleRoutes();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

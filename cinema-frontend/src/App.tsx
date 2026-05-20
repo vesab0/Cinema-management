@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Index from './pages/index'
@@ -8,7 +9,30 @@ import Rooms from './pages/dashboard/rooms'
 import Schedules from './pages/dashboard/schedule'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
-import MoviesPage from './pages/moviespage'
+import ProfilePage from './pages/profile'
+import MoviesPage from './pages/MoviesPage'
+import MovieDetailsPage from './pages/moviedetails'
+import NotFound from './components/NotFound'
+import { api } from './api'
+import { setAccessToken, fetchCurrentUser } from './auth'
+
+function AuthInit() {
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const { data } = await api.post('/auth/refresh')
+        setAccessToken(data.accessToken)
+        api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+        await fetchCurrentUser()
+      } catch {
+        setAccessToken(null)
+      }
+    }
+    init()
+  }, [])
+
+  return null
+}
 
 function PublicLayout() {
   return (
@@ -23,24 +47,27 @@ function PublicLayout() {
 
 export default function App() {
   return (
-    <Routes>
-
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<Index />} />
-        <Route path="/register" element={<RegisterForms />} />
-        <Route path="/movies" element={<MoviesPage />} />
-      </Route>
-
-      <Route element={<AdminRoute />}>
-        <Route path="/dashboard" element={<Dashboard />}>
-          <Route index element={<Users />} />
-          <Route path="movies" element={<Movies />} />
-          <Route path="rooms" element={<Rooms />} />
-          <Route path="schedules" element={<Schedules />} />
+    <>
+      <AuthInit />
+      <Routes>
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Index />} />
+          <Route path="/register" element={<RegisterForms />} />
+          <Route path="/movies" element={<MoviesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/movies/:id" element={<MovieDetailsPage />} />
         </Route>
-      </Route>
-
-    </Routes>
+        <Route element={<AdminRoute />}>
+          <Route path="/dashboard" element={<Dashboard />}>
+            <Route index element={<Users />} />
+            <Route path="movies" element={<Movies />} />
+            <Route path="rooms" element={<Rooms />} />
+            <Route path="schedules" element={<Schedules />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<NotFound/>} />
+      </Routes>
+    </>
   )
 }
 

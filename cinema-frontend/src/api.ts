@@ -22,16 +22,88 @@ import type {
   UserRole,
   UserRow
 } from './types'
-import { getAccessToken } from './auth'
+import { getAccessToken, setAccessToken, setUser } from './auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: API_BASE_URL || undefined,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
+
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(api(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { data } = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
+        const newAccessToken = data.accessToken;
+        setAccessToken(newAccessToken);
+        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+        onRefreshed(newAccessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        setAccessToken(null);
+        setUser(null);
+        window.location.href = '/';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export const authApi = {
+  register: (payload: RegisterPayload) => api.post('/auth/register', payload),
+
+  login: async (payload: LoginPayload) => {
+    const { data } = await api.post('/auth/login', payload)
+    setAccessToken(data.accessToken)
+    api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    return data
+  },
+
+  refresh: () => api.post('/auth/refresh'),
+  me: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'),
+}
 
 const allowedRoles: UserRole[] = ['user', 'admin', 'staff']
 
@@ -61,23 +133,12 @@ function toUpdatePayload(row: UserRow): UpdateUserPayload {
   const parts = row.fullName.trim().split(/\s+/).filter(Boolean)
   const firstName = parts[0] ?? ''
   const lastName = parts.slice(1).join(' ')
-  return {
-    firstName,
-    lastName,
-    phone: row.phone,
-    role: row.role,
-  }
-}
-
-export const authApi = {
-  register: (payload: RegisterPayload) => api.post('/auth/register', payload),
-  login: (payload: LoginPayload) => api.post('/auth/login', payload),
-  refresh: (refreshToken: string) => api.post('/auth/refresh', { refreshToken }),
+  return { firstName, lastName, phone: row.phone, role: row.role }
 }
 
 export const usersApi = {
   async list(): Promise<UserRow[]> {
-    const { data } = await api.get<BackendUserResponse[]>('/api/users', {
+    const { data } = await api.get<<BackendUserResponse[]>('/api/users', {
       headers: getAuthHeaders(),
     })
     return data.map(toUserRow)
@@ -104,13 +165,13 @@ export const moviesApi = {
 }
 
 export const genresApi = {
-  list: () => api.get<GenreOption[]>('/api/genres').then((r) => r.data),
-  create: (name: string) => api.post<GenreOption>('/api/genres', { name }).then((r) => r.data),
+  list: () => api.get<<GenreOption[]>('/api/genres').then((r) => r.data),
+  create: (name: string) => api.post<<GenreOption>('/api/genres', { name }).then((r) => r.data),
 }
 
 export const castMembersApi = {
-  list: () => api.get<CastMemberOption[]>('/api/cast-members').then((r) => r.data),
-  create: (fullName: string) => api.post<CastMemberOption>('/api/cast-members', { fullName }).then((r) => r.data),
+  list: () => api.get<<CastMemberOption[]>('/api/cast-members').then((r) => r.data),
+  create: (fullName: string) => api.post<<CastMemberOption>('/api/cast-members', { fullName }).then((r) => r.data),
 }
 
 export const uploadsApi = {
@@ -125,22 +186,36 @@ export const uploadsApi = {
 }
 
 export const roomsApi = {
-  list: () => api.get<RoomRow[]>('/api/rooms', { headers: getAuthHeaders() }).then(r => r.data),
-  getById: (id: string) => api.get<RoomWithSeats>(`/api/rooms/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
-  create: (payload: CreateRoomPayload) => api.post<RoomWithSeats>('/api/rooms', payload, { headers: getAuthHeaders() }).then(r => r.data),
-  update: (id: string, payload: UpdateRoomPayload) => api.put<RoomRow>(`/api/rooms/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
+  list: () => api.get<<RoomRow[]>('/api/rooms', { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<<RoomWithSeats>(`/api/rooms/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  create: (payload: CreateRoomPayload) => api.post<<RoomWithSeats>('/api/rooms', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  update: (id: string, payload: UpdateRoomPayload) => api.put<<RoomRow>(`/api/rooms/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
   remove: (id: string) => api.delete(`/api/rooms/${id}`, { headers: getAuthHeaders() }),
   updateSeat: (roomId: string, seatId: string, payload: UpdateSeatPayload) =>
     api.patch(`/api/rooms/${roomId}/seats/${seatId}`, payload, { headers: getAuthHeaders() }),
 }
 
 export const schedulesApi = {
-  list: () => api.get<ScheduleRow[]>('/api/schedules', { headers: getAuthHeaders() }).then(r => r.data),
-  getById: (id: string) => api.get<ScheduleRow>(`/api/schedules/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
-  create: (payload: CreateSchedulePayload) => api.post<ScheduleRow>('/api/schedules', payload, { headers: getAuthHeaders() }).then(r => r.data),
-  update: (id: string, payload: UpdateSchedulePayload) => api.put<ScheduleRow>(`/api/schedules/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
+  list: () => api.get<<ScheduleRow[]>('/api/schedules', { headers: getAuthHeaders() }).then(r => r.data),
+  getById: (id: string) => api.get<<ScheduleRow>(`/api/schedules/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
+  create: (payload: CreateSchedulePayload) => api.post<<ScheduleRow>('/api/schedules', payload, { headers: getAuthHeaders() }).then(r => r.data),
+  update: (id: string, payload: UpdateSchedulePayload) => api.put<<ScheduleRow>(`/api/schedules/${id}`, payload, { headers: getAuthHeaders() }).then(r => r.data),
   remove: (id: string) => api.delete(`/api/schedules/${id}`, { headers: getAuthHeaders() }),
-  getByDate: (date: string) => api.get<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
+  getByDate: (date: string) => api.get<<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
+}
+
+export const movieSearchApi = {
+  search: (q: string, limit = 20) =>
+    predictorApi.get<<import('./types').PredictorMovie[]>('/search', { params: { q, limit } }).then(r => r.data),
+}
+
+export const favoritesApi = {
+  list: (userId: string) =>
+    api.get<FavoriteMovieResponse[]>(`/api/users/${userId}/favorites`, { headers: getAuthHeaders() }).then(r => r.data),
+  add: (userId: string, tmdbId: number, movieTitle: string, posterPath: string) =>
+    api.post<FavoriteMovieResponse>(`/api/users/${userId}/favorites`, { tmdbId, movieTitle, posterPath }, { headers: getAuthHeaders() }).then(r => r.data),
+  remove: (userId: string, tmdbId: number) =>
+    api.delete(`/api/users/${userId}/favorites/${tmdbId}`, { headers: getAuthHeaders() }),
 }
 
 export default api
