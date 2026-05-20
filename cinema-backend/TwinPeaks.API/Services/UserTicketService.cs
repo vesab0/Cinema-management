@@ -1,15 +1,18 @@
 using TwinPeaks.API.Data;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 
 namespace TwinPeaks.API.Services
 {
     public class UserTicketService
     {
         private readonly ApplicationDbContext _db;
+        private readonly StripeService _stripeService;
 
-        public UserTicketService(ApplicationDbContext db)
+        public UserTicketService(ApplicationDbContext db, StripeService stripeService)
         {
             _db = db;
+            _stripeService = stripeService;
         }
 
         public List<UserTicketResponse> GetAll()
@@ -42,10 +45,11 @@ namespace TwinPeaks.API.Services
             return ut == null ? null : ToResponse(ut);
         }
 
-        public UserTicketResponse Purchase(PurchaseTicketRequest req)
+        public async Task<UserTicketResponse> PurchaseAsync(PurchaseTicketRequest req)
         {
             if (req.UserId == Guid.Empty) throw new ArgumentException("UserId is required");
             if (req.TicketId == Guid.Empty) throw new ArgumentException("TicketId is required");
+            if (string.IsNullOrWhiteSpace(req.PaymentIntentId)) throw new ArgumentException("PaymentIntentId is required");
 
             var user = _db.Users.FirstOrDefault(u => u.Id == req.UserId);
             if (user == null) throw new ArgumentException("User not found");
@@ -55,13 +59,49 @@ namespace TwinPeaks.API.Services
             if (ticket.Status != TicketStatus.Available)
                 throw new ArgumentException("Ticket is no longer available");
 
+            // Verify payment was successful with Stripe
+            PaymentIntent intent;
+            try
+            {
+                intent = await _stripeService.GetPaymentIntentAsync(req.PaymentIntentId);
+            }
+            catch (StripeException ex)
+            {
+                throw new ArgumentException($"Failed to verify payment: {ex.Message}");
+            }
+
+            if (intent.Status != "succeeded")
+                throw new ArgumentException($"Payment has not been completed. Status: {intent.Status}");
+
+            // Ensure this payment intent is for the correct ticket
+            if (!intent.Metadata.TryGetValue("ticketId", out var intentTicketId)
+                || intentTicketId != req.TicketId.ToString())
+                throw new ArgumentException("Payment intent does not match the requested ticket");
+
+            return CreateUserTicket(req.UserId, req.TicketId, ticket);
+        }
+
+        // Called from Stripe webhook after payment_intent.succeeded
+        public void FinalizeFromWebhook(Guid userId, Guid ticketId, string paymentIntentId)
+        {
+            var ticket = _db.Tickets.FirstOrDefault(t => t.Id == ticketId);
+            if (ticket == null || ticket.Status != TicketStatus.Available) return;
+
+            // Idempotency: skip if already purchased
+            if (_db.UserTickets.Any(ut => ut.TicketId == ticketId)) return;
+
+            CreateUserTicket(userId, ticketId, ticket);
+        }
+
+        private UserTicketResponse CreateUserTicket(Guid userId, Guid ticketId, Ticket ticket)
+        {
             ticket.Status = TicketStatus.Sold;
 
             var userTicket = new UserTicket
             {
                 Id = Guid.NewGuid(),
-                UserId = req.UserId,
-                TicketId = req.TicketId,
+                UserId = userId,
+                TicketId = ticketId,
                 PurchasedAt = DateTime.UtcNow,
                 IsUsed = false,
                 ConfirmationCode = Guid.NewGuid().ToString("N").ToUpperInvariant()[..12]

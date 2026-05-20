@@ -135,7 +135,7 @@ namespace TwinPeaks.API
         string CreatedAt
     );
 
-    public record PurchaseTicketRequest(Guid UserId, Guid TicketId);
+    public record PurchaseTicketRequest(Guid UserId, Guid TicketId, string PaymentIntentId);
     public record UserTicketResponse(
         Guid Id,
         Guid UserId,

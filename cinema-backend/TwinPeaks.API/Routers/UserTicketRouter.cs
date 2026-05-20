@@ -50,11 +50,11 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPost("/purchase", (PurchaseTicketRequest req, UserTicketService userTicketService) =>
+            group.MapPost("/purchase", async (PurchaseTicketRequest req, UserTicketService userTicketService) =>
             {
                 try
                 {
-                    var ut = userTicketService.Purchase(req);
+                    var ut = await userTicketService.PurchaseAsync(req);
                     return Results.Created($"/api/user-tickets/{ut.Id}", ut);
                 }
                 catch (ArgumentException ex)
