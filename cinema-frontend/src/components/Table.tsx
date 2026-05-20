@@ -9,6 +9,7 @@ export type Column<T> = {
   renderCell?: (value: unknown) => React.ReactNode;
   hideInModal?: boolean;
   hideInTable?: boolean;
+  width?: string;
 };
 
 type TableProps<T extends Record<string, unknown>> = {
@@ -24,6 +25,7 @@ type TableProps<T extends Record<string, unknown>> = {
   onEditOverride?: (row: T) => void;
   keyField?: keyof T;
   validate?: (row: T) => string | null;
+  noEdit?: boolean;
 };
 
 
@@ -40,6 +42,7 @@ export default function Table<T extends Record<string, unknown>>({
   onEditOverride,
   keyField,
   validate,
+  noEdit = false,
 }: TableProps<T>) {
   const [rows, setRows] = useState<T[]>(initialRows);
   const [editingRow, setEditingRow] = useState<T | null>(null);
@@ -122,7 +125,7 @@ export default function Table<T extends Record<string, unknown>>({
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 {tableColumns.map((col) => (
-                  <th key={String(col.key)} className="text-left text-xs font-semibold text-gray-400 uppercase tracking-widest px-5 py-3">
+                  <th key={String(col.key)} style={col.width ? { width: col.width } : undefined} className="text-left text-xs font-semibold text-gray-400 uppercase tracking-widest px-5 py-3">
                     {col.label}
                   </th>
                 ))}
@@ -140,7 +143,7 @@ export default function Table<T extends Record<string, unknown>>({
                 rows.map((row, rowIndex) => (
                   <tr key={keyField ? String(row[keyField]) : rowIndex} className="border-b border-gray-100 last:border-0 even:bg-gray-50 hover:bg-gray-100 transition-colors">
                     {tableColumns.map((col) => (
-                      <td key={String(col.key)} className="px-5 py-2.5">
+                      <td key={String(col.key)} style={col.width ? { width: col.width } : undefined} className="px-5 py-2.5">
                         {col.type === "select" ? (
                           <select
                             className="w-full bg-transparent text-sm text-gray-700 border border-transparent rounded px-1.5 py-1 hover:border-gray-300 focus:border-gray-400 focus:bg-gray-50 outline-none cursor-pointer transition-all"
@@ -165,11 +168,13 @@ export default function Table<T extends Record<string, unknown>>({
                         {saved[rowIndex] && (
                           <span className="text-xs text-green-500 font-medium mr-1">Saved ✓</span>
                         )}
-                        <button onClick={() => onEditOverride ? onEditOverride(rows[rowIndex]) : openEditModal(rowIndex)} title="Edit" className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
+                        {!noEdit && (
+                          <button onClick={() => onEditOverride ? onEditOverride(rows[rowIndex]) : openEditModal(rowIndex)} title="Edit" className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        )}
 
                         <button onClick={() => handleDelete(rowIndex)} title="Delete" className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors active:scale-95">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
