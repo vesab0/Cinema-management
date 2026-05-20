@@ -82,7 +82,6 @@ export default function SeatSelectionPage() {
     <div className="min-h-screen bg-stage text-white">
       <div className="max-w-7xl mx-auto px-8 py-10">
 
-        {/* Page header */}
         <div className="mb-7">
           <button
             onClick={() => navigate(-1)}
@@ -98,13 +97,10 @@ export default function SeatSelectionPage() {
           </p>
         </div>
 
-        {/* Two-column layout */}
         <div className="flex gap-6 items-start">
 
-          {/* Left: Theater */}
           <div className="flex-1 min-w-0">
             <div className="bg-[#111] rounded p-8 pb-10">
-              {/* Screen */}
               <div className="mb-12 text-center px-8">
                 <svg viewBox="0 0 600 28" className="w-full max-w-xl mx-auto" fill="none">
                   <path d="M 20 26 Q 300 2 580 26" stroke="white" strokeOpacity="0.35" strokeWidth="2" />
@@ -112,7 +108,6 @@ export default function SeatSelectionPage() {
                 <p className="text-[10px] uppercase tracking-[0.5em] text-white/25 mt-1">Screen</p>
               </div>
 
-              {/* Seat grid */}
               <div className="flex flex-col items-center gap-2.5">
                 {rows.map((rowLabel) => (
                   <div key={rowLabel} className="flex items-center gap-2">
@@ -133,7 +128,6 @@ export default function SeatSelectionPage() {
                 ))}
               </div>
 
-              {/* Legend */}
               <div className="mt-10 flex flex-wrap justify-center gap-8 text-xs text-white/40">
                 <LegendDot cls="bg-white/20 border border-white/25" label="Available" />
                 <LegendDot cls="bg-[#f5c518]" label="Selected" />
@@ -143,10 +137,8 @@ export default function SeatSelectionPage() {
             </div>
           </div>
 
-          {/* Right: Sidebar */}
           <div className="w-[300px] shrink-0 sticky top-6 flex flex-col gap-4">
 
-            {/* Movie info card */}
             <div className="bg-[#141414] border border-white/10 rounded p-5">
               <div className="flex gap-3 items-start">
                 {posterSrc && (
@@ -161,10 +153,8 @@ export default function SeatSelectionPage() {
               </div>
             </div>
 
-            {/* Ticket control card — the red rectangle area */}
             <div className="bg-[#141414] border border-white/10 rounded p-6 flex flex-col gap-5">
 
-              {/* Ticket count */}
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-3">Number of tickets</p>
                 <div className="flex items-center gap-5">
@@ -186,7 +176,6 @@ export default function SeatSelectionPage() {
                 </p>
               </div>
 
-              {/* Selected seats */}
               {selectedTickets.length > 0 && (
                 <>
                   <div className="border-t border-white/10" />
@@ -213,7 +202,6 @@ export default function SeatSelectionPage() {
                 </>
               )}
 
-              {/* Total */}
               {selectedTickets.length > 0 && (
                 <>
                   <div className="border-t border-white/10" />

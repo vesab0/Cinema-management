@@ -91,7 +91,6 @@ export default function PaymentPage() {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-          {/* Payment form */}
           <div className="lg:col-span-3">
             <h1 className="text-2xl font-bold uppercase tracking-wide mb-8">Payment Details</h1>
             <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -105,7 +104,6 @@ export default function PaymentPage() {
             </Elements>
           </div>
 
-          {/* Order summary */}
           <div className="lg:col-span-2 lg:mt-[72px]">
             <div className="bg-[#141414] border border-white/10 rounded p-6 sticky top-6">
               <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 mb-4">Order Summary</p>
@@ -220,7 +218,6 @@ function CardForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Cardholder name */}
       <div>
         <label className="block text-[10px] uppercase tracking-[0.3em] text-white/40 mb-2">
           Cardholder Name
@@ -234,7 +231,6 @@ function CardForm({
         />
       </div>
 
-      {/* Card number */}
       <div>
         <label className="block text-[10px] uppercase tracking-[0.3em] text-white/40 mb-2">
           Card Number
@@ -244,7 +240,6 @@ function CardForm({
         </div>
       </div>
 
-      {/* Expiry + CVC */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-[10px] uppercase tracking-[0.3em] text-white/40 mb-2">

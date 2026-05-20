@@ -9,9 +9,6 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/stripe");
 
-            // POST /api/stripe/create-payment-intent
-            // Body: { "ticketId": "guid" }
-            // Returns { clientSecret, paymentIntentId, amountInCents }
             group.MapPost("/create-payment-intent", async (
                 CreatePaymentIntentRequest req,
                 StripeService stripeService) =>
@@ -40,8 +37,6 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            // POST /api/stripe/create-multi-payment-intent
-            // Body: { "ticketIds": ["guid1","guid2"], "userId": "guid" }
             group.MapPost("/create-multi-payment-intent", async (
                 CreateMultiPaymentIntentRequest req,
                 StripeService stripeService) =>
@@ -70,8 +65,6 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            // POST /api/stripe/webhook
-            // Stripe webhook endpoint — set in Stripe dashboard
             group.MapPost("/webhook", async (
                 HttpRequest request,
                 IConfiguration config,

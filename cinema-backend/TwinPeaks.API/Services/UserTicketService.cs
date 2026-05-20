@@ -59,7 +59,6 @@ namespace TwinPeaks.API.Services
             if (ticket.Status != TicketStatus.Available)
                 throw new ArgumentException("Ticket is no longer available");
 
-            // Verify payment was successful with Stripe
             PaymentIntent intent;
             try
             {
@@ -73,7 +72,6 @@ namespace TwinPeaks.API.Services
             if (intent.Status != "succeeded")
                 throw new ArgumentException($"Payment has not been completed. Status: {intent.Status}");
 
-            // Ensure this payment intent is for the correct ticket
             if (!intent.Metadata.TryGetValue("ticketId", out var intentTicketId)
                 || intentTicketId != req.TicketId.ToString())
                 throw new ArgumentException("Payment intent does not match the requested ticket");
@@ -90,7 +88,6 @@ namespace TwinPeaks.API.Services
             var user = _db.Users.FirstOrDefault(u => u.Id == req.UserId);
             if (user == null) throw new ArgumentException("User not found");
 
-            // Verify payment
             PaymentIntent intent;
             try { intent = await _stripeService.GetPaymentIntentAsync(req.PaymentIntentId); }
             catch (StripeException ex) { throw new ArgumentException($"Failed to verify payment: {ex.Message}"); }
@@ -98,7 +95,6 @@ namespace TwinPeaks.API.Services
             if (intent.Status != "succeeded")
                 throw new ArgumentException($"Payment has not been completed. Status: {intent.Status}");
 
-            // Validate metadata ticketIds match
             if (!intent.Metadata.TryGetValue("ticketIds", out var metaIds))
                 throw new ArgumentException("Payment intent does not contain ticketIds metadata");
 
@@ -114,13 +110,11 @@ namespace TwinPeaks.API.Services
             return results;
         }
 
-        // Called from Stripe webhook after payment_intent.succeeded
         public void FinalizeFromWebhook(Guid userId, Guid ticketId, string paymentIntentId)
         {
             var ticket = _db.Tickets.FirstOrDefault(t => t.Id == ticketId);
             if (ticket == null || ticket.Status != TicketStatus.Available) return;
 
-            // Idempotency: skip if already purchased
             if (_db.UserTickets.Any(ut => ut.TicketId == ticketId)) return;
 
             CreateUserTicket(userId, ticketId, ticket);
