@@ -57,7 +57,9 @@ export default function MovieDetails({ movieId: propId }: Props) {
         <div className="mt-2 text-gray-500 text-sm">
           <strong>Genres:</strong> {movie.genres?.join(', ')}
         </div>
-     
+        <div className="mt-6">
+          <MovieTrailer trailerUrl={movie.trailerUrl} />
+        </div>
       </div>
     </div>
   )
