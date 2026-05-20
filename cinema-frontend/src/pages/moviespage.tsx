@@ -5,7 +5,11 @@ import MovieCard from "../components/MovieCard";
 import SecondaryNav from "../components/SecondaryNav";
 import { getUserId } from "../auth";
 
-export default function MoviesPage() {
+interface MoviesPageProps {
+  mode?: "now-playing" | "upcoming";
+}
+
+export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
   const [movies, setMovies] = useState<MovieRow[]>([]);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
@@ -46,8 +50,16 @@ export default function MoviesPage() {
     }
   };
 
+  const d = new Date();
+  const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
   const filtered = movies
     .filter((m) => m.isActive)
+    .filter((m) => {
+      const releaseStr = m.releaseDate ? m.releaseDate.slice(0, 10) : null;
+      if (mode === "upcoming") return releaseStr !== null && releaseStr > todayStr;
+      return releaseStr === null || releaseStr <= todayStr;
+    })
     .filter((m) =>
       search.trim() === "" || m.name.toLowerCase().includes(search.toLowerCase())
     );
@@ -68,7 +80,7 @@ export default function MoviesPage() {
         <SecondaryNav />
         <div className="px-10 py-10 max-w-6xl mx-auto">
           <h1 className="font-display text-gold text-5xl tracking-widest uppercase mb-2">
-            Now Playing
+            {mode === "upcoming" ? "Upcoming" : "Now Playing"}
           </h1>
           <div className="w-12 h-0.5 bg-wine mb-6" />
 

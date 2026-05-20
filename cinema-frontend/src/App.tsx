@@ -31,7 +31,8 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Index />} />
         <Route path="/register" element={<RegisterForms />} />
-        <Route path="/movies" element={<MoviesPage />} />
+        <Route path="/movies" element={<MoviesPage mode="now-playing" />} />
+        <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/movies/:id" element={<MovieDetailsPage />} />
       </Route>
