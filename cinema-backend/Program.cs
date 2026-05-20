@@ -62,6 +62,8 @@ builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.TicketService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.UserTicketService>();
 builder.Services.AddSingleton<TwinPeaks.API.Services.IEmailService, TwinPeaks.API.Services.SendGridEmailService>();
 builder.Services.AddSingleton<TwinPeaks.API.Services.MovieNotificationService>();
 builder.Services.AddHttpClient();
@@ -132,6 +134,8 @@ app.MapLookupRoutes();
 app.MapUploadRoutes();
 app.MapRoomRoutes();
 app.MapScheduleRoutes();
+app.MapTicketRoutes();
+app.MapUserTicketRoutes();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

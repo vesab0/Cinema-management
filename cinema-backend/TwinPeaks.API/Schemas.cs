@@ -116,4 +116,41 @@ namespace TwinPeaks.API
         TimeSpan? StartTime,
         bool? IsActive
     );
+
+    public record CreateTicketRequest(Guid ScheduleId, Guid SeatId, decimal Price);
+    public record UpdateTicketRequest(decimal? Price, TicketStatus? Status);
+    public record TicketResponse(
+        Guid Id,
+        Guid ScheduleId,
+        string MovieName,
+        DateTime ScheduleDay,
+        string StartTime,
+        Guid SeatId,
+        string RowLabel,
+        int ColNumber,
+        string SeatType,
+        decimal Price,
+        string Status,
+        string CreatedAt
+    );
+
+    public record PurchaseTicketRequest(Guid UserId, Guid TicketId);
+    public record UserTicketResponse(
+        Guid Id,
+        Guid UserId,
+        string UserFullName,
+        string UserEmail,
+        Guid TicketId,
+        string MovieName,
+        DateTime ScheduleDay,
+        string StartTime,
+        string RoomName,
+        string RowLabel,
+        int ColNumber,
+        string SeatType,
+        decimal Price,
+        string ConfirmationCode,
+        bool IsUsed,
+        string PurchasedAt
+    );
 }
