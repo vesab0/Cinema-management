@@ -87,6 +87,22 @@ export default function Schedules() {
       ),
     },
     {
+      key: "ticketPrice",
+      label: "Ticket Price",
+      hideInTable: true,
+      renderField: (val, onChange) => (
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={String(val ?? "0")}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className={inputClass}
+          placeholder="e.g. 12.50"
+        />
+      ),
+    },
+    {
       key: "isActive",
       label: "Active",
       type: "select",
@@ -146,6 +162,7 @@ export default function Schedules() {
         roomId,
         scheduleDay: row.scheduleDay,
         startTime: row.startTime,
+        ticketPrice: Number(row.ticketPrice ?? 0),
         isActive: row.isActive ?? true,
       });
       await loadData();
@@ -159,6 +176,7 @@ export default function Schedules() {
     if (!String(row.roomName ?? "").trim()) return "Room is required";
     if (!String(row.scheduleDay ?? "").trim()) return "Date is required";
     if (!String(row.startTime ?? "").trim()) return "Time is required";
+    if (row.id === "" && (row.ticketPrice === undefined || row.ticketPrice === null || Number(row.ticketPrice) < 0)) return "Ticket price must be non-negative";
     return null;
   };
 
@@ -181,6 +199,7 @@ export default function Schedules() {
         roomName: "",
         scheduleDay: new Date().toISOString().split("T")[0],
         startTime: "14:00",
+        ticketPrice: 0,
         createdAt: new Date().toISOString().split("T")[0],
         isActive: true,
       }}

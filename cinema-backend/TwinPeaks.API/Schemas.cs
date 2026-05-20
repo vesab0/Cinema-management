@@ -106,6 +106,7 @@ namespace TwinPeaks.API
         Guid RoomId,
         DateTime ScheduleDay,
         TimeSpan StartTime,
+        decimal TicketPrice,
         bool? IsActive
     );
 

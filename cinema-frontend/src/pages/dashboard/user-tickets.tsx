@@ -70,12 +70,11 @@ function CreateBookingModal({
     });
   }, [movieId]);
 
-  // Load available tickets when schedule changes
+  // Load all tickets when schedule changes (available + sold, to render full seat map)
   useEffect(() => {
     if (!scheduleId) { setTickets([]); setTicketId(""); return; }
     ticketsApi.getBySchedule(scheduleId).then((t) => {
-      const available = t.filter((tk) => tk.status === "Available");
-      setTickets(available);
+      setTickets(t);
       setTicketId("");
     });
   }, [scheduleId]);
@@ -112,7 +111,7 @@ function CreateBookingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-white rounded-xl shadow-xl w-full mx-4 p-6 transition-all ${step === "seat" ? "max-w-2xl max-h-[90vh] overflow-y-auto" : "max-w-md"}`} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-gray-800">New Booking</h2>
@@ -139,7 +138,7 @@ function CreateBookingModal({
         </div>
 
         {/* Step content */}
-        <div className="space-y-4 min-h-[120px]">
+        <div className={`space-y-4 ${step === "seat" ? "min-h-[160px]" : "min-h-[120px]"}`}>
 
           {step === "user" && (
             <div>
@@ -187,16 +186,9 @@ function CreateBookingModal({
             <div>
               <label className={labelClass}>Select Seat</label>
               {tickets.length === 0 ? (
-                <p className="text-sm text-gray-400">No available seats for this schedule.</p>
+                <p className="text-sm text-gray-400">No seats for this schedule.</p>
               ) : (
-                <select value={ticketId} onChange={(e) => setTicketId(e.target.value)} className={inputClass}>
-                  <option value="">— choose a seat —</option>
-                  {tickets.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      Row {t.rowLabel}, Seat {t.colNumber} — {t.seatType} — €{t.price}
-                    </option>
-                  ))}
-                </select>
+                <SeatMap tickets={tickets} selectedTicketId={ticketId} onSelect={setTicketId} />
               )}
             </div>
           )}
@@ -240,6 +232,78 @@ function CreateBookingModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SeatMap({ tickets, selectedTicketId, onSelect }: {
+  tickets: TicketRow[];
+  selectedTicketId: string;
+  onSelect: (ticketId: string) => void;
+}) {
+  const grouped = tickets.reduce<Record<string, TicketRow[]>>((acc, t) => {
+    (acc[t.rowLabel] ??= []).push(t);
+    return acc;
+  }, {});
+
+  const seatColor = (t: TicketRow) => {
+    if (t.status !== "Available") return "bg-gray-100 border border-gray-200 text-gray-300 cursor-not-allowed";
+    if (t.seatType === "VIP") return "bg-amber-100 border border-amber-300 text-amber-700 hover:brightness-95";
+    if (t.seatType === "Wheelchair") return "bg-blue-100 border border-blue-300 text-blue-700 hover:brightness-95";
+    return "bg-gray-700 border border-gray-600 text-white hover:bg-gray-600";
+  };
+
+  const ringColor = (t: TicketRow) => {
+    if (t.seatType === "VIP") return "ring-amber-500";
+    if (t.seatType === "Wheelchair") return "ring-blue-500";
+    return "ring-gray-800";
+  };
+
+  const selectedTicket = tickets.find((t) => t.id === selectedTicketId);
+
+  return (
+    <div>
+      <div className="flex gap-4 mb-3 text-xs text-gray-500">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-700 inline-block" /> Standard</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-100 border border-amber-300 inline-block" /> VIP</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-100 border border-blue-300 inline-block" /> Wheelchair</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200 inline-block" /> Sold</span>
+      </div>
+
+      <div className="text-center mb-3">
+        <div className="mx-auto h-1.5 w-40 bg-gray-300 rounded-full" />
+        <span className="text-xs text-gray-400 tracking-widest uppercase mt-1 block">Screen</span>
+      </div>
+
+      <div className="space-y-1.5 overflow-x-auto pb-1 flex flex-col items-center">
+        {Object.keys(grouped).sort().map((rowLabel) => (
+          <div key={rowLabel} className="flex items-center gap-3">
+            <span className="text-xs text-gray-400 w-4 text-right">{rowLabel}</span>
+            <div className="flex gap-1">
+              {grouped[rowLabel].sort((a, b) => a.colNumber - b.colNumber).map((t) => (
+                <button
+                  key={t.id}
+                  disabled={t.status !== "Available"}
+                  onClick={() => onSelect(selectedTicketId === t.id ? "" : t.id)}
+                  title={`${t.rowLabel}${t.colNumber} · ${t.seatType} · €${t.price}${t.status !== "Available" ? " · Sold" : ""}`}
+                  className={`w-6 h-6 rounded-sm text-[10px] font-medium transition-all active:scale-90
+                    ${seatColor(t)}
+                    ${selectedTicketId === t.id ? `ring-2 ring-offset-1 ${ringColor(t)} scale-110` : ""}
+                  `}
+                >
+                  {t.colNumber}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {selectedTicket && (
+        <p className="mt-3 text-xs text-gray-500 text-center">
+          Selected: <span className="font-semibold text-gray-700">Row {selectedTicket.rowLabel}, Seat {selectedTicket.colNumber}</span> · {selectedTicket.seatType} · <span className="font-semibold">€{selectedTicket.price}</span>
+        </p>
+      )}
     </div>
   );
 }

@@ -174,6 +174,7 @@ export type CreateSchedulePayload = {
   roomId: string;
   scheduleDay: string;
   startTime: string;
+  ticketPrice: number;
   isActive?: boolean;
 };
 
