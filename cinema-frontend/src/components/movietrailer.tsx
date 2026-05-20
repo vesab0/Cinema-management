@@ -1,3 +1,5 @@
+import YouTube from 'react-youtube'
+
 type Props = {
   trailerUrl?: string
 }
@@ -18,12 +20,18 @@ export default function MovieTrailer({ trailerUrl }: Props) {
 
   return (
     <div className="aspect-video w-full">
-      <iframe
-        src={`https://www.youtube.com/embed/${videoId}?mute=1&rel=0`}
-        title="Movie trailer"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
+      <YouTube
+        videoId={videoId}
         className="h-full w-full"
+        iframeClassName="h-full w-full"
+        opts={{
+          playerVars: {
+            autoplay: 1,
+            mute: 1,
+            rel: 0,
+            playsinline: 1,
+          },
+        }}
       />
     </div>
   )
