@@ -42,6 +42,7 @@ namespace TwinPeaks.API.Services
             if (!string.IsNullOrWhiteSpace(req.FirstName)) user.FirstName = req.FirstName.Trim();
             if (!string.IsNullOrWhiteSpace(req.LastName))  user.LastName  = req.LastName.Trim();
             if (!string.IsNullOrWhiteSpace(req.Phone))     user.PhoneNumber = req.Phone.Trim();
+            if (!string.IsNullOrWhiteSpace(req.AvatarPath)) user.AvatarPath = req.AvatarPath.Trim();
 
             if (!string.IsNullOrWhiteSpace(req.Role))
             {
@@ -89,6 +90,7 @@ namespace TwinPeaks.API.Services
             u.LastName,
             u.Email,
             u.PhoneNumber ?? "",
+            u.AvatarPath,
             u.UserRoles.Select(ur => ur.Role.Name).FirstOrDefault() ?? "user",
             u.CreatedAt.ToString("yyyy-MM-dd"),
             u.IsActive

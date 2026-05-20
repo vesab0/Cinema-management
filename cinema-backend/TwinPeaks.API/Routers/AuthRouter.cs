@@ -123,6 +123,7 @@ namespace TwinPeaks.API.Routers
                     email = user.Email,
                     firstName = user.FirstName,
                     lastName = user.LastName,
+                    avatarPath = user.AvatarPath,
                     roles,
                     isActive = user.IsActive
                 });

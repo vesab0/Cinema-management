@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RegisterForms from "./RegisterForms";
 import { getAccessToken, getUser, logout } from "../auth";
+import { API_BASE_URL as _API_BASE } from "../api";
 
 export default function Navbar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,7 +14,29 @@ export default function Navbar() {
         const user = getUser();
         return !!user?.roles.map(r => r.toLowerCase()).includes('admin');
     });
+    const [avatarSrc, setAvatarSrc] = useState<string | null>(() => {
+        const user = getUser();
+        return user?.avatarPath ?? null;
+    });
     const navigate = useNavigate();
+
+    // listen for global user change events so navbar updates without full refresh
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const detail = (e as CustomEvent).detail as any;
+            if (!detail) {
+                setUserName(null);
+                setIsAdminUser(false);
+                setAvatarSrc(null);
+                return;
+            }
+            setUserName(`${detail.firstName} ${detail.lastName}`.trim() || detail.email || null);
+            setIsAdminUser(detail.roles?.map((r: string) => r.toLowerCase()).includes('admin'));
+            setAvatarSrc(detail.avatarPath ?? null);
+        };
+        window.addEventListener('auth:user-changed', handler as EventListener);
+        return () => window.removeEventListener('auth:user-changed', handler as EventListener);
+    }, []);
 
     const authToken = getAccessToken();
     const isLoggedIn = !!authToken;
@@ -55,6 +78,12 @@ export default function Navbar() {
                 <div className="ml-auto flex items-center gap-4">
                     {isLoggedIn ? (
                         <>
+                            {(() => {
+                                const raw = avatarSrc ?? getUser()?.avatarPath;
+                                if (!raw) return (<div onClick={() => navigate('/profile')} className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm text-white/80 cursor-pointer">A</div>);
+                                const src = raw.startsWith('http') ? raw : `${_API_BASE}${raw}`;
+                                return (<img src={src} alt="Avatar" onClick={() => navigate('/profile')} className="h-8 w-8 rounded-full object-cover cursor-pointer" />);
+                            })()}
                             <span className="text-white font-medium text-sm">
                                 {userName ?? "User"}
                             </span>

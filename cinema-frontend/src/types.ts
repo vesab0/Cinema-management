@@ -27,6 +27,7 @@ export type BackendUserResponse = {
   lastName: string;
   email: string;
   phone: string;
+  avatarPath?: string;
   role: string;
   createdAt: string;
   isActive: boolean;
@@ -36,6 +37,7 @@ export type UpdateUserPayload = {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  avatarPath?: string;
   role?: string;
 };
 

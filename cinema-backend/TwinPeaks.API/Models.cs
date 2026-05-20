@@ -10,6 +10,7 @@ namespace TwinPeaks.API
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
+        public string? AvatarPath { get; set; }
         public string? PhoneNumber { get; set; }
         public bool EmailConfirmed { get; set; }
         public bool LockoutEnabled { get; set; }

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { favoritesApi, movieSearchApi } from "../api";
+import { favoritesApi, movieSearchApi, uploadsApi, usersApi, api } from "../api";
 import type { FavoriteMovieResponse, PredictorMovie } from "../types";
 import SecondaryNav from "../components/SecondaryNav";
-import { getUserId, getUserName, getUserEmail } from "../auth";
+import { getUserId, getUserName, getUserEmail, getUser, setUser } from "../auth";
 
 // Strip embedded quotes from malformed TMDB URLs stored before the predictor fix
 function cleanUrl(url: string): string {
@@ -14,6 +14,15 @@ export default function ProfilePage() {
   const userId = getUserId();
   const userName = getUserName();
   const userEmail = getUserEmail();
+  const currentUser = getUser();
+
+  const [editFirstName, setEditFirstName] = useState(currentUser?.firstName ?? "");
+  const [editLastName, setEditLastName] = useState(currentUser?.lastName ?? "");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(currentUser?.avatarPath ?? null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
 
   // Favorites state
   const [favorites, setFavorites] = useState<FavoriteMovieResponse[]>([]);
@@ -121,12 +130,68 @@ export default function ProfilePage() {
             </p>
           ) : (
             <div className="mb-10">
-              {userName && (
-                <p className="text-white text-2xl font-semibold mb-1">{userName}</p>
-              )}
-              {userEmail && (
-                <p className="text-white/60 text-sm">{userEmail}</p>
-              )}
+                <div className="flex items-center gap-4 mb-4">
+                  <input id="avatar-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    setSelectedFile(f);
+                    if (f) {
+                      const url = URL.createObjectURL(f);
+                      setAvatarPreview(url);
+                    }
+                  }} />
+                  <div className="relative h-20 w-20 rounded-full overflow-hidden bg-gray-800 cursor-pointer" onClick={() => document.getElementById('avatar-file-input')?.click()}>
+                  {avatarPreview ? (
+                    <img src={(avatarPreview.startsWith('http') || avatarPreview.startsWith('blob:')) ? avatarPreview : `${import.meta.env.VITE_API_URL ?? 'http://localhost:5000'}${avatarPreview}`} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-white/80">A</div>
+                  )}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <span className="text-white text-sm px-2 py-1 bg-black/50 rounded">Change profile</span>
+                  </div>
+                </div>
+                <div>
+                  {!editingName ? (
+                    <div className="flex items-center gap-2">
+                      <div className="text-white text-2xl font-semibold mb-1 cursor-pointer" onClick={() => setEditingName(true)}>{userName}</div>
+                      <button onClick={() => setEditingName(true)} className="text-white/60 text-sm underline">Edit</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 items-center">
+                      <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="First" className="px-2 py-1 rounded bg-black/40 text-white" />
+                      <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Last" className="px-2 py-1 rounded bg-black/40 text-white" />
+                      <button onClick={() => setEditingName(false)} className="px-2 py-1 bg-gray-700 rounded text-white">Done</button>
+                    </div>
+                  )}
+                  <div className="text-white/60 text-sm">{userEmail}</div>
+                </div>
+                <div className="ml-auto self-center">
+                  <button disabled={saving} onClick={async () => {
+                    if (!userId) return;
+                    setSaving(true); setSaveError(null);
+                    try {
+                      let avatarPath: string | undefined;
+                      if (selectedFile) {
+                        const url = await uploadsApi.uploadImage(selectedFile);
+                        avatarPath = url;
+                      }
+
+                      await usersApi.updateProfile(userId, {
+                        firstName: editFirstName || undefined,
+                        lastName: editLastName || undefined,
+                        avatarPath: avatarPath || undefined,
+                      });
+
+                      const { data } = await api.get('/auth/me');
+                      setUser(data);
+                      setAvatarPreview(data?.avatarPath ?? null);
+                    } catch (e: unknown) {
+                      setSaveError(String(e));
+                    } finally {
+                      setSaving(false);
+                    }
+                  }} className="h-10 px-4 bg-gold text-stage rounded whitespace-nowrap leading-none flex items-center justify-center disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
+                  {saveError && <p className="text-red-400 text-sm mt-2">{saveError}</p>}
+                </div>
             </div>
           )}
 

@@ -13,6 +13,7 @@ namespace TwinPeaks.API
         string LastName,
         string Email,
         string Phone,
+        string? AvatarPath,
         string Role,
         string CreatedAt,
         bool   IsActive
@@ -22,6 +23,7 @@ namespace TwinPeaks.API
         string? FirstName,
         string? LastName,
         string? Phone,
+        string? AvatarPath,
         string? Role
     );
 

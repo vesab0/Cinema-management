@@ -13,6 +13,7 @@ import ProfilePage from './pages/profile'
 import MoviesPage from './pages/moviespage'
 import MovieDetailsPage from './pages/moviedetails'
 import NotFound from './components/NotFound'
+import UserTickets from './pages/dashboard/user-tickets'
 import { bootstrapSession } from './auth'
 
 function PublicLayout() {
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="movies" element={<Movies />} />
           <Route path="rooms" element={<Rooms />} />
           <Route path="schedules" element={<Schedules />} />
+          <Route path="user-tickets" element={<UserTickets />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFound/>} />
