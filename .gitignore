@@ -517,8 +517,7 @@ yarn-error.log*
 # Repository-specific generated artifacts
 cinema-backend/bin/
 cinema-backend/obj/
-cinema-backend/TwinPeaks.API/Data/Migrations/**/*.Designer.cs
-cinema-backend/TwinPeaks.API/Data/Migrations/*Snapshot.cs
+
 cinema-frontend/node_modules/
 cinema-frontend/dist/
 
