@@ -1,9 +1,8 @@
-
-
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { MovieRow } from '../types'
 import { moviesApi } from '../api'
+import MovieTrailer from './MovieTrailer'
 
 type Props = {
   movieId?: string
@@ -29,11 +28,11 @@ export default function MovieDetails({ movieId: propId }: Props) {
   if (loading) return <div className="p-6">Loading...</div>
   if (!movie) return <div className="p-6">Movie not found.</div>
 
-  const apiBase = import.meta.env.VITE_API_URL ?? ''
+  const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
   const posterPath = movie.posterUrl ?? ''
   const posterSrc = posterPath.startsWith('http')
     ? posterPath
-    : (apiBase ? `${apiBase.replace(/\/$/, '')}/${posterPath.replace(/^\//, '')}` : posterPath)
+    : `${apiBase.replace(/\/$/, '')}/${posterPath.replace(/^\//, '')}`
 
   return (
     <div className="max-w-5xl mx-auto p-6 flex flex-col md:flex-row gap-10 items-start">
@@ -43,6 +42,7 @@ export default function MovieDetails({ movieId: propId }: Props) {
         </div>
       </div>
       <div className="flex-1">
+        <p className="text-xs uppercase tracking-widest text-white/40 mb-1">So you want to watch:</p>
         <h1 className="text-3xl text-white font-bold">{movie.name}</h1>
         <div className="text-sm text-gray-500 mt-2">
           {movie.ageRating} • {movie.durationMinutes} min • {movie.releaseDate?.split('T')[0]}
@@ -56,6 +56,9 @@ export default function MovieDetails({ movieId: propId }: Props) {
         </div>
         <div className="mt-2 text-gray-500 text-sm">
           <strong>Genres:</strong> {movie.genres?.join(', ')}
+        </div>
+        <div className="mt-6">
+          <MovieTrailer trailerUrl={movie.trailerUrl} />
         </div>
       </div>
     </div>
