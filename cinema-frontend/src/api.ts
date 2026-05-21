@@ -256,7 +256,6 @@ export const userTicketsApi = {
   getById: (id: string) => api.get<UserTicketRow>(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
   getByConfirmationCode: (code: string) => api.get<UserTicketRow>(`/api/user-tickets/confirm/${code}`, { headers: getAuthHeaders() }).then(r => r.data),
   purchase: (payload: PurchaseTicketPayload) => api.post<UserTicketRow>('/api/user-tickets/purchase', payload, { headers: getAuthHeaders() }).then(r => r.data),
-  markUsed: (id: string) => api.patch(`/api/user-tickets/${id}/mark-used`, null, { headers: getAuthHeaders() }),
   cancel: (id: string) => api.delete(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }),
   purchaseMulti: (payload: PurchaseMultiTicketPayload) =>
     api.post<UserTicketRow[]>('/api/user-tickets/purchase-multi', payload, { headers: getAuthHeaders() }).then(r => r.data),

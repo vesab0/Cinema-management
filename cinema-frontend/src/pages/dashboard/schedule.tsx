@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import { moviesApi, roomsApi, schedulesApi } from "../../api";
+import { moviesApi, roomsApi, schedulesApi, ticketsApi } from "../../api";
 import type { ScheduleRow, RoomOption } from "../../types";
 
 const inputClass =
-  "w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all";
+  "w-full text-sm text-white bg-[#1c1a18] rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
 const labelClass =
-  "block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1";
+  "block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1";
 
 const HOUR_HEIGHT = 48; // px per hour
 const START_HOUR = 9;
@@ -73,16 +73,16 @@ function EditModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6"
+        className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-md mx-4 p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-gray-800">Edit Schedule</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100">
+          <h2 className="text-lg font-semibold text-white">Edit Schedule</h2>
+          <button onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -93,15 +93,15 @@ function EditModal({
           <div>
             <label className={labelClass}>Movie</label>
             <select value={form.movieName} onChange={(e) => setForm((f) => ({ ...f, movieName: e.target.value }))} className={inputClass}>
-              <option value="">Select movie...</option>
-              {movieOptions.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+              <option value="" className="bg-dash-card">Select movie...</option>
+              {movieOptions.map((m) => <option key={m.id} value={m.name} className="bg-dash-card">{m.name}</option>)}
             </select>
           </div>
           <div>
             <label className={labelClass}>Room</label>
             <select value={form.roomName} onChange={(e) => setForm((f) => ({ ...f, roomName: e.target.value }))} className={inputClass}>
-              <option value="">Select room...</option>
-              {roomOptions.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+              <option value="" className="bg-dash-card">Select room...</option>
+              {roomOptions.map((r) => <option key={r.id} value={r.name} className="bg-dash-card">{r.name}</option>)}
             </select>
           </div>
           <div className="flex gap-3">
@@ -117,17 +117,17 @@ function EditModal({
           <div>
             <label className={labelClass}>Active</label>
             <select value={String(form.isActive)} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.value === "true" }))} className={inputClass}>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="true" className="bg-dash-card">Yes</option>
+              <option value="false" className="bg-dash-card">No</option>
             </select>
           </div>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button onClick={handleSubmit} disabled={saving} className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 active:scale-95 disabled:opacity-40 transition-all">
+          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">Cancel</button>
+          <button onClick={handleSubmit} disabled={saving} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all">
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -153,35 +153,35 @@ function ScheduleDetail({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-xs mx-4 p-5"
+        className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-xs mx-4 p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-3">
           <div>
-            <p className="font-semibold text-gray-800 text-sm">{schedule.movieName}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{schedule.roomName}</p>
+            <p className="font-semibold text-white text-sm">{schedule.movieName}</p>
+            <p className="text-xs text-white/40 mt-0.5">{schedule.roomName}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded text-gray-400 hover:bg-gray-100">
+          <button onClick={onClose} className="p-1 rounded text-white/40 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-4 flex-wrap">
+        <div className="flex items-center gap-3 text-xs text-white/50 mb-4 flex-wrap">
           <span>{String(schedule.scheduleDay).split("T")[0]}</span>
-          <span className="font-medium text-gray-700">{schedule.startTime}</span>
-          <span className="text-gray-400">{duration}m</span>
-          <span className={`px-2 py-0.5 rounded-full font-medium ${schedule.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+          <span className="font-medium text-white/80">{schedule.startTime}</span>
+          <span className="text-white/40">{duration}m</span>
+          <span className={`px-2 py-0.5 rounded-full font-medium ${schedule.isActive ? "bg-gold/20 text-gold" : "bg-white/10 text-white/40"}`}>
             {schedule.isActive ? "Active" : "Inactive"}
           </span>
         </div>
         <div className="flex gap-2">
-          <button onClick={onEdit} className="flex-1 text-xs font-medium px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all">Edit</button>
-          <button onClick={onDelete} className="flex-1 text-xs font-medium px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-all">Delete</button>
+          <button onClick={onEdit} className="flex-1 text-xs font-medium px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 transition-all">Edit</button>
+          <button onClick={onDelete} className="flex-1 text-xs font-medium px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all">Delete</button>
         </div>
       </div>
     </div>
@@ -324,16 +324,16 @@ function RangeCreateModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-gray-800">Create Schedules</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100">
+          <h2 className="text-lg font-semibold text-white">Create Schedules</h2>
+          <button onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -345,15 +345,15 @@ function RangeCreateModal({
             <div className="flex-1">
               <label className={labelClass}>Movie</label>
               <select value={movieName} onChange={(e) => setMovieName(e.target.value)} className={inputClass}>
-                <option value="">Select movie...</option>
-                {movieOptions.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+                <option value="" className="bg-dash-card">Select movie...</option>
+                {movieOptions.map((m) => <option key={m.id} value={m.name} className="bg-dash-card">{m.name}</option>)}
               </select>
             </div>
             <div className="flex-1">
               <label className={labelClass}>Room</label>
               <select value={roomName} onChange={(e) => setRoomName(e.target.value)} className={inputClass}>
-                <option value="">Select room...</option>
-                {roomOptions.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                <option value="" className="bg-dash-card">Select room...</option>
+                {roomOptions.map((r) => <option key={r.id} value={r.name} className="bg-dash-card">{r.name}</option>)}
               </select>
             </div>
           </div>
@@ -379,8 +379,8 @@ function RangeCreateModal({
                   onClick={() => toggleDay(i)}
                   className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition-all ${
                     activeDays.includes(i)
-                      ? "bg-gray-800 text-white border-gray-800"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                      ? "bg-wine text-white border-wine"
+                      : "bg-[#1c1a18] text-white/50 border-dash-border hover:border-white/30"
                   }`}
                 >
                   {day}
@@ -392,7 +392,7 @@ function RangeCreateModal({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className={labelClass}>Time Slots</label>
-              <button type="button" onClick={addTime} className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+              <button type="button" onClick={addTime} className="text-xs font-medium text-gold hover:text-gold/80 transition-colors">
                 + Add time
               </button>
             </div>
@@ -409,7 +409,7 @@ function RangeCreateModal({
                     <button
                       type="button"
                       onClick={() => removeTime(i)}
-                      className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                      className="flex-shrink-0 p-1.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -434,30 +434,30 @@ function RangeCreateModal({
           </div>
 
           {totalCount > 0 && (
-            <div className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+            <div className="text-xs text-white/50 bg-[#1c1a18] rounded-lg px-3 py-2">
               Will create{" "}
-              <span className="font-semibold text-gray-700">{totalCount}</span>{" "}
+              <span className="font-semibold text-white">{totalCount}</span>{" "}
               schedule{totalCount !== 1 ? "s" : ""} across{" "}
-              <span className="font-semibold text-gray-700">{scheduleDates.length}</span>{" "}
+              <span className="font-semibold text-white">{scheduleDates.length}</span>{" "}
               day{scheduleDates.length !== 1 ? "s" : ""}
             </div>
           )}
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-red-500 whitespace-pre-line bg-red-50 rounded-lg px-3 py-2">
+          <p className="mt-3 text-sm text-red-400 whitespace-pre-line bg-red-500/10 rounded-lg px-3 py-2">
             {error}
           </p>
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving || totalCount === 0}
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 active:scale-95 disabled:opacity-40 transition-all"
+            className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all"
           >
             {saving
               ? `Creating ${totalCount}…`
@@ -476,6 +476,7 @@ function CalendarGrid({
   rooms,
   movieMetas,
   selectedDate,
+  ticketCounts,
   onCellClick,
   onScheduleClick,
 }: {
@@ -483,6 +484,7 @@ function CalendarGrid({
   rooms: RoomOption[];
   movieMetas: MovieMeta[];
   selectedDate: string;
+  ticketCounts: Record<string, { sold: number; available: number }>;
   onCellClick: (roomName: string, time: string) => void;
   onScheduleClick: (schedule: ScheduleRow) => void;
 }) {
@@ -514,7 +516,7 @@ function CalendarGrid({
 
   if (rooms.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-400 text-sm">
+      <div className="text-center py-12 text-white/40 text-sm">
         No rooms configured yet.
       </div>
     );
@@ -525,13 +527,13 @@ function CalendarGrid({
       {/* Time label column */}
       <div className="flex-shrink-0 w-14">
         {/* header spacer */}
-        <div className="h-10 border-b border-gray-200 bg-gray-50/80" />
+        <div className="h-10 bg-[#1c1a18]/80" />
         {/* time labels */}
         <div className="relative" style={{ height: gridHeight }}>
           {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => (
             <div
               key={i}
-              className="absolute right-2 text-[11px] text-gray-400 font-medium -translate-y-2"
+              className="absolute right-2 text-[11px] text-white/40 font-medium -translate-y-2"
               style={{ top: i * HOUR_HEIGHT }}
             >
               {String((START_HOUR + i) % 24).padStart(2, "0")}:00
@@ -545,17 +547,17 @@ function CalendarGrid({
         const roomSchedules = byRoom[room.name] ?? [];
 
         return (
-          <div key={room.id} className="flex-1 min-w-[160px] border-l border-gray-200">
+          <div key={room.id} className="flex-1 min-w-[160px]">
             {/* Column header */}
-            <div className="h-10 flex items-center justify-center border-b border-gray-200 bg-gray-50/80 sticky top-0 z-10">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+            <div className="h-10 flex items-center justify-center bg-[#1c1a18]/80 sticky top-0 z-10">
+              <span className="text-xs font-semibold text-white/50 uppercase tracking-widest">
                 {room.name}
               </span>
             </div>
 
             {/* Schedule area */}
             <div
-              className="relative cursor-pointer group/col hover:bg-blue-50/20 transition-colors"
+              className="relative cursor-pointer group/col hover:bg-wine/5 transition-colors"
               style={{ height: gridHeight }}
               onClick={(e) => handleAreaClick(room.name, e)}
             >
@@ -563,7 +565,7 @@ function CalendarGrid({
               {Array.from({ length: TOTAL_HOURS }, (_, i) => (
                 <div
                   key={i}
-                  className="absolute inset-x-0 border-t border-gray-100"
+                  className="absolute inset-x-0 border-t border-white/5"
                   style={{ top: i * HOUR_HEIGHT }}
                 />
               ))}
@@ -571,7 +573,7 @@ function CalendarGrid({
               {Array.from({ length: TOTAL_HOURS }, (_, i) => (
                 <div
                   key={`h${i}`}
-                  className="absolute inset-x-0 border-t border-gray-50"
+                  className="absolute inset-x-0 border-t border-white/[0.03]"
                   style={{ top: i * HOUR_HEIGHT + HOUR_HEIGHT / 2 }}
                 />
               ))}
@@ -579,7 +581,7 @@ function CalendarGrid({
               {/* "Click to add" hint */}
               {roomSchedules.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/col:opacity-100 transition-opacity pointer-events-none">
-                  <span className="text-xs text-blue-400 font-medium bg-blue-50 px-2 py-1 rounded-md">
+                  <span className="text-xs text-gold font-medium bg-gold/10 px-2 py-1 rounded-md">
                     Click to add
                   </span>
                 </div>
@@ -595,6 +597,7 @@ function CalendarGrid({
                 const height = Math.max((duration / 60) * HOUR_HEIGHT, 28);
                 const isShort = height < 48;
 
+                const counts = ticketCounts[s.id];
                 return (
                   <button
                     key={s.id}
@@ -603,13 +606,13 @@ function CalendarGrid({
                       e.stopPropagation();
                       onScheduleClick(s);
                     }}
-                    className={`absolute inset-x-1 rounded-md text-left overflow-hidden transition-all hover:brightness-95 hover:shadow-sm active:scale-[0.98] border ${
+                    className={`absolute inset-x-1 rounded-md text-left overflow-hidden transition-all hover:brightness-110 hover:shadow-sm active:scale-[0.98] border ${
                       s.isActive
-                        ? "bg-blue-100 text-blue-900 border-blue-200"
-                        : "bg-gray-100 text-gray-500 border-gray-200"
+                        ? "bg-wine/40 text-white border-wine/60"
+                        : "bg-white/5 text-white/40 border-white/10"
                     }`}
                     style={{ top, height, zIndex: 5 }}
-                    title={`${s.movieName} — ${s.startTime} (${duration}m)`}
+                    title={`${s.movieName} — ${s.startTime} (${duration}m)${counts ? ` · ${counts.available} free · ${counts.sold} sold` : ""}`}
                   >
                     <div className="px-2 py-1">
                       <div className={`font-semibold truncate ${isShort ? "text-[10px]" : "text-[11px]"}`}>
@@ -620,9 +623,16 @@ function CalendarGrid({
                           {s.startTime} · {duration}m
                         </div>
                       )}
+                      {!isShort && counts && (
+                        <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
+                          <span className="text-emerald-400/80">{counts.available} free</span>
+                          <span className="opacity-30">·</span>
+                          <span className="opacity-50">{counts.sold} sold</span>
+                        </div>
+                      )}
                     </div>
                     {/* Color bar on left edge */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-md ${s.isActive ? "bg-blue-400" : "bg-gray-300"}`} />
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-md ${s.isActive ? "bg-gold" : "bg-white/20"}`} />
                   </button>
                 );
               })}
@@ -644,6 +654,8 @@ export default function Schedules() {
   const [movieMetas, setMovieMetas] = useState<MovieMeta[]>([]);
   const [roomOptions, setRoomOptions] = useState<RoomOption[]>([]);
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+
+  const [ticketCounts, setTicketCounts] = useState<Record<string, { sold: number; available: number }>>({});
 
   const [editingRow, setEditingRow] = useState<ScheduleRow | null>(null);
   const [detailRow, setDetailRow] = useState<ScheduleRow | null>(null);
@@ -675,6 +687,22 @@ export default function Schedules() {
   useEffect(() => {
     loadData().finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const daySchedules = rows.filter(r => String(r.scheduleDay).split("T")[0] === selectedDate);
+    if (daySchedules.length === 0) return;
+    Promise.all(
+      daySchedules.map(s =>
+        ticketsApi.getBySchedule(s.id).then(tickets => ({
+          id: s.id,
+          sold: tickets.filter(t => t.status === "Sold").length,
+          available: tickets.filter(t => t.status === "Available").length,
+        }))
+      )
+    ).then(results => {
+      setTicketCounts(Object.fromEntries(results.map(r => [r.id, { sold: r.sold, available: r.available }])));
+    });
+  }, [selectedDate, rows]);
 
   const shiftDate = (delta: number) => {
     const d = new Date(selectedDate + "T00:00:00");
@@ -729,8 +757,8 @@ export default function Schedules() {
     (r) => String(r.scheduleDay).split("T")[0] === selectedDate
   ).length;
 
-  if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (loading) return <div className="p-8 text-white/50">Loading...</div>;
+  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const detailDuration =
     detailRow
@@ -741,22 +769,22 @@ export default function Schedules() {
     <>
       <div className="flex flex-col h-screen p-8 pb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">Schedules</h1>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Schedules</h1>
           <button
             onClick={() => setRangeInitial({})}
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 active:scale-95 transition-all"
+            className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all"
           >
             Create Schedules
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
           {/* Date navigation */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between px-5 py-3 bg-[#1c1a18]">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => shiftDate(-1)}
-                className="p-1.5 rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+                className="p-1.5 rounded-md text-white/40 hover:bg-white/10 hover:text-white transition-colors"
                 title="Previous day"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -767,12 +795,12 @@ export default function Schedules() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-sm font-semibold text-gray-800 border-0 bg-transparent cursor-pointer outline-none"
+                className="text-sm font-semibold text-white border-0 bg-transparent cursor-pointer outline-none"
               />
-              <span className="text-sm text-gray-400 hidden sm:block">{displayDate}</span>
+              <span className="text-sm text-white/40 hidden sm:block">{displayDate}</span>
               <button
                 onClick={() => shiftDate(1)}
-                className="p-1.5 rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+                className="p-1.5 rounded-md text-white/40 hover:bg-white/10 hover:text-white transition-colors"
                 title="Next day"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -783,14 +811,14 @@ export default function Schedules() {
 
             <div className="flex items-center gap-3">
               {dayCount > 0 && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gold/20 text-gold">
                   {dayCount} showing{dayCount !== 1 ? "s" : ""}
                 </span>
               )}
               {!isToday && (
                 <button
                   onClick={() => setSelectedDate(todayStr)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-white transition-all"
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg text-white/60 hover:bg-white/5 transition-all"
                 >
                   Today
                 </button>
@@ -805,6 +833,7 @@ export default function Schedules() {
               rooms={roomOptions}
               movieMetas={movieMetas}
               selectedDate={selectedDate}
+              ticketCounts={ticketCounts}
               onCellClick={(roomName, time) =>
                 setRangeInitial({ room: roomName, date: selectedDate, time })
               }

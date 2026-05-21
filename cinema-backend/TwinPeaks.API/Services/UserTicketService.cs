@@ -130,7 +130,6 @@ namespace TwinPeaks.API.Services
                 UserId = userId,
                 TicketId = ticketId,
                 PurchasedAt = DateTime.UtcNow,
-                IsUsed = false,
                 ConfirmationCode = Guid.NewGuid().ToString("N").ToUpperInvariant()[..12]
             };
 
@@ -138,16 +137,6 @@ namespace TwinPeaks.API.Services
             _db.SaveChanges();
 
             return GetById(userTicket.Id)!;
-        }
-
-        public void MarkUsed(Guid id)
-        {
-            var ut = _db.UserTickets.FirstOrDefault(ut => ut.Id == id);
-            if (ut == null) throw new ArgumentException("UserTicket not found");
-            if (ut.IsUsed) throw new ArgumentException("Ticket has already been used");
-
-            ut.IsUsed = true;
-            _db.SaveChanges();
         }
 
         public void Cancel(Guid id)
@@ -195,7 +184,6 @@ namespace TwinPeaks.API.Services
                 SeatType: ut.Ticket.Seat.SeatType.ToString(),
                 Price: ut.Ticket.Price,
                 ConfirmationCode: ut.ConfirmationCode,
-                IsUsed: ut.IsUsed,
                 PurchasedAt: ut.PurchasedAt.ToString("yyyy-MM-dd HH:mm")
             );
         }

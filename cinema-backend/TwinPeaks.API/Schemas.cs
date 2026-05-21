@@ -154,7 +154,6 @@ namespace TwinPeaks.API
         string SeatType,
         decimal Price,
         string ConfirmationCode,
-        bool IsUsed,
         string PurchasedAt
     );
 }
