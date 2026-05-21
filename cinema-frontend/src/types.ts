@@ -231,7 +231,6 @@ export interface UserTicketRow {
   seatType: string;
   price: number;
   confirmationCode: string;
-  isUsed: boolean;
   purchasedAt: string;
 }
 

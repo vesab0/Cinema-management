@@ -84,23 +84,6 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPatch("/{id:guid}/mark-used", (Guid id, UserTicketService userTicketService) =>
-            {
-                try
-                {
-                    userTicketService.MarkUsed(id);
-                    return Results.NoContent();
-                }
-                catch (ArgumentException ex)
-                {
-                    return Results.BadRequest(new { message = ex.Message });
-                }
-                catch (Exception ex)
-                {
-                    return Results.Problem(title: "Failed to mark ticket as used", detail: ex.Message, statusCode: 500);
-                }
-            });
-
             group.MapDelete("/{id:guid}", (Guid id, UserTicketService userTicketService) =>
             {
                 try

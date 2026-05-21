@@ -3,7 +3,7 @@ import DataTable, { type Column } from "../../components/Table";
 import { castMembersApi, genresApi, moviesApi, uploadsApi } from "../../api";
 import type { CastMemberOption, GenreOption, MovieRow } from "../../types";
 
-const inputClass = "w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all";
+const inputClass = "w-full text-sm text-white bg-dash-surface border border-dash-border rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
 
 function SearchSelect({
   selectedIds,
@@ -77,7 +77,7 @@ function SearchSelect({
           {selectedOptions.map((o) => (
             <span
               key={o.id}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-gray-800 text-white"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-wine text-white"
             >
               {o[labelKey]}
               <button
@@ -104,16 +104,16 @@ function SearchSelect({
 
         {/* Dropdown */}
         {open && (query.length > 0 || filtered.length > 0) && (
-          <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-50 mt-1 w-full bg-dash-card border border-dash-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
             {filtered.length === 0 && !canCreate && (
-              <div className="px-3 py-2 text-sm text-gray-400">No results</div>
+              <div className="px-3 py-2 text-sm text-white/40">No results</div>
             )}
             {filtered.map((o) => (
               <button
                 key={o.id}
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); select(o.id); }}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 transition-colors"
               >
                 {o[labelKey]}
               </button>
@@ -123,7 +123,7 @@ function SearchSelect({
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); handleCreate(); }}
                 disabled={creating}
-                className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-100 disabled:opacity-40"
+                className="w-full text-left px-3 py-2 text-sm text-gold hover:bg-gold/10 transition-colors border-t border-dash-border disabled:opacity-40"
               >
                 {creating ? "Creating…" : `+ Create "${query.trim()}"`}
               </button>
@@ -167,13 +167,13 @@ export default function Movies() {
       label: "Created At",
       width: "110px",
       hideInModal: true,
-      renderCell: (v) => <span className="text-sm text-gray-700 px-1.5">{String(v).split("T")[0]}</span>,
+      renderCell: (v) => <span className="text-sm text-white/80 px-1.5">{String(v).split("T")[0]}</span>,
     },
     {
       key: "releaseDate",
       label: "Release Date",
       width: "110px",
-      renderCell: (v) => <span className="text-sm text-gray-700 px-1.5">{String(v).split("T")[0]}</span>,
+      renderCell: (v) => <span className="text-sm text-white/80 px-1.5">{String(v).split("T")[0]}</span>,
       renderField: (val, onChange) => (
         <input type="date" value={String(val ?? "").split("T")[0]} onChange={(e) => onChange(e.target.value)} className={inputClass} />
       ),
@@ -182,7 +182,7 @@ export default function Movies() {
       key: "genres",
       label: "Genres",
       renderCell: (val) => (
-        <span className="text-sm text-gray-700 px-1.5">{(val as string[]).join(", ")}</span>
+        <span className="text-sm text-white/80 px-1.5">{(val as string[]).join(", ")}</span>
       ),
       renderField: (val, onChange) => {
         const selected = (val as string[]) ?? [];
@@ -214,7 +214,7 @@ export default function Movies() {
       key: "cast",
       label: "Cast",
       renderCell: (val) => (
-        <span className="text-sm text-gray-700 px-1.5">{(val as { fullName: string }[]).map((c) => c.fullName).join(", ")}</span>
+        <span className="text-sm text-white/80 px-1.5">{(val as { fullName: string }[]).map((c) => c.fullName).join(", ")}</span>
       ),
       renderField: (val, onChange) => {
         const selected = (val as { fullName: string }[]) ?? [];

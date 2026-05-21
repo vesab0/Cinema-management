@@ -173,9 +173,6 @@ export default function ProfilePage() {
                         <p className="font-bold text-[#f5c518] text-sm leading-snug">{t.movieName}</p>
                         <p className="text-white/50 text-xs mt-0.5">{t.roomName}</p>
                       </div>
-                      {t.isUsed && (
-                        <span className="text-[10px] uppercase tracking-widest text-white/30 bg-white/5 border border-white/10 rounded px-2 py-0.5 shrink-0">Used</span>
-                      )}
                     </div>
 
                     <div className="border-t border-white/10" />

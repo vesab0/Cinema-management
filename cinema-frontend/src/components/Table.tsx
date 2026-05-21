@@ -109,23 +109,23 @@ export default function Table<T extends Record<string, unknown>>({
     <>
       <div className="p-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">{title}</h1>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">{title}</h1>
           {showCreate && (
             <button
               onClick={onCreateClick ?? openCreateModal}
-              className="text-sm font-medium bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 active:scale-95 transition-all"
+              className="text-sm font-medium bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine/80 active:scale-95 transition-all"
             >
               + Create
             </button>
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
+              <tr className="bg-[#1c1a18]">
                 {tableColumns.map((col) => (
-                  <th key={String(col.key)} style={col.width ? { width: col.width } : undefined} className="text-left text-xs font-semibold text-gray-400 uppercase tracking-widest px-5 py-3">
+                  <th key={String(col.key)} style={col.width ? { width: col.width } : undefined} className="text-left text-xs font-semibold text-white/50 uppercase tracking-widest px-5 py-3">
                     {col.label}
                   </th>
                 ))}
@@ -135,29 +135,29 @@ export default function Table<T extends Record<string, unknown>>({
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={tableColumns.length + 1} className="text-center text-gray-400 text-sm py-12">
+                  <td colSpan={tableColumns.length + 1} className="text-center text-white/40 text-sm py-12">
                     No rows yet.
                   </td>
                 </tr>
               ) : (
                 rows.map((row, rowIndex) => (
-                  <tr key={keyField ? String(row[keyField]) : rowIndex} className="border-b border-gray-100 last:border-0 even:bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <tr key={keyField ? String(row[keyField]) : rowIndex} className="even:bg-white/[0.03] hover:bg-white/[0.05] transition-colors">
                     {tableColumns.map((col) => (
                       <td key={String(col.key)} style={col.width ? { width: col.width } : undefined} className="px-5 py-2.5">
                         {col.type === "select" ? (
                           <select
-                            className="w-full bg-transparent text-sm text-gray-700 border border-transparent rounded px-1.5 py-1 hover:border-gray-300 focus:border-gray-400 focus:bg-gray-50 outline-none cursor-pointer transition-all"
+                            className="w-full bg-transparent text-sm text-white border border-transparent rounded px-1.5 py-1 hover:border-dash-border focus:border-gold focus:bg-dash-surface outline-none cursor-pointer transition-all"
                             value={String(row[col.key] ?? "")}
                             onChange={(e) => updateDropdown(rowIndex, col.key, e.target.value)}
                           >
                             {(col.options ?? []).map((opt) => (
-                              <option key={opt} value={opt}>{opt}</option>
+                              <option key={opt} value={opt} className="bg-dash-card text-white">{opt}</option>
                             ))}
                           </select>
                         ) : col.renderCell ? (
                           col.renderCell(row[col.key])
                         ) : (
-                          <span className="text-sm text-gray-700 px-1.5">
+                          <span className="text-sm text-white/80 px-1.5">
                             {String(row[col.key] ?? "")}
                           </span>
                         )}
@@ -166,17 +166,17 @@ export default function Table<T extends Record<string, unknown>>({
                     <td className="px-5 py-2.5">
                       <div className="flex justify-end items-center gap-1">
                         {saved[rowIndex] && (
-                          <span className="text-xs text-green-500 font-medium mr-1">Saved ✓</span>
+                          <span className="text-xs text-gold font-medium mr-1">Saved ✓</span>
                         )}
                         {!noEdit && (
-                          <button onClick={() => onEditOverride ? onEditOverride(rows[rowIndex]) : openEditModal(rowIndex)} title="Edit" className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors active:scale-95">
+                          <button onClick={() => onEditOverride ? onEditOverride(rows[rowIndex]) : openEditModal(rowIndex)} title="Edit" className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors active:scale-95">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                         )}
 
-                        <button onClick={() => handleDelete(rowIndex)} title="Delete" className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors active:scale-95">
+                        <button onClick={() => handleDelete(rowIndex)} title="Delete" className="p-1.5 rounded-md text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -245,11 +245,11 @@ function Modal<T extends Record<string, unknown>>({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onCancel}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onCancel}>
+      <div className="bg-dash-card rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-          <button onClick={onCancel} className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 transition-colors">
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <button onClick={onCancel} className="p-1.5 rounded-md text-white/50 hover:bg-white/10 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -259,7 +259,7 @@ function Modal<T extends Record<string, unknown>>({
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           {columns.map((col) => (
             <div key={String(col.key)}>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">
+              <label className="block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">
                 {col.label}
               </label>
               {col.renderField ? (
@@ -268,10 +268,10 @@ function Modal<T extends Record<string, unknown>>({
                 <select
                   value={String(row[col.key] ?? "")}
                   onChange={(e) => onChange(col.key, e.target.value)}
-                  className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all"
+                  className="w-full text-sm text-white bg-dash-surface border border-dash-border rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
                 >
                   {(col.options ?? []).map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option key={opt} value={opt} className="bg-dash-card text-white">{opt}</option>
                   ))}
                 </select>
               ) : (
@@ -279,7 +279,7 @@ function Modal<T extends Record<string, unknown>>({
                   type={col.type ?? "text"}
                   value={String(row[col.key] ?? "")}
                   onChange={(e) => onChange(col.key, e.target.value)}
-                  className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all"
+                  className="w-full text-sm text-white bg-dash-surface border border-dash-border rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
                 />
               )}
             </div>
@@ -287,14 +287,14 @@ function Modal<T extends Record<string, unknown>>({
         </div>
 
         {validationError && (
-          <p className="mt-4 text-sm text-red-500">{validationError}</p>
+          <p className="mt-4 text-sm text-red-400">{validationError}</p>
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">
+          <button onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg border border-dash-border text-white/70 hover:bg-white/5 transition-all">
             Cancel
           </button>
-          <button onClick={handleConfirm} className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 active:scale-95 transition-all">
+          <button onClick={handleConfirm} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all">
             {confirmLabel}
           </button>
         </div>
