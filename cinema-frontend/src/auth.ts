@@ -22,6 +22,7 @@ export type User = {
 	email: string
 	firstName: string
 	lastName: string
+	avatarPath?: string | null
 	roles: string[]
 	isActive: boolean
 }
@@ -110,6 +111,11 @@ export function getUser(): User | null {
 
 export function setUser(user: User | null): void {
 	_user = user
+	try {
+		window.dispatchEvent(new CustomEvent('auth:user-changed', { detail: user }))
+	} catch {
+		// ignore in non-browser environments
+	}
 }
 
 export function getUserId(): string | null {
@@ -232,6 +238,10 @@ function clearAuthState(): void {
 	_accessToken = null
 	_user = null
 	delete api.defaults.headers.common.Authorization
+	try {
+		window.dispatchEvent(new CustomEvent('auth:user-changed', { detail: null }))
+	} catch {
+	}
 }
 
 export async function bootstrapSession(): Promise<User | null> {

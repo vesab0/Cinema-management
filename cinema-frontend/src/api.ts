@@ -33,7 +33,7 @@ import type {
 } from './types'
 import { getAccessToken, setAccessToken, setUser } from './auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8001'
 
 export const predictorApi = axios.create({
@@ -178,6 +178,10 @@ export const usersApi = {
     await api.put(`/api/users/${row.id}`, toUpdatePayload(row), {
       headers: getAuthHeaders(),
     })
+  },
+
+  async updateProfile(id: string, payload: UpdateUserPayload): Promise<void> {
+    await api.put(`/api/users/${id}`, payload, { headers: getAuthHeaders() })
   },
 
   async remove(id: string): Promise<void> {

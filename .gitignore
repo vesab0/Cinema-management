@@ -523,3 +523,4 @@ cinema-frontend/dist/
 
 # Secrets — never commit
 cinema-backend/appsettings.Development.json
+/cinema-backend/public/uploads
