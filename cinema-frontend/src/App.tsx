@@ -13,6 +13,8 @@ import ProfilePage from './pages/profile'
 import MoviesPage from './pages/MoviesPage'
 import MovieDetailsPage from './pages/moviedetails'
 import NotFound from './components/NotFound'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 
 function PublicLayout() {
   return (
@@ -35,6 +37,9 @@ export default function App() {
         <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/movies/:id" element={<MovieDetailsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+
       </Route>
       <Route element={<AdminRoute />}>
         <Route path="/dashboard" element={<Dashboard />}>
