@@ -7,7 +7,6 @@ import { bootstrapSession } from './auth'
 
 // Eagerly loaded (public, always needed)
 import Index from './pages/index'
-import MoviesPage from './pages/moviespage'
 import RegisterForms from './components/RegisterForms'
 
 // Lazily loaded (heavy or infrequently visited)
@@ -17,6 +16,9 @@ const PaymentPage = lazy(() => import('./pages/paymentpage'))
 const ConfirmationPage = lazy(() => import('./pages/confirmationpage'))
 const ProfilePage = lazy(() => import('./pages/profile'))
 const NotFound = lazy(() => import('./components/NotFound'))
+const MoviesPage = lazy(() => import('./pages/moviespage'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('./pages/TermsOfService'))
 
 // Dashboard pages (admin-only, always lazy)
 const Dashboard = lazy(() => import('./pages/dashboard/dashboard'))
@@ -76,6 +78,8 @@ export default function App() {
             <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
             <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
             <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
           </Route>
           <Route element={<AdminRoute />}>
             <Route path="/dashboard" element={<Dashboard />}>
