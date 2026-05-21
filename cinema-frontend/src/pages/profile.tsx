@@ -5,34 +5,39 @@ import type { FavoriteMovieResponse, PredictorMovie } from "../types";
 import SecondaryNav from "../components/SecondaryNav";
 import { getUserId, getUserName, getUserEmail, getUser, setUser } from "../auth";
 
-// Strip embedded quotes from malformed TMDB URLs stored before the predictor fix
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
+
 function cleanUrl(url: string): string {
   return url.replace(/'/g, "").replace(/"/g, "");
 }
 
+function resolveAvatar(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("blob:")) return path;
+  return `${API_BASE}${path}`;
+}
+
 export default function ProfilePage() {
   const userId = getUserId();
-  const userName = getUserName();
   const userEmail = getUserEmail();
   const currentUser = getUser();
 
   const [editFirstName, setEditFirstName] = useState(currentUser?.firstName ?? "");
   const [editLastName, setEditLastName] = useState(currentUser?.lastName ?? "");
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(currentUser?.avatarPath ?? null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    resolveAvatar(currentUser?.avatarPath)
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedOk, setSavedOk] = useState(false);
   const [editingName, setEditingName] = useState(false);
 
-  // Favorites state
   const [favorites, setFavorites] = useState<FavoriteMovieResponse[]>([]);
   const [favsLoading, setFavsLoading] = useState(true);
   const [favsError, setFavsError] = useState<string | null>(null);
-
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Search state (inside modal)
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PredictorMovie[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -40,6 +45,18 @@ export default function ProfilePage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const favoriteTmdbIds = new Set(favorites.map((f) => f.tmdbId));
+
+  // Derive display name from state
+  const displayName = `${editFirstName} ${editLastName}`.trim() ||
+    getUserName() || userEmail || "User";
+
+  // Initials fallback
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   useEffect(() => {
     if (!userId) { setFavsLoading(false); return; }
@@ -49,11 +66,9 @@ export default function ProfilePage() {
       .finally(() => setFavsLoading(false));
   }, [userId]);
 
-  // Search debounce
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (query.trim().length < 2) { setResults([]); return; }
-
     debounceRef.current = setTimeout(() => {
       setSearchLoading(true);
       setSearchError(null);
@@ -62,9 +77,37 @@ export default function ProfilePage() {
         .catch(() => setSearchError("Search failed. Is the predictor running?"))
         .finally(() => setSearchLoading(false));
     }, 300);
-
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
+
+  const handleSave = async () => {
+    if (!userId) return;
+    setSaving(true);
+    setSaveError(null);
+    setSavedOk(false);
+    try {
+      let avatarPath: string | undefined;
+      if (selectedFile) {
+        avatarPath = await uploadsApi.uploadImage(selectedFile);
+      }
+      await usersApi.updateProfile(userId, {
+        firstName: editFirstName || undefined,
+        lastName: editLastName || undefined,
+        avatarPath: avatarPath || undefined,
+      });
+      const { data } = await api.get("/auth/me");
+      setUser(data);
+      setAvatarPreview(resolveAvatar(data?.avatarPath));
+      setSelectedFile(null);
+      setEditingName(false);
+      setSavedOk(true);
+      setTimeout(() => setSavedOk(false), 2500);
+    } catch (e: unknown) {
+      setSaveError(String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleRemoveFavorite = async (tmdbId: number) => {
     if (!userId) return;
@@ -76,7 +119,6 @@ export default function ProfilePage() {
 
   const handleToggleFavorite = async (movie: PredictorMovie) => {
     if (!userId) return;
-
     if (favoriteTmdbIds.has(movie.tmdbId)) {
       setFavorites((prev) => prev.filter((f) => f.tmdbId !== movie.tmdbId));
       await favoritesApi.remove(userId, movie.tmdbId).catch(() => {
@@ -84,9 +126,7 @@ export default function ProfilePage() {
       });
     } else {
       await favoritesApi.add(userId, movie.tmdbId, movie.title, movie.posterUrl)
-        .then((newFav) => {
-          setFavorites((prev) => [...prev, newFav]);
-        })
+        .then((newFav) => setFavorites((prev) => [...prev, newFav]))
         .catch(() => {});
     }
   };
@@ -110,18 +150,20 @@ export default function ProfilePage() {
       }}
     >
       <div className="absolute inset-0 bg-black/70" />
+
       <div className="relative z-10">
         <SecondaryNav />
-        <div className="px-10 py-10 max-w-6xl mx-auto">
 
-          {/* User info section */}
+        <div className="px-10 py-10 max-w-5xl mx-auto">
+
+          {/* Page title */}
           <h1 className="font-display text-gold text-5xl tracking-widest uppercase mb-2">
             Profile
           </h1>
-          <div className="w-12 h-0.5 bg-wine mb-6" />
+          <div className="w-12 h-0.5 bg-wine mb-8" />
 
           {!userId ? (
-            <p className="text-white/60 text-sm mb-10">
+            <p className="text-white/60 text-sm">
               Please{" "}
               <Link to="/register" className="text-gold underline">
                 sign in
@@ -129,75 +171,109 @@ export default function ProfilePage() {
               to view your profile.
             </p>
           ) : (
-            <div className="mb-10">
-                <div className="flex items-center gap-4 mb-4">
-                  <input id="avatar-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => {
+            <>
+              {/* ── Profile row ───────────────────────────────────────── */}
+              <div className="flex items-center gap-6 mb-10">
+
+                {/* Avatar */}
+                <input
+                  id="avatar-file-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
                     const f = e.target.files?.[0] ?? null;
                     setSelectedFile(f);
-                    if (f) {
-                      const url = URL.createObjectURL(f);
-                      setAvatarPreview(url);
-                    }
-                  }} />
-                  <div className="relative h-20 w-20 rounded-full overflow-hidden bg-gray-800 cursor-pointer" onClick={() => document.getElementById('avatar-file-input')?.click()}>
+                    if (f) setAvatarPreview(URL.createObjectURL(f));
+                  }}
+                />
+                <div
+                  className="relative h-20 w-20 rounded-full overflow-hidden bg-wine/60 border-2 border-gold/30 cursor-pointer shrink-0 group"
+                  onClick={() => document.getElementById("avatar-file-input")?.click()}
+                  title="Change profile photo"
+                >
                   {avatarPreview ? (
-                    <img src={(avatarPreview.startsWith('http') || avatarPreview.startsWith('blob:')) ? avatarPreview : `${import.meta.env.VITE_API_URL ?? 'http://localhost:5000'}${avatarPreview}`} alt="Avatar" className="h-full w-full object-cover" />
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar"
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center text-white/80">A</div>
+                    <div className="h-full w-full flex items-center justify-center text-gold text-xl font-bold">
+                      {initials}
+                    </div>
                   )}
-                  <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="text-white text-sm px-2 py-1 bg-black/50 rounded">Change profile</span>
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                   </div>
                 </div>
-                <div>
-                  {!editingName ? (
-                    <div className="flex items-center gap-2">
-                      <div className="text-white text-2xl font-semibold mb-1 cursor-pointer" onClick={() => setEditingName(true)}>{userName}</div>
-                      <button onClick={() => setEditingName(true)} className="text-white/60 text-sm underline">Edit</button>
+
+                {/* Name + email */}
+                <div className="flex-1 min-w-0">
+                  {editingName ? (
+                    <div className="flex gap-2 items-center mb-1">
+                      <input
+                        value={editFirstName}
+                        onChange={(e) => setEditFirstName(e.target.value)}
+                        placeholder="First name"
+                        className="px-3 py-1.5 rounded bg-black/40 border border-gold/30 text-white text-lg w-32 focus:outline-none focus:border-gold/60"
+                      />
+                      <input
+                        value={editLastName}
+                        onChange={(e) => setEditLastName(e.target.value)}
+                        placeholder="Last name"
+                        className="px-3 py-1.5 rounded bg-black/40 border border-gold/30 text-white text-lg w-32 focus:outline-none focus:border-gold/60"
+                      />
                     </div>
                   ) : (
-                    <div className="flex gap-2 items-center">
-                      <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="First" className="px-2 py-1 rounded bg-black/40 text-white" />
-                      <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Last" className="px-2 py-1 rounded bg-black/40 text-white" />
-                      <button onClick={() => setEditingName(false)} className="px-2 py-1 bg-gray-700 rounded text-white">Done</button>
+                    <div className="text-white text-2xl font-semibold mb-0.5 truncate">
+                      {displayName}
                     </div>
                   )}
-                  <div className="text-white/60 text-sm">{userEmail}</div>
+                  <div className="text-white/50 text-sm">{userEmail}</div>
                 </div>
-                <div className="ml-auto self-center">
-                  <button disabled={saving} onClick={async () => {
-                    if (!userId) return;
-                    setSaving(true); setSaveError(null);
-                    try {
-                      let avatarPath: string | undefined;
-                      if (selectedFile) {
-                        const url = await uploadsApi.uploadImage(selectedFile);
-                        avatarPath = url;
-                      }
 
-                      await usersApi.updateProfile(userId, {
-                        firstName: editFirstName || undefined,
-                        lastName: editLastName || undefined,
-                        avatarPath: avatarPath || undefined,
-                      });
+                {/* Actions — all on the same line */}
+                <div className="flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => setEditingName((v) => !v)}
+                  className="text-gold/60 hover:text-gold transition-colors"
+                  title={editingName ? "Cancel" : "Edit name"}>
+                  {editingName ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  )}
+                </button>
 
-                      const { data } = await api.get('/auth/me');
-                      setUser(data);
-                      setAvatarPreview(data?.avatarPath ?? null);
-                    } catch (e: unknown) {
-                      setSaveError(String(e));
-                    } finally {
-                      setSaving(false);
-                    }
-                  }} className="h-10 px-4 bg-gold text-stage rounded whitespace-nowrap leading-none flex items-center justify-center disabled:opacity-60">{saving ? 'Saving...' : 'Save changes'}</button>
-                  {saveError && <p className="text-red-400 text-sm mt-2">{saveError}</p>}
+              {(editingName || selectedFile) && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="h-9 px-5 bg-gold text-stage text-sm font-semibold rounded hover:bg-gold/90 transition-colors disabled:opacity-60 whitespace-nowrap"
+                >
+                  {saving ? "Saving…" : "Save changes"}
+                </button>
+              )}
+
+                  {savedOk && (
+                    <span className="text-green-400 text-sm font-medium">Saved ✓</span>
+                  )}
+                  {saveError && (
+                    <span className="text-red-400 text-sm">{saveError}</span>
+                  )}
                 </div>
-            </div>
-          )}
+              </div>
 
-          {/* My Favorites section */}
-          {userId && (
-            <>
+              {/* ── Favorites ─────────────────────────────────────────── */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-white text-xl uppercase tracking-widest font-semibold">
                   My Favorites
@@ -210,12 +286,8 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {favsLoading && (
-                <p className="text-white/50 text-sm tracking-wide">Loading...</p>
-              )}
-              {favsError && (
-                <p className="text-red-400 text-sm">Error: {favsError}</p>
-              )}
+              {favsLoading && <p className="text-white/50 text-sm">Loading…</p>}
+              {favsError && <p className="text-red-400 text-sm">Error: {favsError}</p>}
               {!favsLoading && !favsError && favorites.length === 0 && (
                 <p className="text-white/50 text-sm tracking-wide">
                   No favorites yet. Click "Add Favorites" to search and save movies.
@@ -224,23 +296,22 @@ export default function ProfilePage() {
 
               <div className="flex flex-wrap gap-8">
                 {favorites.map((fav) => (
-                  <div key={fav.favoriteId} className="w-[240px]">
-                    <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-3 bg-[#1a1a1a] relative group">
+                  <div key={fav.favoriteId} className="w-[180px]">
+                    <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-3 bg-black/40 relative group">
                       {fav.posterPath ? (
-                        <>
-                          <img
-                            src={cleanUrl(fav.posterPath.startsWith("http") ? fav.posterPath : `http://localhost:5000${fav.posterPath}`)}
-                            alt={fav.movieTitle}
-                            className="w-full h-full object-cover block transition-transform duration-200 hover:scale-[1.04]"
-                            onError={(e) => { const t = e.currentTarget; t.style.display = "none"; t.nextElementSibling?.classList.remove("hidden"); }}
-                          />
-                          <div className="hidden w-full h-full flex items-center justify-center p-3">
-                            <span className="text-[#666] text-xs text-center">{fav.movieTitle}</span>
-                          </div>
-                        </>
+                        <img
+                          src={cleanUrl(
+                            fav.posterPath.startsWith("http")
+                              ? fav.posterPath
+                              : `${API_BASE}${fav.posterPath}`
+                          )}
+                          alt={fav.movieTitle}
+                          className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.04]"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center p-3">
-                          <span className="text-[#666] text-xs text-center">{fav.movieTitle}</span>
+                          <span className="text-white/30 text-xs text-center">{fav.movieTitle}</span>
                         </div>
                       )}
                       <button
@@ -251,11 +322,11 @@ export default function ProfilePage() {
                         ♥
                       </button>
                     </div>
-                    <div className="text-[13px] font-medium text-white mb-1 uppercase tracking-wide">
+                    <div className="text-[13px] font-medium text-white uppercase tracking-wide truncate">
                       {fav.movieTitle}
                     </div>
-                    <div className="text-xs text-[#888]">
-                      Added: {fav.addedAt ? String(fav.addedAt).split("T")[0] : "—"}
+                    <div className="text-xs text-white/40 mt-0.5">
+                      {fav.addedAt ? String(fav.addedAt).split("T")[0] : "—"}
                     </div>
                   </div>
                 ))}
@@ -265,9 +336,12 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Add Favorites Modal */}
+      {/* ── Add Favorites Modal ──────────────────────────────────────── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-6 pt-16 overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-6 pt-16 overflow-y-auto"
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
+        >
           <div className="relative w-full max-w-3xl bg-stage rounded-lg border border-gold/30 shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gold/20">
               <h2 className="text-gold text-lg uppercase tracking-widest font-semibold">
@@ -275,7 +349,7 @@ export default function ProfilePage() {
               </h2>
               <button
                 onClick={closeModal}
-                className="text-white/60 hover:text-white text-2xl leading-none font-light"
+                className="text-white/60 hover:text-white text-2xl leading-none"
               >
                 ×
               </button>
@@ -291,61 +365,47 @@ export default function ProfilePage() {
                 className="mb-6 w-full max-w-md px-4 py-2.5 rounded bg-black/40 border border-gold/30 text-white placeholder-white/40 focus:outline-none focus:border-gold/60"
               />
 
-              {searchLoading && (
-                <p className="text-white/50 text-sm tracking-wide mb-4">Searching...</p>
-              )}
-              {searchError && (
-                <p className="text-red-400 text-sm mb-4">{searchError}</p>
-              )}
+              {searchLoading && <p className="text-white/50 text-sm mb-4">Searching…</p>}
+              {searchError && <p className="text-red-400 text-sm mb-4">{searchError}</p>}
               {!searchLoading && query.trim().length >= 2 && results.length === 0 && !searchError && (
-                <p className="text-white/50 text-sm tracking-wide mb-4">No results for "{query}"</p>
+                <p className="text-white/50 text-sm mb-4">No results for "{query}"</p>
               )}
 
               <div className="flex flex-wrap gap-6 pb-2">
                 {results.map((movie) => {
                   const isFav = favoriteTmdbIds.has(movie.tmdbId);
                   return (
-                    <div key={movie.tmdbId} className="w-[160px]">
-                      <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-[#1a1a1a] relative group">
+                    <div key={movie.tmdbId} className="w-[140px]">
+                      <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-black/40 relative group">
                         {movie.posterUrl ? (
-                          <>
-                            <img
-                              src={cleanUrl(movie.posterUrl)}
-                              alt={movie.title}
-                              className="w-full h-full object-cover block transition-transform duration-200 hover:scale-[1.04]"
-                              onError={(e) => { const t = e.currentTarget; t.style.display = "none"; t.nextElementSibling?.classList.remove("hidden"); }}
-                            />
-                            <div className="hidden w-full h-full flex items-center justify-center p-3">
-                              <span className="text-[#666] text-xs text-center">{movie.title}</span>
-                            </div>
-                          </>
+                          <img
+                            src={cleanUrl(movie.posterUrl)}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.04]"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center p-3">
-                            <span className="text-[#666] text-xs text-center">{movie.title}</span>
+                            <span className="text-white/30 text-xs text-center">{movie.title}</span>
                           </div>
                         )}
                         <button
                           onClick={() => handleToggleFavorite(movie)}
                           className={`absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-lg leading-none opacity-0 group-hover:opacity-100 transition-opacity ${isFav ? "text-red-500" : "text-white/70 hover:text-red-400"}`}
-                          title={isFav ? "Remove from favorites" : "Add to favorites"}
+                          title={isFav ? "Remove" : "Add to favorites"}
                         >
                           {isFav ? "♥" : "♡"}
                         </button>
                       </div>
-                      <div className="text-[12px] font-medium text-white mb-0.5 uppercase tracking-wide truncate" title={movie.title}>
+                      <div className="text-[12px] font-medium text-white uppercase tracking-wide truncate" title={movie.title}>
                         {movie.title}
                       </div>
-                      <div className="text-xs text-[#888] flex items-center gap-2">
+                      <div className="text-xs text-white/40 flex items-center gap-2 mt-0.5">
                         <span>{movie.releaseDate?.split("-")[0] ?? "—"}</span>
                         {movie.voteAverage > 0 && (
                           <span className="text-gold/70">★ {movie.voteAverage.toFixed(1)}</span>
                         )}
                       </div>
-                      {movie.genres.length > 0 && (
-                        <div className="text-[10px] text-white/40 mt-0.5 truncate">
-                          {movie.genres.slice(0, 3).join(" · ")}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
