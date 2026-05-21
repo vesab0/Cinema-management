@@ -50,11 +50,11 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPost("/purchase", (PurchaseTicketRequest req, UserTicketService userTicketService) =>
+            group.MapPost("/purchase", async (PurchaseTicketRequest req, UserTicketService userTicketService) =>
             {
                 try
                 {
-                    var ut = userTicketService.Purchase(req);
+                    var ut = await userTicketService.PurchaseAsync(req);
                     return Results.Created($"/api/user-tickets/{ut.Id}", ut);
                 }
                 catch (ArgumentException ex)
@@ -67,12 +67,12 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPatch("/{id:guid}/mark-used", (Guid id, UserTicketService userTicketService) =>
+            group.MapPost("/purchase-multi", async (PurchaseMultiTicketRequest req, UserTicketService userTicketService) =>
             {
                 try
                 {
-                    userTicketService.MarkUsed(id);
-                    return Results.NoContent();
+                    var results = await userTicketService.PurchaseMultiAsync(req);
+                    return Results.Ok(results);
                 }
                 catch (ArgumentException ex)
                 {
@@ -80,7 +80,7 @@ namespace TwinPeaks.API.Routers
                 }
                 catch (Exception ex)
                 {
-                    return Results.Problem(title: "Failed to mark ticket as used", detail: ex.Message, statusCode: 500);
+                    return Results.Problem(title: "Failed to purchase tickets", detail: ex.Message, statusCode: 500);
                 }
             });
 

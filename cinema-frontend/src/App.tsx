@@ -12,6 +12,9 @@ import AdminRoute from './AdminRoute'
 import ProfilePage from './pages/profile'
 import MoviesPage from './pages/moviespage'
 import MovieDetailsPage from './pages/moviedetails'
+import SeatSelectionPage from './pages/seatselection'
+import PaymentPage from './pages/paymentpage'
+import ConfirmationPage from './pages/confirmationpage'
 import NotFound from './components/NotFound'
 import UserTickets from './pages/dashboard/user-tickets'
 import { bootstrapSession } from './auth'
@@ -61,6 +64,9 @@ export default function App() {
         <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/movies/:id" element={<MovieDetailsPage />} />
+        <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
+        <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
+        <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
       </Route>
       <Route element={<AdminRoute />}>
         <Route path="/dashboard" element={<Dashboard />}>

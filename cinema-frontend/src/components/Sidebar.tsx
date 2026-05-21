@@ -33,16 +33,8 @@ const links: NavLink[] = [
     ),
   },
   {
-    label: "Bookings",
-    to: "/dashboard/user-tickets",
-    icon: (
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.5 4h-13m13 16h-13M8 20v-3.333a2 2 0 0 1 .4-1.2L10 12.6a1 1 0 0 0 0-1.2L8.4 8.533A2 2 0 0 1 8 7.333V4h8v3.333a2 2 0 0 1-.4 1.2L13.975 11.4a1 1 0 0 0 0 1.2l1.625 2.867c.254.411.4.893.4 1.4V20H8Z" />
-    ),
-  },
-  {
     label: "Financials",
-    to: "/dashboard/financials",
-    disabled: true,
+    to: "/dashboard/user-tickets",
     icon: (
       <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 17.345a4.76 4.76 0 0 0 2.558 1.618c2.274.589 4.512-.446 4.999-2.31.487-1.866-1.273-3.9-3.546-4.49-2.273-.59-4.034-2.623-3.547-4.488.486-1.865 2.724-2.899 4.998-2.31.982.236 1.87.8 2.322 1.584m-3.36 13.19V21m0-18v2.069" />
     ),
@@ -57,7 +49,7 @@ export default function Sidebar() {
       <button
         onClick={() => setOpen((o) => !o)}
         type="button"
-        className="fixed top-3 left-3 z-50 inline-flex sm:hidden items-center justify-center p-2 rounded-lg bg-gray-900 text-white"
+        className="fixed top-3 left-3 z-50 inline-flex sm:hidden items-center justify-center p-2 rounded-lg bg-wine-dark text-white"
       >
         <span className="sr-only">Open sidebar</span>
         <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -66,9 +58,9 @@ export default function Sidebar() {
       </button>
 
       <aside
-        className={`fixed top-0 left-0 z-40 w-64 h-full bg-gray-900 transition-transform sm:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed top-0 left-0 z-40 w-64 h-full bg-[#300000] transition-transform sm:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center px-5 py-5 border-b border-gray-700">
+        <div className="flex items-center px-5 py-5 bg-black/20">
           <span className="text-white font-semibold text-lg tracking-tight">Admin</span>
         </div>
 
@@ -77,12 +69,12 @@ export default function Sidebar() {
             {links.map(({ label, to, disabled, icon }) => (
               <li key={label}>
                 {disabled ? (
-                  <span className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 cursor-not-allowed select-none">
+                  <span className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-white/30 cursor-not-allowed select-none">
                     <svg className="w-5 h-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                       {icon}
                     </svg>
                     {label}
-                    <span className="ml-auto text-[10px] font-semibold tracking-wider uppercase bg-gray-700 text-gray-400 px-1.5 py-0.5 rounded">Soon</span>
+                    <span className="ml-auto text-[10px] font-semibold tracking-wider uppercase bg-gold/20 text-gold px-1.5 py-0.5 rounded">Soon</span>
                   </span>
                 ) : (
                   <NavLink
@@ -90,8 +82,8 @@ export default function Sidebar() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-gray-700 text-white"
-                          : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                          ? "bg-white/15 text-white"
+                          : "text-white/60 hover:bg-white/10 hover:text-white"
                       }`
                     }
                   >

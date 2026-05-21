@@ -137,7 +137,9 @@ namespace TwinPeaks.API
         string CreatedAt
     );
 
-    public record PurchaseTicketRequest(Guid UserId, Guid TicketId);
+    public record PurchaseTicketRequest(Guid UserId, Guid TicketId, string PaymentIntentId);
+    public record CreateMultiPaymentIntentRequest(List<Guid> TicketIds, Guid UserId);
+    public record PurchaseMultiTicketRequest(Guid UserId, List<Guid> TicketIds, string PaymentIntentId);
     public record UserTicketResponse(
         Guid Id,
         Guid UserId,
@@ -145,6 +147,7 @@ namespace TwinPeaks.API
         string UserEmail,
         Guid TicketId,
         string MovieName,
+        int DurationMinutes,
         DateTime ScheduleDay,
         string StartTime,
         string RoomName,
@@ -153,7 +156,6 @@ namespace TwinPeaks.API
         string SeatType,
         decimal Price,
         string ConfirmationCode,
-        bool IsUsed,
         string PurchasedAt
     );
 }

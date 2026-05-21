@@ -186,7 +186,6 @@ namespace TwinPeaks.API
         public Guid TicketId { get; set; }
         public Ticket Ticket { get; set; } = null!;
         public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
-        public bool IsUsed { get; set; } = false;
         public string ConfirmationCode { get; set; } = string.Empty;
     }
 }
