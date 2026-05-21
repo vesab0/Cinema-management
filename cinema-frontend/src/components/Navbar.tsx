@@ -75,33 +75,47 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                <div className="ml-auto flex items-center gap-4">
-                    {isLoggedIn ? (
+                    <div className="ml-auto flex items-center gap-4">
+                        {isLoggedIn ? (
                         <>
-                            {(() => {
-                                const raw = avatarSrc ?? getUser()?.avatarPath;
-                                if (!raw) return (<div onClick={() => navigate('/profile')} className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm text-white/80 cursor-pointer">A</div>);
-                                const src = raw.startsWith('http') ? raw : `${_API_BASE}${raw}`;
-                                return (<img src={src} alt="Avatar" onClick={() => navigate('/profile')} className="h-8 w-8 rounded-full object-cover cursor-pointer" />);
-                            })()}
-                            <span className="text-white font-medium text-sm">
-                                {userName ?? "User"}
-                            </span>
-                            <button
-                                onClick={handleLogout}
-                                className="text-white/60 text-sm underline hover:text-white transition-colors"
-                            >
-                                Logout
-                            </button>
-                        </>
-                    ) : (
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="text-white underline hover:text-white/80 text-sm"
-                        >
-                            Sign In
-                        </button>
-                    )}
+                        <div
+                        onClick={() => navigate('/profile')}
+                        className="flex items-center gap-2 cursor-pointer group">
+                        {(() => {
+                        const raw = avatarSrc ?? getUser()?.avatarPath;
+                        if (!raw) return (
+                            <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm text-white/80 group-hover:ring-2 group-hover:ring-gold/50 transition-all">
+                            A
+                            </div>
+                        );
+                        const src = raw.startsWith('http') ? raw : `${_API_BASE}${raw}`;
+                        return (
+                            <img
+                            src={src}
+                            alt="Avatar"
+                            className="h-8 w-8 rounded-full object-cover group-hover:ring-2 group-hover:ring-gold/50 transition-all"
+                            />
+                        );
+                        })()}
+                        <span className="text-white font-medium text-sm group-hover:text-gold transition-colors">
+                        {userName ?? "User"}
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="text-white/60 text-sm underline hover:text-white transition-colors"
+                    >
+                        Logout
+                    </button>
+                    </>
+                ) : (
+                    <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-white underline hover:text-white/80 text-sm"
+                    >
+                    Sign In
+                    </button>
+                )}
                 </div>
             </nav>
 
