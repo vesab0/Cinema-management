@@ -8,7 +8,8 @@ namespace TwinPeaks.API.Routers
     {
         public static void MapUserRoutes(this WebApplication app)
         {
-            var group = app.MapGroup("/api/users");
+            var group = app.MapGroup("/api/users")
+                .RequireAuthorization("AdminOnly");
 
             group.MapGet("/", (UsersService users) =>
             {

@@ -19,7 +19,7 @@ export default function Hero() {
           <span className="tracking-wide">Prishtine 1998</span>
         </div>
 
-        <h1 className="text-5xl font-extrabold tracking-tight sm:text-7xl md:text-8xl lg:text-[10rem]">
+        <h1 className="font-display text-5xl tracking-tight sm:text-7xl md:text-8xl lg:text-[10rem]">
           TWIN PEAKS
         </h1>
 
@@ -41,14 +41,14 @@ export default function Hero() {
           Located in the heart of Prishtina, Twin Peaks Cinema brings the world's finest films to you.
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60 sm:gap-6">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-white/50 uppercase tracking-widest sm:gap-x-8">
           <span>5 Screening Halls</span>
-          <span className="text-yellow-400">|</span>
-          <span className="text-white">IMAX</span>
-          <span className="text-white/60">Laser Projection</span>
-          <span className="text-yellow-400">|</span>
-          <span className="text-white">DOLBY</span>
-          <span className="text-white/60">Atmos Sound</span>
+          <span className="text-gold/50">·</span>
+          <span>IMAX</span>
+          <span className="text-gold/50">·</span>
+          <span>Laser Projection</span>
+          <span className="text-gold/50">·</span>
+          <span>Dolby Atmos</span>
         </div>
 
         <div className="mt-20 h-px w-full max-w-xl bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />

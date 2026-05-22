@@ -10,6 +10,7 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/tickets");
 
+            // Staff/Admin: view all tickets
             group.MapGet("/", (TicketService ticketService) =>
             {
                 try
@@ -20,8 +21,10 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to fetch tickets", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
+            // Public: needed for booking seat selection
             group.MapGet("/schedule/{scheduleId:guid}", (Guid scheduleId, TicketService ticketService) =>
             {
                 try
@@ -48,6 +51,7 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
+            // Staff/Admin mutations
             group.MapPost("/", (CreateTicketRequest req, TicketService ticketService) =>
             {
                 try
@@ -63,7 +67,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to create ticket", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapPost("/generate/{scheduleId:guid}", (Guid scheduleId, decimal price, TicketService ticketService) =>
             {
@@ -80,7 +85,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to generate tickets", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapPut("/{id:guid}", (Guid id, UpdateTicketRequest req, TicketService ticketService) =>
             {
@@ -97,7 +103,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to update ticket", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapDelete("/{id:guid}", (Guid id, TicketService ticketService) =>
             {
@@ -114,7 +121,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to delete ticket", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
         }
     }
 }

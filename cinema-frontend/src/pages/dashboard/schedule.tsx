@@ -1,5 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { moviesApi, roomsApi, schedulesApi, ticketsApi } from "../../api";
+import { scheduleEditSchema, rangeCreateSchema, type ScheduleEditFormData } from "../../schemas/dashboard";
 import type { ScheduleRow, RoomOption } from "../../types";
 
 const inputClass =
@@ -41,33 +44,27 @@ function EditModal({
   movieOptions: MovieOption[];
   roomOptions: RoomOption[];
   onClose: () => void;
-  onConfirm: (data: {
-    movieName: string;
-    roomName: string;
-    scheduleDay: string;
-    startTime: string;
-    isActive: boolean;
-  }) => Promise<void>;
+  onConfirm: (data: ScheduleEditFormData) => Promise<void>;
 }) {
-  const [form, setForm] = useState({
-    movieName: schedule.movieName,
-    roomName: schedule.roomName,
-    scheduleDay: String(schedule.scheduleDay).split("T")[0],
-    startTime: schedule.startTime,
-    isActive: schedule.isActive,
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<ScheduleEditFormData>({
+    resolver: zodResolver(scheduleEditSchema),
+    defaultValues: {
+      movieName: schedule.movieName,
+      roomName: schedule.roomName,
+      scheduleDay: String(schedule.scheduleDay).split("T")[0],
+      startTime: schedule.startTime,
+      isActive: schedule.isActive,
+    },
   });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    setSaving(true);
+  const onSubmit = async (data: ScheduleEditFormData) => {
+    setServerError(null);
     try {
-      await onConfirm(form);
+      await onConfirm(data);
       onClose();
     } catch (e) {
-      setError(String(e));
-    } finally {
-      setSaving(false);
+      setServerError(String(e));
     }
   };
 
@@ -76,13 +73,14 @@ function EditModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       onClick={onClose}
     >
-      <div
+      <form
         className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-md mx-4 p-6"
         onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">Edit Schedule</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
+          <button type="button" onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -92,46 +90,60 @@ function EditModal({
         <div className="space-y-4">
           <div>
             <label className={labelClass}>Movie</label>
-            <select value={form.movieName} onChange={(e) => setForm((f) => ({ ...f, movieName: e.target.value }))} className={inputClass}>
+            <select {...register("movieName")} className={inputClass}>
               <option value="" className="bg-dash-card">Select movie...</option>
               {movieOptions.map((m) => <option key={m.id} value={m.name} className="bg-dash-card">{m.name}</option>)}
             </select>
+            {errors.movieName && <p className="mt-1 text-xs text-red-400">{errors.movieName.message}</p>}
           </div>
           <div>
             <label className={labelClass}>Room</label>
-            <select value={form.roomName} onChange={(e) => setForm((f) => ({ ...f, roomName: e.target.value }))} className={inputClass}>
+            <select {...register("roomName")} className={inputClass}>
               <option value="" className="bg-dash-card">Select room...</option>
               {roomOptions.map((r) => <option key={r.id} value={r.name} className="bg-dash-card">{r.name}</option>)}
             </select>
+            {errors.roomName && <p className="mt-1 text-xs text-red-400">{errors.roomName.message}</p>}
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
               <label className={labelClass}>Date</label>
-              <input type="date" value={form.scheduleDay} onChange={(e) => setForm((f) => ({ ...f, scheduleDay: e.target.value }))} className={inputClass} />
+              <input type="date" {...register("scheduleDay")} className={inputClass} />
+              {errors.scheduleDay && <p className="mt-1 text-xs text-red-400">{errors.scheduleDay.message}</p>}
             </div>
             <div className="flex-1">
               <label className={labelClass}>Time</label>
-              <input type="time" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} className={inputClass} />
+              <input type="time" {...register("startTime")} className={inputClass} />
+              {errors.startTime && <p className="mt-1 text-xs text-red-400">{errors.startTime.message}</p>}
             </div>
           </div>
           <div>
             <label className={labelClass}>Active</label>
-            <select value={String(form.isActive)} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.value === "true" }))} className={inputClass}>
-              <option value="true" className="bg-dash-card">Yes</option>
-              <option value="false" className="bg-dash-card">No</option>
-            </select>
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field }) => (
+                <select
+                  value={String(field.value)}
+                  onChange={(e) => field.onChange(e.target.value === "true")}
+                  className={inputClass}
+                >
+                  <option value="true" className="bg-dash-card">Yes</option>
+                  <option value="false" className="bg-dash-card">No</option>
+                </select>
+              )}
+            />
           </div>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+        {serverError && <p className="mt-3 text-sm text-red-400">{serverError}</p>}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">Cancel</button>
-          <button onClick={handleSubmit} disabled={saving} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all">
-            {saving ? "Saving..." : "Save"}
+          <button type="button" onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">Cancel</button>
+          <button type="submit" disabled={isSubmitting} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all">
+            {isSubmitting ? "Saving..." : "Save"}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
@@ -271,10 +283,11 @@ function RangeCreateModal({
   const totalCount = scheduleDates.length * validTimes.length;
 
   const handleSubmit = async () => {
-    if (!movieName) { setError("Movie is required"); return; }
-    if (!roomName) { setError("Room is required"); return; }
-    if (!fromDate || !toDate) { setError("Date range is required"); return; }
-    if (fromDate > toDate) { setError("From date must be before to date"); return; }
+    const parseResult = rangeCreateSchema.safeParse({ movieName, roomName, fromDate, toDate, price });
+    if (!parseResult.success) {
+      setError(parseResult.error.errors[0].message);
+      return;
+    }
     if (validTimes.length === 0) { setError("Add at least one time slot"); return; }
     if (totalCount === 0) { setError("No dates match the selected criteria"); return; }
 
@@ -710,13 +723,7 @@ export default function Schedules() {
     setSelectedDate(formatDate(d));
   };
 
-  const handleEdit = async (form: {
-    movieName: string;
-    roomName: string;
-    scheduleDay: string;
-    startTime: string;
-    isActive: boolean;
-  }) => {
+  const handleEdit = async (form: ScheduleEditFormData) => {
     if (!editingRow) return;
     const movieId = movieOptions.find((m) => m.name === form.movieName)?.id;
     const roomId = roomOptions.find((r) => r.name === form.roomName)?.id;

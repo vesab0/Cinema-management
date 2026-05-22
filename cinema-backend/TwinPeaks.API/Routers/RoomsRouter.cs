@@ -1,4 +1,5 @@
 using TwinPeaks.API.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -10,6 +11,7 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/rooms");
 
+            // Public reads (needed for seat selection in booking flow)
             group.MapGet("/", (RoomService rooms) =>
             {
                 try
@@ -36,8 +38,13 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPost("/", (CreateRoomRequest req, RoomService rooms) =>
+            // Admin-only mutations
+            group.MapPost("/", async (CreateRoomRequest req, RoomService rooms, IValidator<CreateRoomRequest> validator) =>
             {
+                var validation = await validator.ValidateAsync(req);
+                if (!validation.IsValid)
+                    return Results.ValidationProblem(validation.ToDictionary());
+
                 try
                 {
                     var room = rooms.Create(req);
@@ -51,7 +58,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to create room", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("AdminOnly");
 
             group.MapPut("/{id:guid}", (Guid id, UpdateRoomRequest req, RoomService rooms) =>
             {
@@ -65,7 +73,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to update room", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("AdminOnly");
 
             group.MapPatch("/{roomId:guid}/seats/{seatId:guid}", (Guid roomId, Guid seatId, UpdateSeatRequest req, RoomService rooms) =>
             {
@@ -79,7 +88,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to update seat", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("AdminOnly");
 
             group.MapDelete("/{id:guid}", (Guid id, RoomService rooms) =>
             {
@@ -93,7 +103,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to delete room", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("AdminOnly");
         }
     }
 }

@@ -1,4 +1,5 @@
 using TwinPeaks.API.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
@@ -10,6 +11,7 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/schedules");
 
+            // Public reads (needed for booking flow)
             group.MapGet("/", (ScheduleService scheduleService) =>
             {
                 try
@@ -79,8 +81,13 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPost("/", (CreateMovieScheduleRequest req, ScheduleService scheduleService) =>
+            // Staff/Admin mutations
+            group.MapPost("/", async (CreateMovieScheduleRequest req, ScheduleService scheduleService, IValidator<CreateMovieScheduleRequest> validator) =>
             {
+                var validation = await validator.ValidateAsync(req);
+                if (!validation.IsValid)
+                    return Results.ValidationProblem(validation.ToDictionary());
+
                 try
                 {
                     var schedule = scheduleService.Create(req);
@@ -94,7 +101,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to create schedule", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapPut("/{id:guid}", (Guid id, UpdateMovieScheduleRequest req, ScheduleService scheduleService) =>
             {
@@ -111,7 +119,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to update schedule", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapDelete("/{id:guid}", (Guid id, ScheduleService scheduleService) =>
             {
@@ -128,7 +137,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to delete schedule", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
         }
     }
 }

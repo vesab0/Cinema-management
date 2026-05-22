@@ -1,4 +1,5 @@
 using TwinPeaks.API.Services;
+using FluentValidation;
 
 namespace TwinPeaks.API.Routers
 {
@@ -8,6 +9,7 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/movies");
 
+            // Public reads
             group.MapGet("/", (MovieService movies) =>
             {
                 try
@@ -35,8 +37,13 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPost("/", (CreateMovieRequest req, MovieService movies, MovieNotificationService notifications) =>
+            // Staff/Admin mutations
+            group.MapPost("/", async (CreateMovieRequest req, MovieService movies, MovieNotificationService notifications, IValidator<CreateMovieRequest> validator) =>
             {
+                var validation = await validator.ValidateAsync(req);
+                if (!validation.IsValid)
+                    return Results.ValidationProblem(validation.ToDictionary());
+
                 try
                 {
                     var movie = movies.Create(req);
@@ -51,7 +58,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to create movie", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapPut("/{id:guid}", (Guid id, UpdateMovieRequest req, MovieService movies) =>
             {
@@ -65,7 +73,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to update movie", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
 
             group.MapDelete("/{id:guid}", (Guid id, MovieService movies) =>
             {
@@ -79,7 +88,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to delete movie", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("StaffOrAdmin");
         }
     }
 }

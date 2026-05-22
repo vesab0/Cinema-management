@@ -80,7 +80,7 @@ export default function SeatSelectionPage() {
 
   return (
     <div className="min-h-screen bg-stage text-white">
-      <div className="max-w-7xl mx-auto px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
 
         <div className="mb-7">
           <button
@@ -97,10 +97,10 @@ export default function SeatSelectionPage() {
           </p>
         </div>
 
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           <div className="flex-1 min-w-0">
-            <div className="bg-[#111] rounded p-8 pb-10">
+            <div className="bg-[#111] rounded p-4 sm:p-8 pb-10 overflow-x-auto">
               <div className="mb-12 text-center px-8">
                 <svg viewBox="0 0 600 28" className="w-full max-w-xl mx-auto" fill="none">
                   <path d="M 20 26 Q 300 2 580 26" stroke="white" strokeOpacity="0.35" strokeWidth="2" />
@@ -137,7 +137,7 @@ export default function SeatSelectionPage() {
             </div>
           </div>
 
-          <div className="w-[300px] shrink-0 sticky top-6 flex flex-col gap-4">
+          <div className="w-full lg:w-[300px] shrink-0 lg:sticky lg:top-6 flex flex-col gap-4">
 
             <div className="bg-[#141414] border border-white/10 rounded p-5">
               <div className="flex gap-3 items-start">

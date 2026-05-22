@@ -200,6 +200,7 @@ export default function Table<T extends Record<string, unknown>>({
           onCancel={closeEditModal}
           onConfirm={handleEditSave}
           confirmLabel="Save"
+          validate={validate}
         />
       )}
 

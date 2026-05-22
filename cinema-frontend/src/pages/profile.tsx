@@ -109,7 +109,7 @@ export default function ProfilePage() {
     try {
       let avatarPath: string | undefined;
       if (selectedFile) {
-        avatarPath = await uploadsApi.uploadImage(selectedFile);
+        avatarPath = await uploadsApi.uploadImage(selectedFile, 'avatar');
       }
       await usersApi.updateProfile(userId, {
         firstName: editFirstName || undefined,
@@ -175,7 +175,7 @@ export default function ProfilePage() {
       <div className="relative z-10">
         <SecondaryNav />
 
-        <div className="px-10 py-10 max-w-5xl mx-auto">
+        <div className="px-4 sm:px-8 md:px-10 py-8 sm:py-10 max-w-5xl mx-auto">
 
           {/* Page title */}
           <h1 className="font-display text-gold text-5xl tracking-widest uppercase mb-2">
@@ -194,7 +194,7 @@ export default function ProfilePage() {
           ) : (
             <>
               {/* ── Profile row ───────────────────────────────────────── */}
-              <div className="flex items-center gap-6 mb-10">
+              <div className="flex flex-wrap items-center gap-6 mb-10">
 
                 {/* Avatar */}
                 <input
@@ -307,11 +307,11 @@ export default function ProfilePage() {
               {!ticketsLoading && tickets.length === 0 && (
                 <p className="text-white/50 text-sm tracking-wide">No tickets yet.</p>
               )}
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {tickets.map((t) => (
                   <div
                     key={t.id}
-                    className="bg-[#141414] border border-white/10 rounded p-5 w-[280px] flex flex-col gap-3"
+                    className="bg-[#141414] border border-white/10 rounded p-5 flex flex-col gap-3"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -412,6 +412,8 @@ export default function ProfilePage() {
                 ))}
               </div>
             </>
+          )}
+          </>
           )}
         </div>
       </div>

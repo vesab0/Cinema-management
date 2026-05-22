@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
+using TwinPeaks.API.Services;
 
 namespace TwinPeaks.API.Routers
 {
@@ -7,34 +6,26 @@ namespace TwinPeaks.API.Routers
     {
         public static void MapUploadRoutes(this WebApplication app)
         {
-            app.MapPost("/api/uploads/image", async (IFormFile file, IWebHostEnvironment env) =>
+            app.MapPost("/api/uploads/image", async (IFormFile file, IS3Service s3, string? type) =>
             {
                 if (file == null || file.Length == 0)
-                {
                     return Results.BadRequest(new { message = "Image file is required" });
-                }
 
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
                 var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
                 if (!allowed.Contains(ext))
-                {
                     return Results.BadRequest(new { message = "Unsupported image type" });
-                }
 
-                var uploadsDir = Path.Combine(env.ContentRootPath, "public", "uploads");
-                Directory.CreateDirectory(uploadsDir);
+                var folder = type == "avatar" ? "profile-pictures" : "posters";
+                var key = $"{folder}/{Guid.NewGuid():N}{ext}";
 
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                var fullPath = Path.Combine(uploadsDir, fileName);
+                await using var stream = file.OpenReadStream();
+                var url = await s3.UploadAsync(stream, key, file.ContentType);
 
-                await using (var stream = File.Create(fullPath))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                return Results.Ok(new UploadImageResponse($"/uploads/{fileName}"));
+                return Results.Ok(new UploadImageResponse(url));
             })
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .RequireAuthorization("StaffOrAdmin");
         }
     }
 }

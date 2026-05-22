@@ -82,7 +82,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-stage text-white">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <button
           onClick={() => navigate(-1)}
           className="text-white/40 text-xs uppercase tracking-widest hover:text-white transition-colors mb-8 flex items-center gap-2"

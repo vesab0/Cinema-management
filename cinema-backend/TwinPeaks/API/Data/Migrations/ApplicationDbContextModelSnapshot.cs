@@ -426,9 +426,6 @@ namespace backend.TwinPeaks.API.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("varchar(64)");
 
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<DateTime>("PurchasedAt")
                         .HasColumnType("datetime(6)");
 

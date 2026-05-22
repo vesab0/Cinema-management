@@ -210,10 +210,11 @@ export const castMembersApi = {
 }
 
 export const uploadsApi = {
-  uploadImage: async (file: File): Promise<string> => {
+  uploadImage: async (file: File, type?: 'avatar' | 'poster'): Promise<string> => {
     const formData = new FormData()
     formData.append('file', file)
-    const { data } = await api.post<{ url: string }>('/api/uploads/image', formData, {
+    const params = type ? `?type=${type}` : ''
+    const { data } = await api.post<{ url: string }>(`/api/uploads/image${params}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return data.url

@@ -9,6 +9,7 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/stripe");
 
+            // Payment intents require an authenticated user
             group.MapPost("/create-payment-intent", async (
                 CreatePaymentIntentRequest req,
                 StripeService stripeService) =>
@@ -35,7 +36,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to create payment intent", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization();
 
             group.MapPost("/create-multi-payment-intent", async (
                 CreateMultiPaymentIntentRequest req,
@@ -63,8 +65,10 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to create payment intent", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization();
 
+            // Webhook is called by Stripe directly — no Bearer token
             group.MapPost("/webhook", async (
                 HttpRequest request,
                 IConfiguration config,

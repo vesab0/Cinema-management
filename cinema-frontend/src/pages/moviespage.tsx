@@ -78,7 +78,7 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
       <div className="absolute inset-0 bg-black/70" />
       <div className="relative z-10">
         <SecondaryNav />
-        <div className="px-10 py-10 max-w-6xl mx-auto">
+        <div className="px-4 sm:px-8 md:px-10 py-10 max-w-6xl mx-auto">
           <h1 className="font-display text-gold text-5xl tracking-widest uppercase mb-2">
             {mode === "upcoming" ? "Upcoming" : "Now Playing"}
           </h1>
@@ -89,7 +89,7 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
             placeholder="Search movies..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="mb-8 w-full max-w-sm px-4 py-2 rounded bg-black/40 border border-gold/30 text-white placeholder-white/40 focus:outline-none focus:border-gold/60"
+            className="mb-8 w-full max-w-sm px-4 py-2.5 rounded bg-black/40 border border-gold/30 text-white placeholder-white/40 focus:outline-none focus:border-gold/60 transition-colors"
           />
 
           {loading && (
@@ -102,7 +102,7 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
             <p className="text-white/50 text-sm tracking-wide">No movies found.</p>
           )}
 
-          <div className="flex flex-wrap gap-8">
+          <div className="flex flex-wrap gap-6 sm:gap-8">
             {filtered.map((movie) => (
               <MovieCard
                 key={movie.id}
