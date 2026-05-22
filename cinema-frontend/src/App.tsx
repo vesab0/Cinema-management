@@ -16,6 +16,8 @@ import SeatSelectionPage from './pages/seatselection'
 import PaymentPage from './pages/paymentpage'
 import ConfirmationPage from './pages/confirmationpage'
 import NotFound from './components/NotFound'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import UserTickets from './pages/dashboard/user-tickets'
 import { bootstrapSession } from './auth'
 
@@ -64,6 +66,9 @@ export default function App() {
         <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/movies/:id" element={<MovieDetailsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+
         <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
         <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
         <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
