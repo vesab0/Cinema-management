@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RegisterForms from "./RegisterForms";
-import { getAccessToken, getUser, logout } from "../auth";
+import { getAccessToken, getUser, isAuthenticated, logout } from "../auth";
 import { API_BASE_URL as _API_BASE } from "../api";
 
 export default function Navbar() {
@@ -38,8 +38,7 @@ export default function Navbar() {
         return () => window.removeEventListener('auth:user-changed', handler as EventListener);
     }, []);
 
-    const authToken = getAccessToken();
-    const isLoggedIn = !!authToken;
+    const isLoggedIn = isAuthenticated();
 
     const handleLoginSuccess = () => {
         setIsModalOpen(false);
