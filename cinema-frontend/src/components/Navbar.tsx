@@ -1,56 +1,72 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RegisterForms from "./RegisterForms";
-import { getAccessToken, isAdminToken } from "../auth";
-
-function getUserName(token: string): string | null {
-    try {
-        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-        const first = payload["given_name"] ?? payload["firstName"] ?? "";
-        const last = payload["family_name"] ?? payload["lastName"] ?? "";
-        const full = `${first} ${last}`.trim();
-        return full || payload["email"] || null;
-    } catch {
-        return null;
-    }
-}
+import { getAccessToken, getUser, isAuthenticated, logout } from "../auth";
+import { API_BASE_URL as _API_BASE } from "../api";
 
 export default function Navbar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [authToken, setAuthToken] = useState<string | null>(getAccessToken);
+    const [userName, setUserName] = useState<string | null>(() => {
+        const user = getUser();
+        return user ? `${user.firstName} ${user.lastName}`.trim() || user.email : null;
+    });
+    const [isAdminUser, setIsAdminUser] = useState(() => {
+        const user = getUser();
+        return !!user?.roles.map(r => r.toLowerCase()).includes('admin');
+    });
+    const [avatarSrc, setAvatarSrc] = useState<string | null>(() => {
+        const user = getUser();
+        return user?.avatarPath ?? null;
+    });
     const navigate = useNavigate();
 
-    const isLoggedIn = !!authToken;
-    const isAdmin = authToken ? isAdminToken(authToken) : false;
-    const userName = authToken ? getUserName(authToken) : null;
+    // listen for global user change events so navbar updates without full refresh
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const detail = (e as CustomEvent).detail as any;
+            if (!detail) {
+                setUserName(null);
+                setIsAdminUser(false);
+                setAvatarSrc(null);
+                return;
+            }
+            setUserName(`${detail.firstName} ${detail.lastName}`.trim() || detail.email || null);
+            setIsAdminUser(detail.roles?.map((r: string) => r.toLowerCase()).includes('admin'));
+            setAvatarSrc(detail.avatarPath ?? null);
+        };
+        window.addEventListener('auth:user-changed', handler as EventListener);
+        return () => window.removeEventListener('auth:user-changed', handler as EventListener);
+    }, []);
+
+    const isLoggedIn = isAuthenticated();
 
     const handleLoginSuccess = () => {
         setIsModalOpen(false);
-        setAuthToken(getAccessToken());
+        const user = getUser();
+        if (user) {
+            setUserName(`${user.firstName} ${user.lastName}`.trim() || user.email);
+            setIsAdminUser(user.roles.map(r => r.toLowerCase()).includes('admin'));
+        }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        setAuthToken(null);
+    const handleLogout = async () => {
+        await logout();
+        setUserName(null);
+        setIsAdminUser(false);
         navigate("/");
     };
 
     return (
         <>
             <nav className="relative bg-wine p-4 flex items-center">
-
-                {/* Left side - Dashboard for admins */}
                 <div className="flex-1 flex items-center">
-                    {isAdmin && (
+                    {isAdminUser && (
                         <Link to="/dashboard" className="text-sm font-semibold text-gold hover:text-gold/70 transition-colors">
                             Dashboard
                         </Link>
                     )}
                 </div>
 
-                {/* Centered logo */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
                     <Link to="/" className="flex items-center gap-2">
                         <img src="/logo.png" alt="Logo" className="h-10" />
@@ -58,28 +74,47 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                {/* Right side - auth */}
-                <div className="ml-auto flex items-center gap-4">
-                    {isLoggedIn ? (
+                    <div className="ml-auto flex items-center gap-4">
+                        {isLoggedIn ? (
                         <>
-                            <span className="text-white font-medium text-sm">
-                                {userName ?? "User"}
-                            </span>
-                            <button
-                                onClick={handleLogout}
-                                className="text-white/60 text-sm underline hover:text-white transition-colors"
-                            >
-                                Logout
-                            </button>
-                        </>
-                    ) : (
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="text-white underline hover:text-white/80 text-sm"
-                        >
-                            Sign In
-                        </button>
-                    )}
+                        <div
+                        onClick={() => navigate('/profile')}
+                        className="flex items-center gap-2 cursor-pointer group">
+                        {(() => {
+                        const raw = avatarSrc ?? getUser()?.avatarPath;
+                        if (!raw) return (
+                            <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm text-white/80 group-hover:ring-2 group-hover:ring-gold/50 transition-all">
+                            A
+                            </div>
+                        );
+                        const src = raw.startsWith('http') ? raw : `${_API_BASE}${raw}`;
+                        return (
+                            <img
+                            src={src}
+                            alt="Avatar"
+                            className="h-8 w-8 rounded-full object-cover group-hover:ring-2 group-hover:ring-gold/50 transition-all"
+                            />
+                        );
+                        })()}
+                        <span className="text-white font-medium text-sm group-hover:text-gold transition-colors">
+                        {userName ?? "User"}
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="text-white/60 text-sm underline hover:text-white transition-colors"
+                    >
+                        Logout
+                    </button>
+                    </>
+                ) : (
+                    <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-white underline hover:text-white/80 text-sm"
+                    >
+                    Sign In
+                    </button>
+                )}
                 </div>
             </nav>
 

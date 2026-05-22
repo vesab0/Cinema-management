@@ -10,6 +10,7 @@ namespace TwinPeaks.API
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
+        public string? AvatarPath { get; set; }
         public string? PhoneNumber { get; set; }
         public bool EmailConfirmed { get; set; }
         public bool LockoutEnabled { get; set; }
@@ -185,7 +186,6 @@ namespace TwinPeaks.API
         public Guid TicketId { get; set; }
         public Ticket Ticket { get; set; } = null!;
         public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
-        public bool IsUsed { get; set; } = false;
         public string ConfirmationCode { get; set; } = string.Empty;
     }
 }

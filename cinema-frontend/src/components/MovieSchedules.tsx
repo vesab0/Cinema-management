@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { schedulesApi } from '../api'
 import type { ScheduleRow } from '../types'
 
@@ -19,6 +20,7 @@ function getDayLabel(dateStr: string): string {
 }
 
 export default function MovieSchedules({ movieId }: Props) {
+  const navigate = useNavigate()
   const [schedules, setSchedules] = useState<ScheduleRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,8 +48,16 @@ export default function MovieSchedules({ movieId }: Props) {
   }, [movieId])
 
   const groupedByDay = useMemo(() => {
+    const now = Date.now()
     const filtered = schedules
-      .filter((s) => s.movieId === movieId)
+      .filter((s) => {
+        if (s.movieId !== movieId) return false
+        const day = s.scheduleDay?.split('T')[0] ?? ''
+        const [hh, mm] = (s.startTime ?? '00:00').split(':').map(Number)
+        const start = new Date(day)
+        start.setHours(hh, mm, 0, 0)
+        return start.getTime() > now
+      })
       .sort((a, b) =>
         `${a.scheduleDay} ${a.startTime}`.localeCompare(`${b.scheduleDay} ${b.startTime}`)
       )
@@ -81,6 +91,7 @@ export default function MovieSchedules({ movieId }: Props) {
             {daySchedules.map((schedule) => (
               <div
                 key={schedule.id}
+                onClick={() => navigate(`/booking/${schedule.id}`)}
                 className="bg-[#6b1a2a] hover:bg-[#822033] border border-transparent hover:border-[#f5c518] transition-colors p-4 min-w-[110px] cursor-pointer"
               >
                 <div className="text-2xl font-bold text-white leading-none">

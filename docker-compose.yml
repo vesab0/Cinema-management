@@ -18,6 +18,9 @@ services:
       - SendGrid__ApiKey=${SendGrid__ApiKey}
       - SendGrid__FromEmail=${SendGrid__FromEmail}
       - SendGrid__FromName=${SendGrid__FromName}
+      - Stripe__PublishableKey=${Stripe__PublishableKey}
+      - Stripe__SecretKey=${Stripe__SecretKey}
+      - Stripe__WebhookSecret=${Stripe__WebhookSecret}
     depends_on:
       mysql:
         condition: service_healthy

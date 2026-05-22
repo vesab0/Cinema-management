@@ -29,6 +29,18 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+builder.Services.AddAuthentication()
+    .AddCookie("RefreshTokenCookie", options =>
+    {
+        options.Cookie.Name = "refresh_token";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+    });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
@@ -40,7 +52,8 @@ builder.Services.AddCors(options =>
                 return uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
             })
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -56,6 +69,10 @@ builder.Services.AddDbContext<TwinPeaks.API.Data.ApplicationDbContext>(options =
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
+var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
+    ?? throw new InvalidOperationException("Stripe:SecretKey is not configured.");
+Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
+
 builder.Services.AddSingleton<TwinPeaks.API.Services.TokenService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.AuthService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.UsersService>();
@@ -63,6 +80,7 @@ builder.Services.AddScoped<TwinPeaks.API.Services.MovieService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.RoomService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.ScheduleService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.TicketService>();
+builder.Services.AddScoped<TwinPeaks.API.Services.StripeService>();
 builder.Services.AddScoped<TwinPeaks.API.Services.UserTicketService>();
 builder.Services.AddSingleton<TwinPeaks.API.Services.IEmailService, TwinPeaks.API.Services.SendGridEmailService>();
 builder.Services.AddSingleton<TwinPeaks.API.Services.MovieNotificationService>();
@@ -136,6 +154,7 @@ app.MapRoomRoutes();
 app.MapScheduleRoutes();
 app.MapTicketRoutes();
 app.MapUserTicketRoutes();
+app.MapStripeRoutes();
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();

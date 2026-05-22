@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Index from './pages/index'
@@ -6,15 +7,19 @@ import Users from './pages/dashboard/users'
 import Movies from './pages/dashboard/movies'
 import Rooms from './pages/dashboard/rooms'
 import Schedules from './pages/dashboard/schedule'
-import UserTickets from './pages/dashboard/user-tickets'
 import RegisterForms from './components/RegisterForms'
 import AdminRoute from './AdminRoute'
 import ProfilePage from './pages/profile'
-import MoviesPage from './pages/MoviesPage'
+import MoviesPage from './pages/moviespage'
 import MovieDetailsPage from './pages/moviedetails'
+import SeatSelectionPage from './pages/seatselection'
+import PaymentPage from './pages/paymentpage'
+import ConfirmationPage from './pages/confirmationpage'
 import NotFound from './components/NotFound'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
+import UserTickets from './pages/dashboard/user-tickets'
+import { bootstrapSession } from './auth'
 
 function PublicLayout() {
   return (
@@ -28,6 +33,30 @@ function PublicLayout() {
 }
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await bootstrapSession()
+      } finally {
+        setIsReady(true)
+      }
+    }
+
+    init()
+  }, [])
+
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-stage text-white flex items-center justify-center">
+        <p className="text-sm uppercase tracking-[0.35em] text-gold/70">
+          Restoring session...
+        </p>
+      </div>
+    )
+  }
+
   return (
     <Routes>
       <Route element={<PublicLayout />}>
@@ -40,6 +69,9 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
 
+        <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
+        <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
+        <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
       </Route>
       <Route element={<AdminRoute />}>
         <Route path="/dashboard" element={<Dashboard />}>

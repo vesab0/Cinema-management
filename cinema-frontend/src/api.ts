@@ -12,6 +12,9 @@ import type {
   MovieRow,
   MovieOption,
   PurchaseTicketPayload,
+  PurchaseMultiTicketPayload,
+  CreateMultiPaymentIntentPayload,
+  MultiPaymentIntentResponse,
   RegisterPayload,
   RoomOption,
   RoomRow,
@@ -28,9 +31,9 @@ import type {
   UserRow,
   UserTicketRow,
 } from './types'
-import { getAccessToken } from './auth'
+import { getAccessToken, setAccessToken, setUser } from './auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
 const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8001'
 
 export const predictorApi = axios.create({
@@ -40,10 +43,97 @@ export const predictorApi = axios.create({
 
 export const api = axios.create({
   baseURL: API_BASE_URL || undefined,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
+
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const url = originalRequest.url || '';
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (
+        url.includes('/auth/me') ||
+        url.includes('/auth/refresh') ||
+        url.includes('/auth/login') ||
+        url.includes('/auth/register')
+      ) {
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(api(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { data } = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+
+        const newAccessToken = data.accessToken;
+        setAccessToken(newAccessToken);
+        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+        onRefreshed(newAccessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        setAccessToken(null);
+        setUser(null);
+        window.location.href = '/';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export const authApi = {
+  register: (payload: RegisterPayload) => api.post('/auth/register', payload),
+
+  login: async (payload: LoginPayload) => {
+    const { data } = await api.post('/auth/login', payload)
+    setAccessToken(data.accessToken)
+    api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    return data
+  },
+
+  refresh: () => api.post('/auth/refresh'),
+  me: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'),
+}
 
 const allowedRoles: UserRole[] = ['user', 'admin', 'staff']
 
@@ -73,18 +163,7 @@ function toUpdatePayload(row: UserRow): UpdateUserPayload {
   const parts = row.fullName.trim().split(/\s+/).filter(Boolean)
   const firstName = parts[0] ?? ''
   const lastName = parts.slice(1).join(' ')
-  return {
-    firstName,
-    lastName,
-    phone: row.phone,
-    role: row.role,
-  }
-}
-
-export const authApi = {
-  register: (payload: RegisterPayload) => api.post('/auth/register', payload),
-  login: (payload: LoginPayload) => api.post('/auth/login', payload),
-  refresh: (refreshToken: string) => api.post('/auth/refresh', { refreshToken }),
+  return { firstName, lastName, phone: row.phone, role: row.role }
 }
 
 export const usersApi = {
@@ -99,6 +178,10 @@ export const usersApi = {
     await api.put(`/api/users/${row.id}`, toUpdatePayload(row), {
       headers: getAuthHeaders(),
     })
+  },
+
+  async updateProfile(id: string, payload: UpdateUserPayload): Promise<void> {
+    await api.put(`/api/users/${id}`, payload, { headers: getAuthHeaders() })
   },
 
   async remove(id: string): Promise<void> {
@@ -177,8 +260,14 @@ export const userTicketsApi = {
   getById: (id: string) => api.get<UserTicketRow>(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
   getByConfirmationCode: (code: string) => api.get<UserTicketRow>(`/api/user-tickets/confirm/${code}`, { headers: getAuthHeaders() }).then(r => r.data),
   purchase: (payload: PurchaseTicketPayload) => api.post<UserTicketRow>('/api/user-tickets/purchase', payload, { headers: getAuthHeaders() }).then(r => r.data),
-  markUsed: (id: string) => api.patch(`/api/user-tickets/${id}/mark-used`, null, { headers: getAuthHeaders() }),
   cancel: (id: string) => api.delete(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }),
+  purchaseMulti: (payload: PurchaseMultiTicketPayload) =>
+    api.post<UserTicketRow[]>('/api/user-tickets/purchase-multi', payload, { headers: getAuthHeaders() }).then(r => r.data),
+}
+
+export const stripeApi = {
+  createMultiPaymentIntent: (payload: CreateMultiPaymentIntentPayload) =>
+    api.post<MultiPaymentIntentResponse>('/api/stripe/create-multi-payment-intent', payload, { headers: getAuthHeaders() }).then(r => r.data),
 }
 
 export const favoritesApi = {

@@ -35,6 +35,7 @@ namespace TwinPeaks.API.Data
                     .OnDelete(DeleteBehavior.Cascade);
                 b.Property(u => u.Email).IsRequired().HasMaxLength(256);
                 b.Property(u => u.PasswordHash).IsRequired();
+                b.Property(u => u.AvatarPath).HasMaxLength(512);
             });
 
             modelBuilder.Entity<Role>(b =>
