@@ -109,6 +109,7 @@ namespace TwinPeaks.API
         DateTime ScheduleDay,
         TimeSpan StartTime,
         decimal TicketPrice,
+        decimal? VipTicketPrice,
         bool? IsActive
     );
 

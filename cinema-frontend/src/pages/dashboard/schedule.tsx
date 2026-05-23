@@ -253,6 +253,7 @@ function RangeCreateModal({
   const [activeDays, setActiveDays] = useState([0, 1, 2, 3, 4, 5, 6]);
   const [times, setTimes] = useState([initialTime ?? "14:00"]);
   const [price, setPrice] = useState(0);
+  const [vipPrice, setVipPrice] = useState<number | "">("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -283,7 +284,7 @@ function RangeCreateModal({
   const totalCount = scheduleDates.length * validTimes.length;
 
   const handleSubmit = async () => {
-    const parseResult = rangeCreateSchema.safeParse({ movieName, roomName, fromDate, toDate, price });
+    const parseResult = rangeCreateSchema.safeParse({ movieName, roomName, fromDate, toDate, price, vipPrice: vipPrice === "" ? undefined : vipPrice });
     if (!parseResult.success) {
       setError(parseResult.error.errors[0].message);
       return;
@@ -321,6 +322,7 @@ function RangeCreateModal({
               scheduleDay: date,
               startTime: time,
               ticketPrice: price,
+              vipTicketPrice: vipPrice === "" ? undefined : vipPrice,
               isActive: true,
             })
           )
@@ -434,16 +436,30 @@ function RangeCreateModal({
             </div>
           </div>
 
-          <div>
-            <label className={labelClass}>Ticket Price (€)</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={price}
-              onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-              className={inputClass}
-            />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className={labelClass}>Ticket Price (€)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex-1">
+              <label className={labelClass}>VIP Ticket Price (€)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Same as standard"
+                value={vipPrice}
+                onChange={(e) => setVipPrice(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           {totalCount > 0 && (

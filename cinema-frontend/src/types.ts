@@ -177,6 +177,7 @@ export type CreateSchedulePayload = {
   scheduleDay: string;
   startTime: string;
   ticketPrice: number;
+  vipTicketPrice?: number;
   isActive?: boolean;
 };
 

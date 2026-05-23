@@ -32,6 +32,7 @@ export const rangeCreateSchema = z
 		fromDate: z.string().min(1, 'From date is required'),
 		toDate: z.string().min(1, 'To date is required'),
 		price: z.number().min(0, 'Price must be ≥ 0').max(10000, 'Price must be ≤ 10,000'),
+		vipPrice: z.number().min(0, 'VIP price must be ≥ 0').max(10000, 'VIP price must be ≤ 10,000').optional(),
 	})
 	.refine((d) => d.fromDate <= d.toDate, {
 		message: 'From date must be before or equal to to date',
