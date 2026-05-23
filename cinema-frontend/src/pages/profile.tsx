@@ -90,15 +90,19 @@ export default function ProfilePage() {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (query.trim().length < 2) { setResults([]); return; }
+    let cancelled = false;
     debounceRef.current = setTimeout(() => {
       setSearchLoading(true);
       setSearchError(null);
       movieSearchApi.search(query.trim())
-        .then(setResults)
-        .catch(() => setSearchError("Search failed. Is the predictor running?"))
-        .finally(() => setSearchLoading(false));
+        .then(data => { if (!cancelled) setResults(data); })
+        .catch(() => { if (!cancelled) setSearchError("Search failed. Is the predictor running?"); })
+        .finally(() => { if (!cancelled) setSearchLoading(false); });
     }, 300);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      cancelled = true;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [query]);
 
   const handleSave = async () => {
@@ -457,7 +461,7 @@ export default function ProfilePage() {
                 {results.map((movie) => {
                   const isFav = favoriteTmdbIds.has(movie.tmdbId);
                   return (
-                    <div key={movie.tmdbId} className="w-[140px]">
+                    <div key={`${query}-${movie.tmdbId}`} className="w-[140px]">
                       <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-black/40 relative group">
                         {movie.posterUrl ? (
                           <img

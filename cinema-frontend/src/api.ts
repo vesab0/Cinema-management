@@ -31,10 +31,10 @@ import type {
   UserRow,
   UserTicketRow,
 } from './types'
-import { getAccessToken, setAccessToken, setUser } from './auth'
+import { fetchCurrentUser, getAccessToken, setAccessToken, setUser } from './auth'
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
-const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8001'
+const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8000'
 
 export const predictorApi = axios.create({
   baseURL: PREDICTOR_URL,
@@ -127,6 +127,7 @@ export const authApi = {
     const { data } = await api.post('/auth/login', payload)
     setAccessToken(data.accessToken)
     api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    await fetchCurrentUser()
     return data
   },
 

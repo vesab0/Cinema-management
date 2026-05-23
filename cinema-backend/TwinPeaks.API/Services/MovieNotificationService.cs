@@ -44,7 +44,7 @@ namespace TwinPeaks.API.Services
             _scopeFactory = scopeFactory;
             _httpFactory = httpFactory;
             _logger = logger;
-            _predictorUrl = config["PredictorUrl"] ?? "http://localhost:8001";
+            _predictorUrl = config["PredictorUrl"] ?? "http://localhost:8000";
         }
 
         public void NotifyOnNewMovie(MovieResponse movie)

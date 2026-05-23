@@ -1,6 +1,4 @@
 export default function MemorialCard() {
-  const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
-
   return (
     <section className="w-full bg-black py-24 flex flex-col items-center px-4">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');`}</style>
@@ -13,7 +11,7 @@ export default function MemorialCard() {
         </p>
       </div>
       <img
-        src={`${apiBase.replace(/\/$/, '')}/uploads/memorial.png`}
+        src="/memorial.png"
         className="w-full max-w-sm"
       />
     </section>

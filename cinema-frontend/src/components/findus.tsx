@@ -31,7 +31,7 @@ export default function FindUs() {
             title="Twin Peaks Cinema location"
             width="100%"
             height="100%"
-            style={{ border: 'none', filter: 'invert(90%) hue-rotate(180deg)' }}
+            style={{ border: 'none', filter: 'invert(1) brightness(0.85) contrast(1.1) hue-rotate(180deg)' }}
           />
         </div>
       </div>
