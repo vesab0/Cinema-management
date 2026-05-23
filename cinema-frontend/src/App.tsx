@@ -17,7 +17,6 @@ import { bootstrapSession } from './auth'
 
 // Eagerly loaded (public, always needed)
 import Index from './pages/index'
-import MoviesPage from './pages/moviespage'
 import RegisterForms from './components/RegisterForms'
 
 // Lazily loaded (heavy or infrequently visited)
@@ -27,6 +26,9 @@ const PaymentPage = lazy(() => import('./pages/paymentpage'))
 const ConfirmationPage = lazy(() => import('./pages/confirmationpage'))
 const ProfilePage = lazy(() => import('./pages/profile'))
 const NotFound = lazy(() => import('./components/NotFound'))
+const MoviesPage = lazy(() => import('./pages/moviespage'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('./pages/TermsOfService'))
 
 // Dashboard pages (admin-only, always lazy)
 const Dashboard = lazy(() => import('./pages/dashboard/dashboard'))
@@ -73,31 +75,34 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<Index />} />
-        <Route path="/register" element={<RegisterForms />} />
-        <Route path="/movies" element={<MoviesPage mode="now-playing" />} />
-        <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/movies/:id" element={<MovieDetailsPage />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
-
-        <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
-        <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
-        <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
-      </Route>
-      <Route element={<AdminRoute />}>
-        <Route path="/dashboard" element={<Dashboard />}>
-          <Route index element={<Users />} />
-          <Route path="movies" element={<Movies />} />
-          <Route path="rooms" element={<Rooms />} />
-          <Route path="schedules" element={<Schedules />} />
-          <Route path="user-tickets" element={<UserTickets />} />
-        </Route>
-      </Route>
-      <Route path="*" element={<NotFound/>} />
-    </Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<PageSpinner />}>
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/register" element={<RegisterForms />} />
+            <Route path="/movies" element={<MoviesPage mode="now-playing" />} />
+            <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/movies/:id" element={<MovieDetailsPage />} />
+            <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
+            <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
+            <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+          </Route>
+          <Route element={<AdminRoute />}>
+            <Route path="/dashboard" element={<Dashboard />}>
+              <Route index element={<Users />} />
+              <Route path="movies" element={<Movies />} />
+              <Route path="rooms" element={<Rooms />} />
+              <Route path="schedules" element={<Schedules />} />
+              <Route path="user-tickets" element={<UserTickets />} />
+            </Route>
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   )
 }
