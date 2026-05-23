@@ -7,8 +7,11 @@ export default function AdminRoute() {
 
   if (!isBootstrapped) return null;
 
-  const isAdmin = !!user?.roles.map(r => r.toLowerCase()).includes('admin')
-  if (!isAdmin) return <Navigate to="/" replace state={{ from: location.pathname }} />;
+  const isAdminOrStaff = user?.roles
+    .map(r => r.toLowerCase())
+    .some(r => r === 'admin' || r === 'staff') ?? false
+
+  if (!isAdminOrStaff) return <Navigate to="/" replace state={{ from: location.pathname }} />;
 
   return <Outlet />;
 }

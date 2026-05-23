@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import DataTable, { type Column } from "../../components/Table";
 import { usersApi } from "../../api";
 import type { UserRow } from "../../types";
+import { useAuthStore } from "../../store/authStore";
 
 const columns: Column<UserRow>[] = [
   { key: "fullName",  label: "Full Name"  },
@@ -12,9 +14,14 @@ const columns: Column<UserRow>[] = [
 ];
 
 export default function Users() {
+  const { user } = useAuthStore();
+  const isAdmin = user?.roles.map(r => r.toLowerCase()).includes('admin') ?? false;
+
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  if (!isAdmin) return <Navigate to="/dashboard/movies" replace />;
 
   useEffect(() => {
     usersApi

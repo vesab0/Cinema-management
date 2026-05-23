@@ -11,7 +11,8 @@ export default function Navbar() {
     const navigate = useNavigate();
 
     const isLoggedIn = !!user
-    const isAdminUser = !!user?.roles.map(r => r.toLowerCase()).includes('admin')
+    const roles = user?.roles.map(r => r.toLowerCase()) ?? []
+    const canSeeDashboard = roles.includes('admin') || roles.includes('staff')
     const userName = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : null
     const avatarSrc = user?.avatarPath ?? null
 
@@ -28,7 +29,7 @@ export default function Navbar() {
         <>
             <nav className="relative bg-wine p-4 flex items-center">
                 <div className="flex-1 flex items-center">
-                    {isAdminUser && (
+                    {canSeeDashboard && (
                         <Link to="/dashboard" className="text-sm font-semibold text-gold hover:text-gold/70 transition-colors">
                             Dashboard
                         </Link>
@@ -42,46 +43,46 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                    <div className="ml-auto flex items-center gap-4">
-                        {isLoggedIn ? (
+                <div className="ml-auto flex items-center gap-4">
+                    {isLoggedIn ? (
                         <>
-                        <div
-                        onClick={() => navigate('/profile')}
-                        className="flex items-center gap-2 cursor-pointer group">
-                        {(() => {
-                        if (!avatarSrc) return (
-                            <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm text-white/80 group-hover:ring-2 group-hover:ring-gold/50 transition-all">
-                            A
+                            <div
+                                onClick={() => navigate('/profile')}
+                                className="flex items-center gap-2 cursor-pointer group">
+                                {(() => {
+                                    if (!avatarSrc) return (
+                                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-sm text-white/80 group-hover:ring-2 group-hover:ring-gold/50 transition-all">
+                                            A
+                                        </div>
+                                    );
+                                    const src = avatarSrc.startsWith('http') ? avatarSrc : `${_API_BASE}${avatarSrc}`;
+                                    return (
+                                        <img
+                                            src={src}
+                                            alt="Avatar"
+                                            className="h-8 w-8 rounded-full object-cover group-hover:ring-2 group-hover:ring-gold/50 transition-all"
+                                        />
+                                    );
+                                })()}
+                                <span className="text-white font-medium text-sm group-hover:text-gold transition-colors">
+                                    {userName ?? "User"}
+                                </span>
                             </div>
-                        );
-                        const src = avatarSrc.startsWith('http') ? avatarSrc : `${_API_BASE}${avatarSrc}`;
-                        return (
-                            <img
-                            src={src}
-                            alt="Avatar"
-                            className="h-8 w-8 rounded-full object-cover group-hover:ring-2 group-hover:ring-gold/50 transition-all"
-                            />
-                        );
-                        })()}
-                        <span className="text-white font-medium text-sm group-hover:text-gold transition-colors">
-                        {userName ?? "User"}
-                        </span>
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="text-white/60 text-sm underline hover:text-white transition-colors"
-                    >
-                        Logout
-                    </button>
-                    </>
-                ) : (
-                    <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="text-white underline hover:text-white/80 text-sm"
-                    >
-                    Sign In
-                    </button>
-                )}
+                            <button
+                                onClick={handleLogout}
+                                className="text-white/60 text-sm underline hover:text-white transition-colors"
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="text-white underline hover:text-white/80 text-sm"
+                        >
+                            Sign In
+                        </button>
+                    )}
                 </div>
             </nav>
 
