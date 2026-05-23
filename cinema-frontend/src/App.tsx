@@ -3,6 +3,16 @@ import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ErrorBoundary from './components/ErrorBoundary'
 import AdminRoute from './AdminRoute'
+import ProfilePage from './pages/profile'
+import MoviesPage from './pages/moviespage'
+import MovieDetailsPage from './pages/moviedetails'
+import SeatSelectionPage from './pages/seatselection'
+import PaymentPage from './pages/paymentpage'
+import ConfirmationPage from './pages/confirmationpage'
+import NotFound from './components/NotFound'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import UserTickets from './pages/dashboard/user-tickets'
 import { bootstrapSession } from './auth'
 
 // Eagerly loaded (public, always needed)
@@ -63,32 +73,31 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <Suspense fallback={<PageSpinner />}>
-        <Routes>
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/register" element={<RegisterForms />} />
-            <Route path="/movies" element={<MoviesPage mode="now-playing" />} />
-            <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/movies/:id" element={<MovieDetailsPage />} />
-            <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
-            <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
-            <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
-          </Route>
-          <Route element={<AdminRoute />}>
-            <Route path="/dashboard" element={<Dashboard />}>
-              <Route index element={<Users />} />
-              <Route path="movies" element={<Movies />} />
-              <Route path="rooms" element={<Rooms />} />
-              <Route path="schedules" element={<Schedules />} />
-              <Route path="user-tickets" element={<UserTickets />} />
-            </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </ErrorBoundary>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Index />} />
+        <Route path="/register" element={<RegisterForms />} />
+        <Route path="/movies" element={<MoviesPage mode="now-playing" />} />
+        <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/movies/:id" element={<MovieDetailsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+
+        <Route path="/booking/:scheduleId" element={<SeatSelectionPage />} />
+        <Route path="/booking/:scheduleId/payment" element={<PaymentPage />} />
+        <Route path="/booking/:scheduleId/confirmation" element={<ConfirmationPage />} />
+      </Route>
+      <Route element={<AdminRoute />}>
+        <Route path="/dashboard" element={<Dashboard />}>
+          <Route index element={<Users />} />
+          <Route path="movies" element={<Movies />} />
+          <Route path="rooms" element={<Rooms />} />
+          <Route path="schedules" element={<Schedules />} />
+          <Route path="user-tickets" element={<UserTickets />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<NotFound/>} />
+    </Routes>
   )
 }

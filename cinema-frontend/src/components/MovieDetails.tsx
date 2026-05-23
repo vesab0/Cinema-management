@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { MovieRow } from '../types'
 import { moviesApi } from '../api'
-import MovieTrailer from './MovieTrailer'
+import MovieTrailer from './movietrailer'
 
 type Props = {
   movieId?: string

@@ -1,14 +1,20 @@
-import SecondaryNav from "../components/SecondaryNav";
-import CurtainOpen from "../components/CurtainOpen";
-import Hero from "../components/Hero";
+
+import SecondaryNav from "../components/SecondaryNav"
+import Hero from "../components/Hero"
+import AboutUs from "../components/aboutussection"
+import MemorialCard from "../components/memorialcard"
+import FindUs from "../components/findus"
+import Footer from "../components/footer"
 
 export default function Index() {
   return (
-    <div className="h-screen w-full">
-      <CurtainOpen>
-        <SecondaryNav />
-        <Hero />
-      </CurtainOpen>
+    <div className="w-full">
+      <SecondaryNav />
+      <Hero />
+      <AboutUs />
+      <MemorialCard />
+      <FindUs />
+      <Footer/>
     </div>
-  );
+  )
 }
