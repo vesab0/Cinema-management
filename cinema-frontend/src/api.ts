@@ -250,6 +250,8 @@ export const schedulesApi = {
 export const movieSearchApi = {
   search: (q: string, limit = 20) =>
     predictorApi.get<import('./types').PredictorMovie[]>('/search', { params: { q, limit } }).then(r => r.data),
+  list: (limit = 9999) =>
+    predictorApi.get<import('./types').PredictorMovie[]>('/browse', { params: { limit } }).then(r => r.data),
 }
 
 export const ticketsApi = {

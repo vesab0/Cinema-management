@@ -25,13 +25,13 @@ export default function FindUs() {
           </div>
         </div>
 
-        <div className="flex-1 w-full border border-white/10 overflow-hidden" style={{ height: '320px' }}>
+        <div className="flex-1 w-full border border-red-600 overflow-hidden" style={{ height: '320px' }}>
           <iframe
             src={mapSrc}
             title="Twin Peaks Cinema location"
             width="100%"
             height="100%"
-            style={{ border: 'none', filter: 'invert(1) brightness(0.85) contrast(1.1) hue-rotate(180deg)' }}
+            style={{ border: 'none', filter: 'grayscale(1) invert(1) brightness(0.9) contrast(1.1)' }}
           />
         </div>
       </div>
