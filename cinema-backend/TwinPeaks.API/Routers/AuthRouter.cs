@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace TwinPeaks.API.Routers
 {
+    public record ForgotPasswordRequest(string Email);
+    public record ResetPasswordRequest(string Email, string Token, string NewPassword);
+
     public static class AuthRouter
     {
         public static void MapAuthRoutes(this WebApplication app)
@@ -27,7 +30,6 @@ namespace TwinPeaks.API.Routers
                             return Results.Conflict(new { message = err });
                         return Results.BadRequest(new { message = err ?? "Invalid registration request" });
                     }
-
                     return Results.Created($"/api/users/{user.Id}", new { user.Id, user.Email, user.FirstName, user.LastName });
                 }
                 catch (Exception ex)
@@ -144,13 +146,41 @@ namespace TwinPeaks.API.Routers
             {
                 var refreshToken = ctx.Request.Cookies["refresh_token"];
                 if (!string.IsNullOrEmpty(refreshToken))
-                {
                     auth.RevokeRefreshToken(refreshToken);
-                }
 
                 ctx.Response.Cookies.Delete("refresh_token");
                 return Results.Ok(new { message = "Logged out" });
             });
+
+            group.MapPost("/forgot-password", async (ForgotPasswordRequest req, AuthService auth) =>
+            {
+                try
+                {
+                    await auth.ForgotPasswordAsync(req.Email);
+                    // always return 200 so we don't leak whether the email exists
+                    return Results.Ok(new { message = "If that email is registered, a reset link has been sent." });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Failed to send reset email", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireRateLimiting("auth-limit");
+
+            group.MapPost("/reset-password", (ResetPasswordRequest req, AuthService auth) =>
+            {
+                try
+                {
+                    var (success, error) = auth.ResetPassword(req.Email, req.Token, req.NewPassword);
+                    if (!success) return Results.BadRequest(new { message = error });
+                    return Results.Ok(new { message = "Password reset successfully." });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Password reset failed", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireRateLimiting("auth-limit");
         }
     }
 }

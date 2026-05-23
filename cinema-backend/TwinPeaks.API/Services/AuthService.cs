@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -13,13 +12,21 @@ namespace TwinPeaks.API.Services
         private static readonly string[] DefaultRoles = ["user", "admin", "staff"];
         private readonly TwinPeaks.API.Data.ApplicationDbContext _db;
         private readonly TokenService _tokenService;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _config;
 
-        public AuthService(TwinPeaks.API.Data.ApplicationDbContext db, TokenService tokenService)
+        public AuthService(
+            TwinPeaks.API.Data.ApplicationDbContext db,
+            TokenService tokenService,
+            IEmailService emailService,
+            IConfiguration config)
         {
             _db = db;
             _tokenService = tokenService;
-            const string bootstrapAdminEmail = "admin@local";
+            _emailService = emailService;
+            _config = config;
 
+            const string bootstrapAdminEmail = "admin@local";
             EnsureDefaultRoles();
 
             if (!_db.Users.Any())
@@ -40,9 +47,7 @@ namespace TwinPeaks.API.Services
 
             var bootstrapAdmin = _db.Users.FirstOrDefault(u => u.Email == bootstrapAdminEmail);
             if (bootstrapAdmin != null)
-            {
                 AssignRole(bootstrapAdmin.Id, "admin");
-            }
 
             var usersWithoutRole = _db.Users
                 .Where(u => !_db.UserRoles.Any(ur => ur.UserId == u.Id))
@@ -50,22 +55,16 @@ namespace TwinPeaks.API.Services
                 .ToList();
 
             foreach (var userId in usersWithoutRole)
-            {
                 AssignRole(userId, "user");
-            }
         }
 
         public (User? user, string? error) Register(RegisterRequest req)
         {
             if (string.IsNullOrWhiteSpace(req.FirstName) || string.IsNullOrWhiteSpace(req.LastName))
-            {
                 return (null, "First name and last name are required");
-            }
 
             if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
-            {
                 return (null, "Email and password are required");
-            }
 
             var email = req.Email.Trim().ToLowerInvariant();
             if (_db.Users.Any(u => u.Email == email)) return (null, "Email already in use");
@@ -89,18 +88,16 @@ namespace TwinPeaks.API.Services
         public (AuthResponse? response, string? error) Login(LoginRequest req)
         {
             if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
-            {
                 return (null, "Email and password are required");
-            }
 
             var email = req.Email.Trim().ToLowerInvariant();
             var user = _db.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
                 .FirstOrDefault(u => u.Email == email);
+
             if (user == null) return (null, "Invalid credentials");
             if (!user.IsActive) return (null, "Account is inactive");
-
             if (!VerifyPassword(req.Password, user.PasswordHash)) return (null, "Invalid credentials");
 
             var (token, expires) = _tokenService.CreateAccessToken(user);
@@ -108,8 +105,7 @@ namespace TwinPeaks.API.Services
             _db.RefreshTokens.Add(refresh);
             _db.SaveChanges();
 
-            var auth = new AuthResponse(token, refresh.Token, (int)(expires - DateTime.UtcNow).TotalSeconds);
-            return (auth, null);
+            return (new AuthResponse(token, refresh.Token, (int)(expires - DateTime.UtcNow).TotalSeconds), null);
         }
 
         public (AuthResponse? response, string? error) Refresh(string refreshToken)
@@ -130,8 +126,66 @@ namespace TwinPeaks.API.Services
             _db.SaveChanges();
 
             var (token, expires) = _tokenService.CreateAccessToken(user);
-            var auth = new AuthResponse(token, newRt.Token, (int)(expires - DateTime.UtcNow).TotalSeconds);
-            return (auth, null);
+            return (new AuthResponse(token, newRt.Token, (int)(expires - DateTime.UtcNow).TotalSeconds), null);
+        }
+
+        public async Task<bool> ForgotPasswordAsync(string email)
+        {
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+            var user = _db.Users.FirstOrDefault(u => u.Email == normalizedEmail);
+            if (user == null) return true; // don't leak whether the email exists
+
+            var existing = _db.PasswordResetTokens
+                .Where(t => t.UserId == user.Id && !t.Used)
+                .ToList();
+            foreach (var t in existing) t.Used = true;
+
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
+            _db.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Token = token,
+                Expires = DateTime.UtcNow.AddHours(1),
+                Used = false
+            });
+            _db.SaveChanges();
+
+            var frontendUrl = _config["App:FrontendUrl"] ?? "http://localhost:5173";
+            var resetLink = $"{frontendUrl}/reset-password?token={token}&email={Uri.EscapeDataString(user.Email)}";
+
+            await _emailService.SendAsync(
+                user.Email,
+                "Reset your Twin Peaks password",
+                $"""
+                <p>Click the link below to reset your password. It expires in 1 hour.</p>
+                <p><a href="{resetLink}">Reset Password</a></p>
+                <p>If you didn't request this, you can ignore this email.</p>
+                """
+            );
+
+            return true;
+        }
+
+        public (bool success, string? error) ResetPassword(string email, string token, string newPassword)
+        {
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+            var user = _db.Users.FirstOrDefault(u => u.Email == normalizedEmail);
+            if (user == null) return (false, "Invalid request");
+
+            var resetToken = _db.PasswordResetTokens.FirstOrDefault(t =>
+                t.UserId == user.Id &&
+                t.Token == token &&
+                !t.Used &&
+                t.Expires > DateTime.UtcNow);
+
+            if (resetToken == null) return (false, "Invalid or expired reset link");
+
+            user.PasswordHash = HashPassword(newPassword);
+            resetToken.Used = true;
+            _db.SaveChanges();
+
+            return (true, null);
         }
 
         public User? GetByEmail(string email) => _db.Users
@@ -163,7 +217,6 @@ namespace TwinPeaks.API.Services
                 .ToList();
 
             if (toCreate.Count == 0) return;
-
             _db.Roles.AddRange(toCreate);
             _db.SaveChanges();
         }
@@ -171,10 +224,7 @@ namespace TwinPeaks.API.Services
         private void AssignRole(Guid userId, string roleName)
         {
             var normalizedRole = roleName.Trim().ToLowerInvariant();
-            if (!DefaultRoles.Contains(normalizedRole))
-            {
-                normalizedRole = "user";
-            }
+            if (!DefaultRoles.Contains(normalizedRole)) normalizedRole = "user";
 
             var role = _db.Roles.FirstOrDefault(r => r.Name == normalizedRole);
             if (role == null)
@@ -220,10 +270,7 @@ namespace TwinPeaks.API.Services
                 var derived = Rfc2898DeriveBytes.Pbkdf2(Encoding.UTF8.GetBytes(password), salt, 100_000, HashAlgorithmName.SHA256, expected.Length);
                 return CryptographicOperations.FixedTimeEquals(derived, expected);
             }
-            catch
-            {
-                return false;
-            }
+            catch { return false; }
         }
     }
 }

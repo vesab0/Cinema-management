@@ -134,6 +134,11 @@ export const authApi = {
   refresh: () => api.post('/auth/refresh'),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
+  forgotPassword: (email: string) =>
+  api.post('/auth/forgot-password', { email }),
+
+resetPassword: (email: string, token: string, newPassword: string) =>
+  api.post('/auth/reset-password', { email, token, newPassword }),
 }
 
 const allowedRoles: UserRole[] = ['user', 'admin', 'staff']

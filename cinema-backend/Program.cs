@@ -10,6 +10,7 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System.Security.Cryptography;
 using System.Text;
+using TwinPeaks.API.Data;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using TwinPeaks.API.Routers;
@@ -246,4 +247,11 @@ app.MapTicketRoutes();
 app.MapUserTicketRoutes();
 app.MapStripeRoutes();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
 app.Run();
+

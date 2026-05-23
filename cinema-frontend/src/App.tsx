@@ -37,6 +37,8 @@ const Movies = lazy(() => import('./pages/dashboard/movies'))
 const Rooms = lazy(() => import('./pages/dashboard/rooms'))
 const Schedules = lazy(() => import('./pages/dashboard/schedule'))
 const UserTickets = lazy(() => import('./pages/dashboard/user-tickets'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 
 function PublicLayout() {
   return (
@@ -100,6 +102,8 @@ export default function App() {
               <Route path="user-tickets" element={<UserTickets />} />
             </Route>
           </Route>
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
