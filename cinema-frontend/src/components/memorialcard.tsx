@@ -14,6 +14,15 @@ export default function MemorialCard() {
         src="/memorial.png"
         className="w-full max-w-sm"
       />
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');`}</style>
+      <div className="text-center mb-16 max-w-2xl">
+        <p
+          className="text-white leading-loose"
+          style={{ fontFamily: "'Rock Salt', cursive", fontSize: "1.1rem" }}
+        >
+         Night Blooming Jasmine
+        </p>
+      </div>
     </section>
   )
 }
