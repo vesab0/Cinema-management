@@ -151,7 +151,6 @@ builder.Services.AddSingleton<IAmazonS3>(_ =>
     var config = new AmazonS3Config
     {
         ServiceURL = "https://s3.filebase.io",
-        ForcePathStyle = true,
         AuthenticationRegion = "us-east-1",
     };
     return new AmazonS3Client(accessKey, secretKey, config);
