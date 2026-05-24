@@ -8,7 +8,8 @@ namespace TwinPeaks.API.Routers
     {
         public static void MapFavoritesRoutes(this WebApplication app)
         {
-            var group = app.MapGroup("/api/users/{userId:guid}/favorites");
+            var group = app.MapGroup("/api/users/{userId:guid}/favorites")
+                .RequireAuthorization();
 
             group.MapGet("/", async (Guid userId, ApplicationDbContext db) =>
             {

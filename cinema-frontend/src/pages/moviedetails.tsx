@@ -1,6 +1,7 @@
 import React from 'react'
 import MovieDetails from '../components/MovieDetails'
 import MovieSchedules from '../components/MovieSchedules'
+import SecondaryNav from '../components/SecondaryNav'
 import { useParams } from 'react-router-dom'
 
 export default function MovieDetailsPage() {
@@ -9,8 +10,9 @@ export default function MovieDetailsPage() {
 
   return (
     <div className="min-h-screen bg-stage">
+      <SecondaryNav />
       <MovieDetails />
-      <div className="mx-auto max-w-5xl px-6 pb-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-10">
         <MovieSchedules movieId={movieId} />
       </div>
     </div>

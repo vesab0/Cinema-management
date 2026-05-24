@@ -10,6 +10,7 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/api/user-tickets");
 
+            // Admin-only: view all purchased tickets (dashboard)
             group.MapGet("/", (UserTicketService userTicketService) =>
             {
                 try
@@ -20,8 +21,10 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to fetch user tickets", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization("AdminOnly");
 
+            // Public: ticket verification by confirmation code
             group.MapGet("/confirm/{code}", (string code, UserTicketService userTicketService) =>
             {
                 try
@@ -36,6 +39,7 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
+            // Authenticated user endpoints
             group.MapGet("/{id:guid}", (Guid id, UserTicketService userTicketService) =>
             {
                 try
@@ -48,7 +52,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to fetch user ticket", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization();
 
             group.MapPost("/purchase", async (PurchaseTicketRequest req, UserTicketService userTicketService) =>
             {
@@ -65,7 +70,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to purchase ticket", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization();
 
             group.MapPost("/purchase-multi", async (PurchaseMultiTicketRequest req, UserTicketService userTicketService) =>
             {
@@ -82,7 +88,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to purchase tickets", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization();
 
             group.MapDelete("/{id:guid}", (Guid id, UserTicketService userTicketService) =>
             {
@@ -99,7 +106,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Failed to cancel user ticket", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireAuthorization();
         }
     }
 }

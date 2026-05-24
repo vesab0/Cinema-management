@@ -141,6 +141,7 @@ export default function Movies() {
   const [error, setError] = useState<string | null>(null);
   const [genreOptions, setGenreOptions] = useState<GenreOption[]>([]);
   const [castOptions, setCastOptions] = useState<CastMemberOption[]>([]);
+  const [isPosterUploading, setIsPosterUploading] = useState(false);
 
   const loadData = async () => {
     const [movies, genres, cast] = await Promise.all([
@@ -251,8 +252,20 @@ export default function Movies() {
         <div className="space-y-2">
           <input type="file" accept="image/*" onChange={async (e) => {
             const file = e.target.files?.[0];
-            if (file) { const url = await uploadsApi.uploadImage(file); onChange(url); }
+            if (file) {
+              try {
+                setIsPosterUploading(true);
+                const url = await uploadsApi.uploadImage(file, 'poster');
+                onChange(url);
+              } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : String(err);
+                alert(`Upload failed: ${msg}`);
+              } finally {
+                setIsPosterUploading(false);
+              }
+            }
           }} className={inputClass} />
+          {isPosterUploading && <p className="text-sm text-yellow-400">Uploading poster, please wait…</p>}
           <input placeholder="Or paste URL" value={String(val ?? "")} onChange={(e) => onChange(e.target.value)} className={inputClass} />
         </div>
       ),
@@ -292,6 +305,7 @@ export default function Movies() {
   if (error)   return <div className="p-8 text-red-500">Error: {error}</div>;
 
   const validateMovie = (row: MovieRow): string | null => {
+    if (isPosterUploading) return "Poster is still uploading, please wait…";
     if (!String(row.name ?? "").trim()) return "Name is required";
     if (!String(row.description ?? "").trim()) return "Description is required";
     if (!String(row.director ?? "").trim()) return "Director is required";

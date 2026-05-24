@@ -68,8 +68,8 @@ function Button({
       {...props}
     >
       {variant === "nowPlaying" ? (
-        <span className="flex items-center justify-center gap-2 md:gap-5">
-          <Play className="size-8 fill-current stroke-none md:size-6" aria-hidden="true" />
+        <span className="flex items-center justify-center gap-2">
+          <Play className="size-4 fill-current stroke-none sm:size-5" aria-hidden="true" />
           <span>{props.children}</span>
         </span>
       ) : (

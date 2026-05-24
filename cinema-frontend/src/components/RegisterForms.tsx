@@ -1,204 +1,184 @@
 import { isAxiosError } from 'axios'
-import { useState, type FormEvent, type MouseEvent } from 'react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useGoogleLogin } from '@react-oauth/google'
 import { authApi } from '../api'
-import { setAccessToken, setUser } from '../auth'
+import {
+	loginSchema,
+	registerSchema,
+	type LoginFormData,
+	type RegisterFormData,
+} from '../schemas/auth'
 
 interface RegisterFormsProps {
 	onLoginSuccess?: () => void
 }
 
+const inputClass =
+	'block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring'
+const errorClass = 'mt-1 text-xs text-red-300'
+
 export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 	const [isCreateMode, setIsCreateMode] = useState(false)
-	const [firstName, setFirstName] = useState('')
-	const [lastName, setLastName] = useState('')
-	const [email, setEmail] = useState('')
-	const [password, setPassword] = useState('')
-	const [isSubmitting, setIsSubmitting] = useState(false)
-	const [errorMessage, setErrorMessage] = useState('')
+	const [serverError, setServerError] = useState('')
 	const [successMessage, setSuccessMessage] = useState('')
 
-	const resetMessages = () => {
-		setErrorMessage('')
-		setSuccessMessage('')
-	}
+	const loginForm = useForm<LoginFormData>({
+		resolver: zodResolver(loginSchema),
+	})
 
-	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault()
-		resetMessages()
+	const registerForm = useForm<RegisterFormData>({
+		resolver: zodResolver(registerSchema),
+	})
 
-		if (!email.trim() || !password.trim()) {
-			setErrorMessage('Email and password are required.')
-			return
-		}
+	const activeForm = isCreateMode ? registerForm : loginForm
+	const isSubmitting = activeForm.formState.isSubmitting
 
-		if (isCreateMode && (!firstName.trim() || !lastName.trim())) {
-			setErrorMessage(
-				'First name and last name are required for account creation.'
-			)
-			return
-		}
-
-		setIsSubmitting(true)
-
-		try {
-			if (isCreateMode) {
-				await authApi.register({
-					firstName: firstName.trim(),
-					lastName: lastName.trim(),
-					email: email.trim(),
-					password,
-				})
-
-				setSuccessMessage('Account created! You can sign in now.')
-				setIsCreateMode(false)
-				setPassword('')
-			} else {
-				const loginResponse = await authApi.login({
-					email: email.trim(),
-					password,
-				})
-
-				// If your backend returns a token
-				if (loginResponse.data?.accessToken) {
-					setAccessToken(loginResponse.data.accessToken)
-				}
-
-				const { data: user } = await authApi.me()
-				setUser(user)
-
+	const googleLogin = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			setServerError('')
+			try {
+				await authApi.googleLogin(tokenResponse.access_token)
 				onLoginSuccess?.()
+			} catch (error: unknown) {
+				setServerError(extractApiError(error) || 'Google sign-in failed. Please try again.')
 			}
+		},
+		onError: () => setServerError('Google sign-in failed. Please try again.'),
+	})
+
+	const toggleMode = (e: React.MouseEvent<HTMLAnchorElement>) => {
+		e.preventDefault()
+		setIsCreateMode((c) => !c)
+		setServerError('')
+		setSuccessMessage('')
+		loginForm.reset()
+		registerForm.reset()
+	}
+
+	const onLogin = loginForm.handleSubmit(async (data) => {
+		setServerError('')
+		try {
+			await authApi.login(data)
+			onLoginSuccess?.()
 		} catch (error: unknown) {
-			const apiMessage = isAxiosError(error)
-				? error.response?.data?.message ||
-				  error.response?.data?.error ||
-				  error.response?.data?.detail ||
-				  error.response?.data?.title
-				: ''
-
-			setErrorMessage(apiMessage || 'Request failed. Please try again.')
-		} finally {
-			setIsSubmitting(false)
+			setServerError(extractApiError(error) || 'Sign in failed. Please try again.')
 		}
-	}
+	})
 
-	const toggleMode = (event: MouseEvent<HTMLAnchorElement>) => {
-		event.preventDefault()
-
-		setIsCreateMode((current) => !current)
-		setPassword('')
-		resetMessages()
-	}
+	const onRegister = registerForm.handleSubmit(async (data) => {
+		setServerError('')
+		try {
+			await authApi.register(data)
+			setSuccessMessage('Account created! You can sign in now.')
+			setIsCreateMode(false)
+			registerForm.reset()
+		} catch (error: unknown) {
+			setServerError(extractApiError(error) || 'Registration failed. Please try again.')
+		}
+	})
 
 	return (
 		<div className="w-full max-w-sm p-6 m-auto mx-auto bg-wine rounded-lg shadow-md border border-gold/30">
 			<div className="flex justify-center mx-auto">
-				<img
-					className="w-auto h-7 sm:h-8"
-					src="/logo.png"
-					alt="Logo"
-				/>
+				<img className="w-auto h-7 sm:h-8" src="/logo.png" alt="Logo" />
 			</div>
 
 			<h2 className="mt-4 text-center text-gold font-semibold text-lg">
 				{isCreateMode ? 'Create Account' : 'Welcome Back'}
 			</h2>
 
-			<form className="mt-6" onSubmit={handleSubmit}>
+			<form
+				className="mt-6"
+				onSubmit={isCreateMode ? onRegister : onLogin}
+				noValidate
+			>
 				{isCreateMode && (
 					<>
 						<div>
-							<label
-								htmlFor="firstName"
-								className="block text-sm text-gold"
-							>
+							<label htmlFor="firstName" className="block text-sm text-gold">
 								First Name
 							</label>
-
 							<input
 								id="firstName"
 								type="text"
-								value={firstName}
-								onChange={(e) => setFirstName(e.target.value)}
-								className="block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring"
+								className={inputClass}
+								{...registerForm.register('firstName')}
 							/>
+							{registerForm.formState.errors.firstName && (
+								<p className={errorClass}>{registerForm.formState.errors.firstName.message}</p>
+							)}
 						</div>
 
 						<div className="mt-4">
-							<label
-								htmlFor="lastName"
-								className="block text-sm text-gold"
-							>
+							<label htmlFor="lastName" className="block text-sm text-gold">
 								Last Name
 							</label>
-
 							<input
 								id="lastName"
 								type="text"
-								value={lastName}
-								onChange={(e) => setLastName(e.target.value)}
-								className="block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring"
+								className={inputClass}
+								{...registerForm.register('lastName')}
 							/>
+							{registerForm.formState.errors.lastName && (
+								<p className={errorClass}>{registerForm.formState.errors.lastName.message}</p>
+							)}
 						</div>
 					</>
 				)}
 
 				<div className={isCreateMode ? 'mt-4' : ''}>
-					<label
-						htmlFor="email"
-						className="block text-sm text-gold"
-					>
+					<label htmlFor="email" className="block text-sm text-gold">
 						Email
 					</label>
-
 					<input
 						id="email"
 						type="email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring"
+						className={inputClass}
+						{...(isCreateMode
+							? registerForm.register('email')
+							: loginForm.register('email'))}
 					/>
+					{isCreateMode
+						? registerForm.formState.errors.email && (
+								<p className={errorClass}>{registerForm.formState.errors.email.message}</p>
+							)
+						: loginForm.formState.errors.email && (
+								<p className={errorClass}>{loginForm.formState.errors.email.message}</p>
+							)}
 				</div>
 
 				<div className="mt-4">
 					<div className="flex items-center justify-between">
-						<label
-							htmlFor="password"
-							className="block text-sm text-gold"
-						>
+						<label htmlFor="password" className="block text-sm text-gold">
 							Password
 						</label>
-
 						{!isCreateMode && (
-							<a
-								href="#"
-								className="text-xs text-gold/80 hover:text-gold hover:underline"
-							>
+							<a href="#" className="text-xs text-gold/80 hover:text-gold hover:underline">
 								Forgot Password?
 							</a>
 						)}
 					</div>
-
 					<input
 						id="password"
 						type="password"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						className="block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring"
+						className={inputClass}
+						{...(isCreateMode
+							? registerForm.register('password')
+							: loginForm.register('password'))}
 					/>
+					{isCreateMode
+						? registerForm.formState.errors.password && (
+								<p className={errorClass}>{registerForm.formState.errors.password.message}</p>
+							)
+						: loginForm.formState.errors.password && (
+								<p className={errorClass}>{loginForm.formState.errors.password.message}</p>
+							)}
 				</div>
 
-				{errorMessage && (
-					<p className="mt-3 text-xs text-red-300">
-						{errorMessage}
-					</p>
-				)}
-
-				{successMessage && (
-					<p className="mt-3 text-xs text-green-300">
-						{successMessage}
-					</p>
-				)}
+				{serverError && <p className="mt-3 text-xs text-red-300">{serverError}</p>}
+				{successMessage && <p className="mt-3 text-xs text-green-300">{successMessage}</p>}
 
 				<div className="mt-6">
 					<button
@@ -217,45 +197,35 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 
 			<div className="flex items-center justify-between mt-4">
 				<span className="w-1/5 border-b border-gold/30" />
-
-				<span className="text-xs text-center text-gold/70 uppercase">
-					or
-				</span>
-
+				<span className="text-xs text-center text-gold/70 uppercase">or</span>
 				<span className="w-1/5 border-b border-gold/30" />
 			</div>
 
 			<div className="flex items-center mt-4 -mx-2">
 				<button
 					type="button"
+					onClick={() => googleLogin()}
 					className="flex items-center justify-center w-full px-6 py-2 mx-2 text-sm font-medium text-gold transition-colors duration-300 transform bg-stage border border-gold/40 rounded-lg hover:bg-stage/80 focus:outline-none"
 				>
-					<svg
-						className="w-4 h-4 mx-2 fill-current"
-						viewBox="0 0 24 24"
-					>
+					<svg className="w-4 h-4 mx-2 fill-current" viewBox="0 0 24 24">
 						<path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" />
 					</svg>
-
-					<span className="hidden mx-2 sm:inline">
-						Sign in with Google
-					</span>
+					<span className="hidden mx-2 sm:inline">Sign in with Google</span>
 				</button>
 			</div>
 
 			<p className="mt-6 text-xs font-light text-center text-gold/70">
-				{isCreateMode
-					? 'Already have an account? '
-					: "Don't have an account? "}
-
-				<a
-					href="#"
-					onClick={toggleMode}
-					className="font-medium text-gold hover:underline"
-				>
+				{isCreateMode ? 'Already have an account? ' : "Don't have an account? "}
+				<a href="#" onClick={toggleMode} className="font-medium text-gold hover:underline">
 					{isCreateMode ? 'Sign In' : 'Create One'}
 				</a>
 			</p>
 		</div>
 	)
+}
+
+function extractApiError(error: unknown): string {
+	if (!isAxiosError(error)) return ''
+	const d = error.response?.data
+	return d?.message || d?.error || d?.detail || d?.title || ''
 }

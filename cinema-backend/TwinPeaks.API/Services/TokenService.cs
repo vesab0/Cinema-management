@@ -12,17 +12,20 @@ namespace TwinPeaks.API.Services
 {
     public class TokenService
     {
-        private readonly string _secret;
         private readonly byte[] _signingKeyBytes;
         private readonly int _expiryMinutes;
         private readonly int _refreshDays;
+        private readonly string _issuer;
+        private readonly string _audience;
 
         public TokenService(IConfiguration config)
         {
-            _secret = config["Jwt:Key"] ?? "please_change_this_development_secret";
-            _signingKeyBytes = BuildSigningKey(_secret);
+            var secret = config["Jwt:Key"] ?? "please_change_this_development_secret";
+            _signingKeyBytes = BuildSigningKey(secret);
             _expiryMinutes = int.TryParse(config["Jwt:ExpiryMinutes"], out var m) ? m : 15;
             _refreshDays = int.TryParse(config["Jwt:RefreshDays"], out var d) ? d : 7;
+            _issuer = config["Jwt:Issuer"] ?? "marquee";
+            _audience = config["Jwt:Audience"] ?? "marquee";
         }
 
         public (string token, DateTime expires) CreateAccessToken(User user)
@@ -52,6 +55,8 @@ namespace TwinPeaks.API.Services
             }
 
             var token = new JwtSecurityToken(
+                issuer: _issuer,
+                audience: _audience,
                 claims: identity.Claims,
                 notBefore: now,
                 expires: expires,
@@ -64,7 +69,7 @@ namespace TwinPeaks.API.Services
 
         public RefreshToken CreateRefreshToken(Guid userId)
         {
-            var rt = new RefreshToken
+            return new RefreshToken
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
@@ -72,7 +77,6 @@ namespace TwinPeaks.API.Services
                 Created = DateTime.UtcNow,
                 Expires = DateTime.UtcNow.AddDays(_refreshDays)
             };
-            return rt;
         }
 
         public ClaimsPrincipal? ValidateToken(string token)
@@ -82,13 +86,15 @@ namespace TwinPeaks.API.Services
             {
                 var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
+                    ValidateIssuer = true,
+                    ValidIssuer = _issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _audience,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(_signingKeyBytes),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromSeconds(30)
-                }, out var validatedToken);
+                }, out _);
 
                 return principal;
             }
@@ -101,12 +107,7 @@ namespace TwinPeaks.API.Services
         private static byte[] BuildSigningKey(string secret)
         {
             var raw = Encoding.UTF8.GetBytes(secret);
-            if (raw.Length >= 32)
-            {
-                return raw;
-            }
-
-            return SHA256.HashData(raw);
+            return raw.Length >= 32 ? raw : SHA256.HashData(raw);
         }
     }
 }

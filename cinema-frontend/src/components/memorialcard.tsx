@@ -1,6 +1,4 @@
 export default function MemorialCard() {
-  const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
-
   return (
     <section className="w-full bg-black py-24 flex flex-col items-center px-4">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');`}</style>
@@ -13,9 +11,18 @@ export default function MemorialCard() {
         </p>
       </div>
       <img
-        src={`${apiBase.replace(/\/$/, '')}/uploads/memorial.png`}
+        src="/memorial.png"
         className="w-full max-w-sm"
       />
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');`}</style>
+      <div className="text-center mb-16 max-w-2xl">
+        <p
+          className="text-white leading-loose"
+          style={{ fontFamily: "'Rock Salt', cursive", fontSize: "1.1rem" }}
+        >
+         Night Blooming Jasmine
+        </p>
+      </div>
     </section>
   )
 }

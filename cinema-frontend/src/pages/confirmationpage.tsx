@@ -59,7 +59,7 @@ export default function ConfirmationPage() {
           )}
         </div>
 
-        <div className="bg-[#1a1a1a] border border-white/10 divide-y divide-white/10">
+        <div className="bg-[#1a1a1a] border border-white/10 rounded divide-y divide-white/10">
           {purchases.map((p) => (
             <div key={p.id} className="p-4 text-left">
               <div className="flex justify-between items-start">
@@ -87,16 +87,16 @@ export default function ConfirmationPage() {
           Save your confirmation codes above. You can also view your tickets in your profile.
         </p>
 
-        <div className="flex gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => navigate('/profile')}
-            className="px-6 py-2.5 text-sm uppercase tracking-widest font-bold bg-[#f5c518] text-black hover:bg-[#e6b800] transition-colors"
+            className="px-6 py-2.5 text-sm uppercase tracking-widest font-bold bg-[#f5c518] text-black hover:bg-[#e6b800] transition-colors rounded-sm"
           >
             My Tickets
           </button>
           <button
             onClick={() => navigate('/movies')}
-            className="px-6 py-2.5 text-sm uppercase tracking-widest font-bold border border-white/20 hover:border-white/50 transition-colors"
+            className="px-6 py-2.5 text-sm uppercase tracking-widest font-bold border border-white/20 hover:border-white/50 transition-colors rounded-sm"
           >
             More Movies
           </button>

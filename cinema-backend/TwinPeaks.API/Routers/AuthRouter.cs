@@ -1,7 +1,9 @@
 using CinemaApp = TwinPeaks.API;
 using TwinPeaks.API.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace TwinPeaks.API.Routers
 {
@@ -11,8 +13,12 @@ namespace TwinPeaks.API.Routers
         {
             var group = app.MapGroup("/auth");
 
-            group.MapPost("/register", (RegisterRequest req, AuthService auth) =>
+            group.MapPost("/register", async (RegisterRequest req, AuthService auth, IValidator<RegisterRequest> validator) =>
             {
+                var validation = await validator.ValidateAsync(req);
+                if (!validation.IsValid)
+                    return Results.ValidationProblem(validation.ToDictionary());
+
                 try
                 {
                     var (user, err) = auth.Register(req);
@@ -29,10 +35,15 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Registration failed", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireRateLimiting("auth-limit");
 
-            group.MapPost("/login", (LoginRequest req, AuthService auth, HttpContext ctx) =>
+            group.MapPost("/login", async (LoginRequest req, AuthService auth, HttpContext ctx, IValidator<LoginRequest> validator) =>
             {
+                var validation = await validator.ValidateAsync(req);
+                if (!validation.IsValid)
+                    return Results.ValidationProblem(validation.ToDictionary());
+
                 try
                 {
                     var (res, err) = auth.Login(req);
@@ -46,7 +57,7 @@ namespace TwinPeaks.API.Routers
                     ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = false,
+                        Secure = true,
                         SameSite = SameSiteMode.Lax,
                         MaxAge = TimeSpan.FromDays(7),
                         Path = "/"
@@ -58,7 +69,8 @@ namespace TwinPeaks.API.Routers
                 {
                     return Results.Problem(title: "Login failed", detail: ex.Message, statusCode: 500);
                 }
-            });
+            })
+            .RequireRateLimiting("auth-limit");
 
             group.MapPost("/refresh", (AuthService auth, HttpContext ctx) =>
             {
@@ -78,7 +90,7 @@ namespace TwinPeaks.API.Routers
                     ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = false,
+                        Secure = true,
                         SameSite = SameSiteMode.Lax,
                         MaxAge = TimeSpan.FromDays(7),
                         Path = "/"
@@ -128,6 +140,33 @@ namespace TwinPeaks.API.Routers
                     isActive = user.IsActive
                 });
             });
+
+            group.MapPost("/google", async (CinemaApp.GoogleAuthRequest req, AuthService auth, IHttpClientFactory httpFactory, IConfiguration config, HttpContext ctx) =>
+            {
+                if (string.IsNullOrWhiteSpace(req.Credential))
+                    return Results.BadRequest(new { message = "Google credential is required" });
+
+                var clientId = config["Google:ClientId"] ?? "";
+                if (string.IsNullOrWhiteSpace(clientId))
+                    return Results.Problem("Google OAuth is not configured on this server", statusCode: 500);
+
+                var http = httpFactory.CreateClient();
+                var (res, err) = await auth.GoogleLoginAsync(req.Credential, clientId, http);
+                if (res == null)
+                    return Results.Json(new { message = err ?? "Google sign-in failed" }, statusCode: 401);
+
+                ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    MaxAge = TimeSpan.FromDays(7),
+                    Path = "/"
+                });
+
+                return Results.Ok(new { accessToken = res.AccessToken, expiresIn = res.ExpiresInSeconds });
+            })
+            .RequireRateLimiting("auth-limit");
 
             group.MapPost("/logout", (AuthService auth, HttpContext ctx) =>
             {

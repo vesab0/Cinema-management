@@ -110,6 +110,7 @@ namespace TwinPeaks.API.Services
             _db.MovieSchedules.Add(schedule);
 
             // Auto-generate one ticket per active seat in the room
+            var vipPrice = req.VipTicketPrice ?? req.TicketPrice;
             var tickets = room.Seats
                 .Where(s => s.IsActive)
                 .Select(s => new Ticket
@@ -117,7 +118,7 @@ namespace TwinPeaks.API.Services
                     Id = Guid.NewGuid(),
                     ScheduleId = schedule.Id,
                     SeatId = s.Id,
-                    Price = req.TicketPrice,
+                    Price = s.SeatType == SeatType.VIP ? vipPrice : req.TicketPrice,
                     Status = TicketStatus.Available,
                     CreatedAt = DateTime.UtcNow
                 })

@@ -8,9 +8,11 @@ namespace TwinPeaks.API.Routers
     {
         public static void MapUserRoutes(this WebApplication app)
         {
-            var group = app.MapGroup("/api/users");
+            // Admin-only routes: list, get by id, delete
+            var adminGroup = app.MapGroup("/api/users")
+                .RequireAuthorization("AdminOnly");
 
-            group.MapGet("/", (UsersService users) =>
+            adminGroup.MapGet("/", (UsersService users) =>
             {
                 try
                 {
@@ -23,7 +25,7 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapGet("/{id:guid}", (Guid id, UsersService users) =>
+            adminGroup.MapGet("/{id:guid}", (Guid id, UsersService users) =>
             {
                 try
                 {
@@ -37,21 +39,7 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapPut("/{id:guid}", (Guid id, UpdateUserRequest req, UsersService users) =>
-            {
-                try
-                {
-                    var (user, err) = users.Update(id, req);
-                    if (user == null) return Results.NotFound(new { message = err ?? "User not found" });
-                    return Results.Ok(user);
-                }
-                catch (Exception ex)
-                {
-                    return Results.Problem(title: "Failed to update user", detail: ex.Message, statusCode: 500);
-                }
-            });
-
-            group.MapDelete("/{id:guid}", (Guid id, UsersService users) =>
+            adminGroup.MapDelete("/{id:guid}", (Guid id, UsersService users) =>
             {
                 try
                 {
@@ -64,6 +52,33 @@ namespace TwinPeaks.API.Routers
                     return Results.Problem(title: "Failed to delete user", detail: ex.Message, statusCode: 500);
                 }
             });
+
+            // Profile update — any authenticated user may update their own record;
+            // only admins may update other users or change roles.
+            app.MapPut("/api/users/{id:guid}", (Guid id, UpdateUserRequest req, UsersService users, HttpContext ctx) =>
+            {
+                try
+                {
+                    var callerId = ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                        ?? ctx.User.FindFirst("sub")?.Value;
+                    var isAdmin = ctx.User.IsInRole("admin");
+
+                    if (!isAdmin && callerId != id.ToString())
+                        return Results.Forbid();
+
+                    // Non-admins cannot change roles
+                    var effectiveReq = isAdmin ? req : req with { Role = null };
+
+                    var (user, err) = users.Update(id, effectiveReq);
+                    if (user == null) return Results.NotFound(new { message = err ?? "User not found" });
+                    return Results.Ok(user);
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Failed to update user", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization();
         }
     }
 }

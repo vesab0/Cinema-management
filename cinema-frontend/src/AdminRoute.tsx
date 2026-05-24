@@ -1,22 +1,17 @@
-import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { isAdminAuthenticated, bootstrapSession } from "./auth";
+import { useAuthStore } from "./store/authStore";
 
 export default function AdminRoute() {
   const location = useLocation();
-  const [status, setStatus] = useState<'loading' | 'ok' | 'denied'>(
-    () => isAdminAuthenticated() ? 'ok' : 'loading'
-  );
+  const { user, isBootstrapped } = useAuthStore()
 
-  useEffect(() => {
-    if (status !== 'loading') return;
-    bootstrapSession().then(user => {
-      const roles = user?.roles.map(r => r.toLowerCase()) ?? [];
-      setStatus(roles.includes('admin') ? 'ok' : 'denied');
-    });
-  }, []);
+  if (!isBootstrapped) return null;
 
-  if (status === 'loading') return null;
-  if (status === 'denied') return <Navigate to="/" replace state={{ from: location.pathname }} />;
+  const isAdminOrStaff = user?.roles
+    .map(r => r.toLowerCase())
+    .some(r => r === 'admin' || r === 'staff') ?? false
+
+  if (!isAdminOrStaff) return <Navigate to="/" replace state={{ from: location.pathname }} />;
+
   return <Outlet />;
 }

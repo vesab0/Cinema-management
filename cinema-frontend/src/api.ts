@@ -31,10 +31,10 @@ import type {
   UserRow,
   UserTicketRow,
 } from './types'
-import { getAccessToken, setAccessToken, setUser } from './auth'
+import { fetchCurrentUser, getAccessToken, setAccessToken, setUser } from './auth'
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
-const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8001'
+const PREDICTOR_URL = import.meta.env.VITE_PREDICTOR_URL ?? 'http://localhost:8000'
 
 export const predictorApi = axios.create({
   baseURL: PREDICTOR_URL,
@@ -127,6 +127,15 @@ export const authApi = {
     const { data } = await api.post('/auth/login', payload)
     setAccessToken(data.accessToken)
     api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    await fetchCurrentUser()
+    return data
+  },
+
+  googleLogin: async (credential: string) => {
+    const { data } = await api.post('/auth/google', { credential })
+    setAccessToken(data.accessToken)
+    api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    await fetchCurrentUser()
     return data
   },
 
@@ -210,10 +219,11 @@ export const castMembersApi = {
 }
 
 export const uploadsApi = {
-  uploadImage: async (file: File): Promise<string> => {
+  uploadImage: async (file: File, type?: 'avatar' | 'poster'): Promise<string> => {
     const formData = new FormData()
     formData.append('file', file)
-    const { data } = await api.post<{ url: string }>('/api/uploads/image', formData, {
+    const endpoint = type === 'avatar' ? '/api/uploads/avatar' : '/api/uploads/image'
+    const { data } = await api.post<{ url: string }>(endpoint, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return data.url
@@ -243,6 +253,8 @@ export const schedulesApi = {
 export const movieSearchApi = {
   search: (q: string, limit = 20) =>
     predictorApi.get<import('./types').PredictorMovie[]>('/search', { params: { q, limit } }).then(r => r.data),
+  list: (limit = 9999) =>
+    predictorApi.get<import('./types').PredictorMovie[]>('/browse', { params: { limit } }).then(r => r.data),
 }
 
 export const ticketsApi = {

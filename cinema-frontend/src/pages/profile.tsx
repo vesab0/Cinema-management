@@ -4,17 +4,33 @@ import { favoritesApi, movieSearchApi, uploadsApi, usersApi, api, userTicketsApi
 import type { FavoriteMovieResponse, PredictorMovie, UserTicketRow } from "../types";
 import SecondaryNav from "../components/SecondaryNav";
 import { getUserId, getUserName, getUserEmail, getUser, setUser } from "../auth";
+import { resolvePosterUrl } from "../lib/posters";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
-
-function cleanUrl(url: string): string {
-  return url.replace(/'/g, "").replace(/"/g, "");
-}
+const PREDICTOR_BASE = import.meta.env.VITE_PREDICTOR_URL ?? "http://localhost:8000";
 
 function resolveAvatar(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith("http") || path.startsWith("blob:")) return path;
   return `${API_BASE}${path}`;
+}
+
+function predictorPosterUrl(title: string): string {
+  return `${PREDICTOR_BASE.replace(/\/$/, "")}/movie-poster?title=${encodeURIComponent(title)}`;
+}
+
+function fallbackToPredictorPoster(
+  e: React.SyntheticEvent<HTMLImageElement>,
+  title: string,
+) {
+  const img = e.currentTarget;
+  if (img.dataset.fallbackApplied === "true") {
+    img.style.display = "none";
+    return;
+  }
+
+  img.dataset.fallbackApplied = "true";
+  img.src = predictorPosterUrl(title);
 }
 
 export default function ProfilePage() {
@@ -64,6 +80,21 @@ export default function ProfilePage() {
     .slice(0, 2);
 
   useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) { setResults([]); setSearchError(null); return; }
+    let cancelled = false;
+    debounceRef.current = setTimeout(() => {
+      setSearchLoading(true);
+      setSearchError(null);
+      movieSearchApi.search(query.trim())
+        .then((data) => { if (!cancelled) setResults(data); })
+        .catch(() => { if (!cancelled) setSearchError("Search failed. Is the predictor running?"); })
+        .finally(() => { if (!cancelled) setSearchLoading(false); });
+    }, 300);
+    return () => { cancelled = true; };
+  }, [query]);
+
+  useEffect(() => {
     if (!userId) { setFavsLoading(false); setTicketsLoading(false); return; }
     favoritesApi.list(userId)
       .then(setFavorites)
@@ -87,19 +118,6 @@ export default function ProfilePage() {
       .finally(() => setTicketsLoading(false));
   }, [userId]);
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (query.trim().length < 2) { setResults([]); return; }
-    debounceRef.current = setTimeout(() => {
-      setSearchLoading(true);
-      setSearchError(null);
-      movieSearchApi.search(query.trim())
-        .then(setResults)
-        .catch(() => setSearchError("Search failed. Is the predictor running?"))
-        .finally(() => setSearchLoading(false));
-    }, 300);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [query]);
 
   const handleSave = async () => {
     if (!userId) return;
@@ -109,7 +127,7 @@ export default function ProfilePage() {
     try {
       let avatarPath: string | undefined;
       if (selectedFile) {
-        avatarPath = await uploadsApi.uploadImage(selectedFile);
+        avatarPath = await uploadsApi.uploadImage(selectedFile, 'avatar');
       }
       await usersApi.updateProfile(userId, {
         firstName: editFirstName || undefined,
@@ -146,7 +164,11 @@ export default function ProfilePage() {
         favoritesApi.list(userId).then(setFavorites).catch(() => {});
       });
     } else {
-      await favoritesApi.add(userId, movie.tmdbId, movie.title, movie.posterUrl)
+      const poster = resolvePosterUrl({
+        posterUrl: movie.posterUrl,
+        posterPath: movie.posterPath,
+      });
+      await favoritesApi.add(userId, movie.tmdbId, movie.title, poster)
         .then((newFav) => setFavorites((prev) => [...prev, newFav]))
         .catch(() => {});
     }
@@ -175,7 +197,7 @@ export default function ProfilePage() {
       <div className="relative z-10">
         <SecondaryNav />
 
-        <div className="px-10 py-10 max-w-5xl mx-auto">
+        <div className="px-4 sm:px-8 md:px-10 py-8 sm:py-10 max-w-5xl mx-auto">
 
           {/* Page title */}
           <h1 className="font-display text-gold text-5xl tracking-widest uppercase mb-2">
@@ -194,7 +216,7 @@ export default function ProfilePage() {
           ) : (
             <>
               {/* ── Profile row ───────────────────────────────────────── */}
-              <div className="flex items-center gap-6 mb-10">
+              <div className="flex flex-wrap items-center gap-6 mb-10">
 
                 {/* Avatar */}
                 <input
@@ -307,11 +329,11 @@ export default function ProfilePage() {
               {!ticketsLoading && tickets.length === 0 && (
                 <p className="text-white/50 text-sm tracking-wide">No tickets yet.</p>
               )}
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {tickets.map((t) => (
                   <div
                     key={t.id}
-                    className="bg-[#141414] border border-white/10 rounded p-5 w-[280px] flex flex-col gap-3"
+                    className="bg-[#141414] border border-white/10 rounded p-5 flex flex-col gap-3"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -360,7 +382,7 @@ export default function ProfilePage() {
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="px-4 py-2 text-xs uppercase tracking-widest text-stage bg-gold rounded hover:bg-gold/90 transition-colors font-medium"
+                  className="px-4 py-2 text-xs uppercase tracking-widest text-stage bg-gold rounded hover:bg-gold/90 transition-colors font-medium disabled:opacity-50"
                 >
                   + Add Favorites
                 </button>
@@ -374,20 +396,20 @@ export default function ProfilePage() {
                 </p>
               )}
 
-              <div className="flex flex-wrap gap-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
                 {favorites.map((fav) => (
-                  <div key={fav.favoriteId} className="w-[180px]">
+                  <div key={fav.favoriteId} className="w-full">
+                    {(() => {
+                      const tmdbPosterSrc = resolvePosterUrl({ posterPath: fav.posterPath });
+                      const posterSrc = tmdbPosterSrc || predictorPosterUrl(fav.movieTitle);
+                      return (
                     <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-3 bg-black/40 relative group">
-                      {fav.posterPath ? (
+                      {posterSrc ? (
                         <img
-                          src={cleanUrl(
-                            fav.posterPath.startsWith("http")
-                              ? fav.posterPath
-                              : `${API_BASE}${fav.posterPath}`
-                          )}
+                          src={posterSrc}
                           alt={fav.movieTitle}
                           className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.04]"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                          onError={(e) => fallbackToPredictorPoster(e, fav.movieTitle)}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center p-3">
@@ -402,6 +424,8 @@ export default function ProfilePage() {
                         ♥
                       </button>
                     </div>
+                      );
+                    })()}
                     <div className="text-[13px] font-medium text-white uppercase tracking-wide truncate">
                       {fav.movieTitle}
                     </div>
@@ -412,6 +436,8 @@ export default function ProfilePage() {
                 ))}
               </div>
             </>
+          )}
+          </>
           )}
         </div>
       </div>
@@ -445,25 +471,49 @@ export default function ProfilePage() {
                 className="mb-6 w-full max-w-md px-4 py-2.5 rounded bg-black/40 border border-gold/30 text-white placeholder-white/40 focus:outline-none focus:border-gold/60"
               />
 
-              {searchLoading && <p className="text-white/50 text-sm mb-4">Searching…</p>}
-              {searchError && <p className="text-red-400 text-sm mb-4">{searchError}</p>}
-              {!searchLoading && query.trim().length >= 2 && results.length === 0 && !searchError && (
+              {searchError && (
+                <p className="text-red-400 text-sm mb-4">{searchError}</p>
+              )}
+              {searchLoading && (
+                <p className="text-white/50 text-sm mb-4">Searching…</p>
+              )}
+              {!searchLoading && !searchError && query.trim().length >= 2 && results.length === 0 && (
                 <p className="text-white/50 text-sm mb-4">No results for "{query}"</p>
               )}
 
-              <div className="flex flex-wrap gap-6 pb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 overflow-hidden gap-4 pb-2">
                 {results.map((movie) => {
                   const isFav = favoriteTmdbIds.has(movie.tmdbId);
+                  const tmdbPosterSrc = resolvePosterUrl({
+                    posterUrl: movie.posterUrl,
+                    posterPath: movie.posterPath,
+                  });
+                  const posterSrc = tmdbPosterSrc || predictorPosterUrl(movie.title);
                   return (
-                    <div key={movie.tmdbId} className="w-[140px]">
-                      <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-black/40 relative group">
-                        {movie.posterUrl ? (
-                          <img
-                            src={cleanUrl(movie.posterUrl)}
-                            alt={movie.title}
-                            className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.04]"
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                          />
+                    <div key={movie.movieLensId ?? movie.tmdbId} className="w-full">
+                      <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-[#1a1a1a] relative group">
+                        {posterSrc ? (
+                          <>
+                            <img
+                              src={posterSrc}
+                              alt={movie.title}
+                              className="w-full h-full object-cover block transition-transform duration-200 hover:scale-[1.04]"
+                              onError={(e) => {
+                                const img = e.currentTarget;
+                                if (img.dataset.fallbackApplied === "true") {
+                                  img.style.display = "none";
+                                  img.nextElementSibling?.classList.remove("hidden");
+                                  return;
+                                }
+
+                                img.dataset.fallbackApplied = "true";
+                                img.src = predictorPosterUrl(movie.title);
+                              }}
+                            />
+                            <div className="hidden w-full h-full flex items-center justify-center p-3">
+                              <span className="text-white/30 text-xs text-center">{movie.title}</span>
+                            </div>
+                          </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center p-3">
                             <span className="text-white/30 text-xs text-center">{movie.title}</span>
@@ -480,11 +530,8 @@ export default function ProfilePage() {
                       <div className="text-[12px] font-medium text-white uppercase tracking-wide truncate" title={movie.title}>
                         {movie.title}
                       </div>
-                      <div className="text-xs text-white/40 flex items-center gap-2 mt-0.5">
+                      <div className="text-xs text-white/40 mt-0.5">
                         <span>{movie.releaseDate?.split("-")[0] ?? "—"}</span>
-                        {movie.voteAverage > 0 && (
-                          <span className="text-gold/70">★ {movie.voteAverage.toFixed(1)}</span>
-                        )}
                       </div>
                     </div>
                   );

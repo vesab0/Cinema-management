@@ -73,7 +73,7 @@ export default function MovieSchedules({ movieId }: Props) {
   if (!movieId) return null
 
   return (
-    <section className="mt-10 p-6">
+    <section className="mt-10 px-0 py-6">
       <h2 className="text-2xl font-bold uppercase tracking-wide text-[#f5c518] mb-8">
         Twin Peaks Cinema – Prishtina
       </h2>
@@ -92,7 +92,7 @@ export default function MovieSchedules({ movieId }: Props) {
               <div
                 key={schedule.id}
                 onClick={() => navigate(`/booking/${schedule.id}`)}
-                className="bg-[#6b1a2a] hover:bg-[#822033] border border-transparent hover:border-[#f5c518] transition-colors p-4 min-w-[110px] cursor-pointer"
+                className="bg-[#6b1a2a] hover:bg-[#822033] border border-transparent hover:border-[#f5c518] transition-colors p-4 min-w-[110px] cursor-pointer rounded-sm"
               >
                 <div className="text-2xl font-bold text-white leading-none">
                   {schedule.startTime}

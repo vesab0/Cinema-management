@@ -229,12 +229,11 @@ export default function CurtainOpen({
   return (
     <div
       ref={stageRef}
-      className={`relative w-full h-full overflow-hidden bg-[#080408] ${className}`}
+      className={`relative w-full bg-[#080408] ${className}`}
     >
       <div
         ref={backdropRef}
-        className="absolute inset-0 opacity-0 transition-opacity duration-[1100ms] ease-in-out flex flex-col items-center justify-start pt-3"
-        style={{ background: "radial-gradient(ellipse 70% 60% at 50% 55%, #1c0d14 0%, #080408 100%)" }}
+        className="relative opacity-0 transition-opacity duration-[1100ms] ease-in-out"
       >
         {children}
       </div>

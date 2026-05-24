@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import DataTable, { type Column } from "../../components/Table";
 import { roomsApi } from "../../api";
+import { roomSchema, type RoomFormData } from "../../schemas/dashboard";
 import type { RoomRow, RoomWithSeats, SeatResponse, SeatType } from "../../types";
 
 const SEAT_TYPES: SeatType[] = ["Standard", "VIP", "Wheelchair"];
@@ -125,19 +128,32 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
   onCancel: () => void;
   onConfirm: (name: string, rows: number, cols: number) => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [rows, setRows] = useState(initial?.rows ?? 8);
-  const [cols, setCols] = useState(initial?.cols ?? 12);
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<RoomFormData>({
+    resolver: zodResolver(roomSchema),
+    defaultValues: {
+      name: initial?.name ?? "",
+      rows: initial?.rows ?? 8,
+      cols: initial?.cols ?? 12,
+    },
+  });
 
-  const rowLabels = Array.from({ length: rows }, (_, i) => String.fromCharCode(65 + i));
+  const watchedRows = Math.min(Math.max(Math.floor(watch("rows") || 1), 1), 50);
+  const watchedCols = Math.min(Math.max(Math.floor(watch("cols") || 1), 1), 50);
+  const rowLabels = Array.from({ length: watchedRows }, (_, i) => String.fromCharCode(65 + i));
   const isEdit = !!initial;
+
+  const onSubmit = (data: RoomFormData) => onConfirm(data.name.trim(), data.rows, data.cols);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" onClick={onCancel}>
-      <div className="bg-dash-card rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <form
+        className="bg-dash-card rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">{isEdit ? "Edit Room" : "New Room"}</h2>
-          <button onClick={onCancel} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
+          <button type="button" onClick={onCancel} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -148,27 +164,31 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
           <div>
             <label className="block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Name</label>
             <input
-              type="text" value={name} onChange={(e) => setName(e.target.value)}
+              type="text"
+              {...register("name")}
               placeholder="e.g. Hall 1"
               className="w-full text-sm text-white bg-dash-surface rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
             />
+            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
           </div>
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Rows</label>
               <input
-                type="number" min={1} max={26} value={rows}
-                onChange={(e) => setRows(Math.min(26, Math.max(1, +e.target.value)))}
+                type="number" min={1} max={50}
+                {...register("rows", { valueAsNumber: true })}
                 className="w-full text-sm text-white bg-dash-surface rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
               />
+              {errors.rows && <p className="mt-1 text-xs text-red-400">{errors.rows.message}</p>}
             </div>
             <div className="flex-1">
               <label className="block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Cols</label>
               <input
-                type="number" min={1} max={30} value={cols}
-                onChange={(e) => setCols(Math.min(30, Math.max(1, +e.target.value)))}
+                type="number" min={1} max={50}
+                {...register("cols", { valueAsNumber: true })}
                 className="w-full text-sm text-white bg-dash-surface rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
               />
+              {errors.cols && <p className="mt-1 text-xs text-red-400">{errors.cols.message}</p>}
             </div>
           </div>
         </div>
@@ -184,7 +204,7 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
               <div key={label} className="flex items-center justify-center gap-3">
                 <span className="text-xs text-white/40 w-4 text-right">{label}</span>
                 <div className="flex gap-1">
-                  {Array.from({ length: cols }, (_, c) => (
+                  {Array.from({ length: watchedCols }, (_, c) => (
                     <div key={c} className="w-5 h-5 rounded-sm bg-white/10" />
                   ))}
                 </div>
@@ -194,18 +214,17 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">
+          <button type="button" onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">
             Cancel
           </button>
           <button
-            onClick={() => name.trim() && onConfirm(name.trim(), rows, cols)}
-            disabled={!name.trim()}
+            type="submit"
             className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40"
           >
             {isEdit ? "Save Changes" : "Create Room"}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
