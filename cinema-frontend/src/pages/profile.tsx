@@ -396,9 +396,9 @@ export default function ProfilePage() {
                 </p>
               )}
 
-              <div className="flex flex-wrap gap-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
                 {favorites.map((fav) => (
-                  <div key={fav.favoriteId} className="w-[180px]">
+                  <div key={fav.favoriteId} className="w-full">
                     {(() => {
                       const tmdbPosterSrc = resolvePosterUrl({ posterPath: fav.posterPath });
                       const posterSrc = tmdbPosterSrc || predictorPosterUrl(fav.movieTitle);
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                 <p className="text-white/50 text-sm mb-4">No results for "{query}"</p>
               )}
 
-              <div className="flex flex-wrap gap-6 pb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 overflow-hidden gap-4 pb-2">
                 {results.map((movie) => {
                   const isFav = favoriteTmdbIds.has(movie.tmdbId);
                   const tmdbPosterSrc = resolvePosterUrl({
@@ -490,7 +490,7 @@ export default function ProfilePage() {
                   });
                   const posterSrc = tmdbPosterSrc || predictorPosterUrl(movie.title);
                   return (
-                    <div key={movie.movieLensId ?? movie.tmdbId} className="w-[160px]">
+                    <div key={movie.movieLensId ?? movie.tmdbId} className="w-full">
                       <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-[#1a1a1a] relative group">
                         {posterSrc ? (
                           <>

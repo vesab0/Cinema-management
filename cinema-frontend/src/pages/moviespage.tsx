@@ -79,7 +79,7 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
       <div className="relative z-10">
         <SecondaryNav />
         <div className="px-4 sm:px-8 md:px-10 py-10 max-w-6xl mx-auto">
-          <h1 className="font-display text-gold text-5xl tracking-widest uppercase mb-2">
+          <h1 className="font-display text-gold text-3xl sm:text-5xl tracking-widest uppercase mb-2">
             {mode === "upcoming" ? "Upcoming" : "Now Playing"}
           </h1>
           <div className="w-12 h-0.5 bg-wine mb-6" />
@@ -102,7 +102,7 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
             <p className="text-white/50 text-sm tracking-wide">No movies found.</p>
           )}
 
-          <div className="flex flex-wrap gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
             {filtered.map((movie) => (
               <MovieCard
                 key={movie.id}

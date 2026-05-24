@@ -15,8 +15,8 @@ export default function MovieCard({ movie, isFavorite = false, onToggleFavorite 
     : (apiBase ? `${apiBase.replace(/\/$/, '')}/${posterPath.replace(/^\//, '')}` : posterPath)
 
   return (
-    <Link to={`/movies/${movie.id}`} className="w-[220px] sm:w-[240px] cursor-pointer block group/card">
-      <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-3 bg-[#1a1a1a] relative">
+    <Link to={`/movies/${movie.id}`} className="w-full cursor-pointer block group/card">
+      <div className="w-full aspect-[2/3] overflow-hidden rounded-md mb-2 bg-[#1a1a1a] relative">
         {movie.posterUrl ? (
           <img
             src={posterSrc}
@@ -39,10 +39,10 @@ export default function MovieCard({ movie, isFavorite = false, onToggleFavorite 
           </button>
         )}
       </div>
-      <div className="text-[13px] font-medium text-white mb-1 uppercase tracking-wide transition-colors group-hover/card:text-gold">
+      <div className="text-[11px] sm:text-[13px] font-medium text-white mb-1 uppercase tracking-wide transition-colors group-hover/card:text-gold line-clamp-2">
         {movie.name}
       </div>
-      <div className="text-xs text-[#888]">
+      <div className="text-[10px] sm:text-xs text-[#888]">
         {movie.releaseDate ? String(movie.releaseDate).split("T")[0] : "—"}
       </div>
     </Link>
