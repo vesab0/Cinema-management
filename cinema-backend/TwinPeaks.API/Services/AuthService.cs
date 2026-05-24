@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using TwinPeaks.API;
 
@@ -143,6 +146,84 @@ namespace TwinPeaks.API.Services
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .FirstOrDefault(u => u.Id == id);
+
+        public async Task<(AuthResponse? response, string? error)> GoogleLoginAsync(
+            string idToken, string expectedClientId, HttpClient http)
+        {
+            HttpResponseMessage resp;
+            try
+            {
+                resp = await http.GetAsync(
+                    $"https://oauth2.googleapis.com/tokeninfo?access_token={Uri.EscapeDataString(idToken)}");
+            }
+            catch
+            {
+                return (null, "Failed to reach Google verification service");
+            }
+
+            if (!resp.IsSuccessStatusCode)
+                return (null, "Invalid Google token");
+
+            using var doc = await JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync());
+            var root = doc.RootElement;
+
+            // For access tokens, check azp (authorized party) or aud against our client ID
+            var aud = root.TryGetProperty("aud", out var audEl) ? audEl.GetString() : null;
+            var azp = root.TryGetProperty("azp", out var azpEl) ? azpEl.GetString() : null;
+            if (aud != expectedClientId && azp != expectedClientId)
+                return (null, "Token audience mismatch");
+
+            var emailVerified = root.TryGetProperty("email_verified", out var evEl)
+                && evEl.GetString() == "true";
+            if (!emailVerified)
+                return (null, "Google email is not verified");
+
+            var email = root.TryGetProperty("email", out var emailEl)
+                ? emailEl.GetString()?.Trim().ToLowerInvariant()
+                : null;
+            if (string.IsNullOrEmpty(email))
+                return (null, "Could not retrieve email from Google token");
+
+            var firstName = root.TryGetProperty("given_name", out var gnEl) ? gnEl.GetString() ?? "" : "";
+            var lastName = root.TryGetProperty("family_name", out var fnEl) ? fnEl.GetString() ?? "" : "";
+            var picture = root.TryGetProperty("picture", out var picEl) ? picEl.GetString() : null;
+
+            var user = _db.Users
+                .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                .FirstOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = string.IsNullOrEmpty(firstName) ? email.Split('@')[0] : firstName,
+                    LastName = lastName,
+                    Email = email,
+                    PasswordHash = string.Empty,
+                    AvatarPath = picture,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                    EmailConfirmed = true,
+                };
+                _db.Users.Add(user);
+                _db.SaveChanges();
+                AssignRole(user.Id, "user");
+                user = _db.Users
+                    .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+                    .First(u => u.Id == user.Id);
+            }
+
+            if (!user.IsActive)
+                return (null, "Account is inactive");
+
+            var (token, expires) = _tokenService.CreateAccessToken(user);
+            var refresh = _tokenService.CreateRefreshToken(user.Id);
+            _db.RefreshTokens.Add(refresh);
+            _db.SaveChanges();
+
+            return (new AuthResponse(token, refresh.Token, (int)(expires - DateTime.UtcNow).TotalSeconds), null);
+        }
 
         public void RevokeRefreshToken(string token)
         {

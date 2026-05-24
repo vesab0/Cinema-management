@@ -6,6 +6,7 @@ namespace TwinPeaks.API
     public record LoginRequest(string Email, string Password);
     public record RefreshRequest(string RefreshToken);
     public record AuthResponse(string AccessToken, string RefreshToken, int ExpiresInSeconds);
+    public record GoogleAuthRequest(string Credential);
 
     public record UserResponse(
         Guid   Id,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ConfirmModal from "./ConfirmModal";
 
 export type Column<T> = {
   key: keyof T;
@@ -49,6 +50,7 @@ export default function Table<T extends Record<string, unknown>>({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [creatingRow, setCreatingRow] = useState<T | null>(null);
   const [saved, setSaved] = useState<Record<number, boolean>>({});
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
 
   useEffect(() => { setRows(initialRows); }, [initialRows]);
 
@@ -98,8 +100,14 @@ export default function Table<T extends Record<string, unknown>>({
   };
 
   const handleDelete = (rowIndex: number) => {
-    onDelete?.(rows[rowIndex]);
-    setRows((prev) => prev.filter((_, i) => i !== rowIndex));
+    setPendingDeleteIndex(rowIndex);
+  };
+
+  const confirmDelete = () => {
+    if (pendingDeleteIndex === null) return;
+    onDelete?.(rows[pendingDeleteIndex]);
+    setRows((prev) => prev.filter((_, i) => i !== pendingDeleteIndex));
+    setPendingDeleteIndex(null);
   };
 
   const tableColumns = columns.filter((col) => !col.hideInTable);
@@ -214,6 +222,13 @@ export default function Table<T extends Record<string, unknown>>({
           onConfirm={handleCreateSave}
           confirmLabel="Create"
           validate={validate}
+        />
+      )}
+
+      {pendingDeleteIndex !== null && (
+        <ConfirmModal
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDeleteIndex(null)}
         />
       )}
     </>

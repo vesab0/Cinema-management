@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useGoogleLogin } from '@react-oauth/google'
 import { authApi } from '../api'
 import {
 	loginSchema,
@@ -33,6 +34,19 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 
 	const activeForm = isCreateMode ? registerForm : loginForm
 	const isSubmitting = activeForm.formState.isSubmitting
+
+	const googleLogin = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			setServerError('')
+			try {
+				await authApi.googleLogin(tokenResponse.access_token)
+				onLoginSuccess?.()
+			} catch (error: unknown) {
+				setServerError(extractApiError(error) || 'Google sign-in failed. Please try again.')
+			}
+		},
+		onError: () => setServerError('Google sign-in failed. Please try again.'),
+	})
 
 	const toggleMode = (e: React.MouseEvent<HTMLAnchorElement>) => {
 		e.preventDefault()
@@ -190,6 +204,7 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 			<div className="flex items-center mt-4 -mx-2">
 				<button
 					type="button"
+					onClick={() => googleLogin()}
 					className="flex items-center justify-center w-full px-6 py-2 mx-2 text-sm font-medium text-gold transition-colors duration-300 transform bg-stage border border-gold/40 rounded-lg hover:bg-stage/80 focus:outline-none"
 				>
 					<svg className="w-4 h-4 mx-2 fill-current" viewBox="0 0 24 24">

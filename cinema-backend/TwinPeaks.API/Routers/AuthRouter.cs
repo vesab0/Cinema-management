@@ -3,6 +3,7 @@ using TwinPeaks.API.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace TwinPeaks.API.Routers
 {
@@ -139,6 +140,33 @@ namespace TwinPeaks.API.Routers
                     isActive = user.IsActive
                 });
             });
+
+            group.MapPost("/google", async (CinemaApp.GoogleAuthRequest req, AuthService auth, IHttpClientFactory httpFactory, IConfiguration config, HttpContext ctx) =>
+            {
+                if (string.IsNullOrWhiteSpace(req.Credential))
+                    return Results.BadRequest(new { message = "Google credential is required" });
+
+                var clientId = config["Google:ClientId"] ?? "";
+                if (string.IsNullOrWhiteSpace(clientId))
+                    return Results.Problem("Google OAuth is not configured on this server", statusCode: 500);
+
+                var http = httpFactory.CreateClient();
+                var (res, err) = await auth.GoogleLoginAsync(req.Credential, clientId, http);
+                if (res == null)
+                    return Results.Json(new { message = err ?? "Google sign-in failed" }, statusCode: 401);
+
+                ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    MaxAge = TimeSpan.FromDays(7),
+                    Path = "/"
+                });
+
+                return Results.Ok(new { accessToken = res.AccessToken, expiresIn = res.ExpiresInSeconds });
+            })
+            .RequireRateLimiting("auth-limit");
 
             group.MapPost("/logout", (AuthService auth, HttpContext ctx) =>
             {

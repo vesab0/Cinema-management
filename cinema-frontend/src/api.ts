@@ -131,6 +131,14 @@ export const authApi = {
     return data
   },
 
+  googleLogin: async (credential: string) => {
+    const { data } = await api.post('/auth/google', { credential })
+    setAccessToken(data.accessToken)
+    api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    await fetchCurrentUser()
+    return data
+  },
+
   refresh: () => api.post('/auth/refresh'),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
