@@ -24,9 +24,8 @@ namespace TwinPeaks.API.Services
         private const string Region = "us-east-1";
         private const string Service = "s3";
 
-        public S3Service(IAmazonS3 s3, IHttpClientFactory httpClientFactory, IConfiguration config)
+        public S3Service(IHttpClientFactory httpClientFactory, IConfiguration config)
         {
-            _s3 = s3;
             _httpClientFactory = httpClientFactory;
             _bucket = config["Filebase:BucketName"]
                 ?? throw new InvalidOperationException("Filebase:BucketName is not configured.");
@@ -34,6 +33,17 @@ namespace TwinPeaks.API.Services
                 ?? throw new InvalidOperationException("Filebase:AccessKeyId is not configured.");
             _secretKey = config["Filebase:SecretAccessKey"]
                 ?? throw new InvalidOperationException("Filebase:SecretAccessKey is not configured.");
+
+            // The AWS SDK works fine for GET and DELETE against Filebase.
+            // PUT via the SDK fails because Filebase does not support the chunked transfer encoding
+            // (aws-chunked) that AWSSDK.S3 uses by default — it returns a 501 Not Implemented.
+            // UploadAsync therefore bypasses the SDK and sends a manually-signed PUT request.
+            _s3 = new AmazonS3Client(_accessKey, _secretKey, new AmazonS3Config
+            {
+                ServiceURL = ServiceEndpoint,
+                ForcePathStyle = true,
+                AuthenticationRegion = Region,
+            });
         }
 
         public async Task<string> UploadAsync(Stream stream, string fileName, string contentType)
@@ -80,7 +90,12 @@ namespace TwinPeaks.API.Services
                 $"SignedHeaders={signedHeaders}, Signature={signature}";
 
             var url = $"{ServiceEndpoint}{path}";
-            var request = new HttpRequestMessage(HttpMethod.Put, url);
+            var request = new HttpRequestMessage(HttpMethod.Put, url)
+            {
+                // Filebase S3 does not support HTTP/2; force 1.1 to avoid ResponseEnded errors
+                Version = new Version(1, 1),
+                VersionPolicy = HttpVersionPolicy.RequestVersionExact,
+            };
             request.Content = new ByteArrayContent(body);
             request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
             request.Headers.TryAddWithoutValidation("Authorization", authorization);

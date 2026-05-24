@@ -1,4 +1,3 @@
-using Amazon.S3;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
@@ -140,22 +139,6 @@ var stripeSecretKey = builder.Configuration["Stripe:SecretKey"]
     ?? throw new InvalidOperationException("Stripe:SecretKey is not configured.");
 Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
 
-// Filebase (S3-compatible)
-builder.Services.AddSingleton<IAmazonS3>(_ =>
-{
-    var accessKey = builder.Configuration["Filebase:AccessKeyId"]
-        ?? throw new InvalidOperationException("Filebase:AccessKeyId is not configured.");
-    var secretKey = builder.Configuration["Filebase:SecretAccessKey"]
-        ?? throw new InvalidOperationException("Filebase:SecretAccessKey is not configured.");
-
-    var config = new AmazonS3Config
-    {
-        ServiceURL = "https://s3.filebase.io",
-        ForcePathStyle = true,
-        AuthenticationRegion = "us-east-1",
-    };
-    return new AmazonS3Client(accessKey, secretKey, config);
-});
 builder.Services.AddScoped<IS3Service, S3Service>();
 
 builder.Services.AddSingleton<TwinPeaks.API.Services.TokenService>();

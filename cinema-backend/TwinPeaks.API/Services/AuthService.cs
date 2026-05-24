@@ -148,33 +148,54 @@ namespace TwinPeaks.API.Services
             .FirstOrDefault(u => u.Id == id);
 
         public async Task<(AuthResponse? response, string? error)> GoogleLoginAsync(
-            string idToken, string expectedClientId, HttpClient http)
+            string accessToken, string expectedClientId, HttpClient http)
         {
-            HttpResponseMessage resp;
+            // Step 1: validate token and verify it was issued to our client ID.
+            // tokeninfo?access_token= returns aud/azp but NOT given_name/family_name/picture.
+            HttpResponseMessage tokenInfoResp;
             try
             {
-                resp = await http.GetAsync(
-                    $"https://oauth2.googleapis.com/tokeninfo?access_token={Uri.EscapeDataString(idToken)}");
+                tokenInfoResp = await http.GetAsync(
+                    $"https://oauth2.googleapis.com/tokeninfo?access_token={Uri.EscapeDataString(accessToken)}");
             }
             catch
             {
                 return (null, "Failed to reach Google verification service");
             }
 
-            if (!resp.IsSuccessStatusCode)
+            if (!tokenInfoResp.IsSuccessStatusCode)
                 return (null, "Invalid Google token");
 
-            using var doc = await JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync());
-            var root = doc.RootElement;
+            using var tokenDoc = await JsonDocument.ParseAsync(await tokenInfoResp.Content.ReadAsStreamAsync());
+            var tokenRoot = tokenDoc.RootElement;
 
-            // For access tokens, check azp (authorized party) or aud against our client ID
-            var aud = root.TryGetProperty("aud", out var audEl) ? audEl.GetString() : null;
-            var azp = root.TryGetProperty("azp", out var azpEl) ? azpEl.GetString() : null;
+            var aud = tokenRoot.TryGetProperty("aud", out var audEl) ? audEl.GetString() : null;
+            var azp = tokenRoot.TryGetProperty("azp", out var azpEl) ? azpEl.GetString() : null;
             if (aud != expectedClientId && azp != expectedClientId)
                 return (null, "Token audience mismatch");
 
-            var emailVerified = root.TryGetProperty("email_verified", out var evEl)
-                && evEl.GetString() == "true";
+            // Step 2: fetch profile data via userinfo — this is where given_name, family_name, picture live.
+            HttpResponseMessage userInfoResp;
+            try
+            {
+                var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
+                userInfoRequest.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                userInfoResp = await http.SendAsync(userInfoRequest);
+            }
+            catch
+            {
+                return (null, "Failed to fetch Google profile");
+            }
+
+            if (!userInfoResp.IsSuccessStatusCode)
+                return (null, "Could not retrieve Google profile");
+
+            using var doc = await JsonDocument.ParseAsync(await userInfoResp.Content.ReadAsStreamAsync());
+            var root = doc.RootElement;
+
+            // userinfo returns email_verified as a boolean, not a string
+            var emailVerified = root.TryGetProperty("email_verified", out var evEl) && evEl.GetBoolean();
             if (!emailVerified)
                 return (null, "Google email is not verified");
 
