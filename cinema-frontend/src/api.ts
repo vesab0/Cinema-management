@@ -131,6 +131,14 @@ export const authApi = {
     return data
   },
 
+  googleLogin: async (credential: string) => {
+    const { data } = await api.post('/auth/google', { credential })
+    setAccessToken(data.accessToken)
+    api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
+    await fetchCurrentUser()
+    return data
+  },
+
   refresh: () => api.post('/auth/refresh'),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
@@ -219,8 +227,8 @@ export const uploadsApi = {
   uploadImage: async (file: File, type?: 'avatar' | 'poster'): Promise<string> => {
     const formData = new FormData()
     formData.append('file', file)
-    const params = type ? `?type=${type}` : ''
-    const { data } = await api.post<{ url: string }>(`/api/uploads/image${params}`, formData, {
+    const endpoint = type === 'avatar' ? '/api/uploads/avatar' : '/api/uploads/image'
+    const { data } = await api.post<{ url: string }>(endpoint, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return data.url

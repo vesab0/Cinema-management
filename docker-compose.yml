@@ -25,6 +25,7 @@ services:
       - Filebase__PublicUrl=${Filebase__PublicUrl}
       - Filebase__AccessKeyId=${Filebase__AccessKeyId}
       - Filebase__SecretAccessKey=${Filebase__SecretAccessKey}
+      - FrontendUrl=${FrontendUrl}
     depends_on:
       mysql:
         condition: service_healthy

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { userTicketsApi, ticketsApi, schedulesApi, usersApi, moviesApi } from "../../api";
 import type { UserTicketRow, TicketRow, ScheduleRow, UserRow, MovieRow } from "../../types";
+import ConfirmModal from "../../components/ConfirmModal";
 
 // ── Booking creation modal ────────────────────────────────────────────────────
 
@@ -325,6 +326,7 @@ function MovieFinancialCard({
   onDelete: (row: UserTicketRow) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<UserTicketRow | null>(null);
 
   return (
     <div className="bg-[#141210] rounded-xl overflow-hidden">
@@ -388,7 +390,7 @@ function MovieFinancialCard({
                   <td className="px-4 py-2.5 text-white/40 text-xs">{String(t.purchasedAt).split("T")[0]}</td>
                   <td className="px-4 py-2.5">
                     <button
-                      onClick={() => onDelete(t)}
+                      onClick={() => setPendingDelete(t)}
                       className="p-1 rounded text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       title="Cancel booking"
                     >
@@ -402,6 +404,14 @@ function MovieFinancialCard({
             </tbody>
           </table>
         </div>
+      )}
+
+      {pendingDelete && (
+        <ConfirmModal
+          message="Are you sure you want to cancel this booking?"
+          onConfirm={() => { onDelete(pendingDelete); setPendingDelete(null); }}
+          onCancel={() => setPendingDelete(null)}
+        />
       )}
     </div>
   );
