@@ -201,9 +201,9 @@ function CardForm({
     }
 
     try {
-      await userTicketsApi.purchaseMulti({ userId, ticketIds, paymentIntentId })
+      const purchases = await userTicketsApi.purchaseMulti({ userId, ticketIds, paymentIntentId })
       navigate(`/booking/${scheduleId}/confirmation`, {
-        state: { ticketIds },
+        state: { purchases },
         replace: true,
       })
     } catch (err: any) {

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Footer from './components/footer'
 import ErrorBoundary from './components/ErrorBoundary'
 import AdminRoute from './AdminRoute'
 import ProfilePage from './pages/profile'
@@ -47,6 +48,7 @@ function PublicLayout() {
       <main className="w-full">
         <Outlet />
       </main>
+      <Footer />
     </div>
   )
 }

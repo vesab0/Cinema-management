@@ -274,6 +274,7 @@ export const ticketsApi = {
 
 export const userTicketsApi = {
   list: () => api.get<UserTicketRow[]>('/api/user-tickets', { headers: getAuthHeaders() }).then(r => r.data),
+  listMy: () => api.get<UserTicketRow[]>('/api/user-tickets/my', { headers: getAuthHeaders() }).then(r => r.data),
   getById: (id: string) => api.get<UserTicketRow>(`/api/user-tickets/${id}`, { headers: getAuthHeaders() }).then(r => r.data),
   getByConfirmationCode: (code: string) => api.get<UserTicketRow>(`/api/user-tickets/confirm/${code}`, { headers: getAuthHeaders() }).then(r => r.data),
   purchase: (payload: PurchaseTicketPayload) => api.post<UserTicketRow>('/api/user-tickets/purchase', payload, { headers: getAuthHeaders() }).then(r => r.data),

@@ -30,6 +30,20 @@ namespace TwinPeaks.API.Services
                 .ToList();
         }
 
+        public List<UserTicketResponse> GetByUserId(Guid userId)
+        {
+            return _db.UserTickets
+                .Where(ut => ut.UserId == userId)
+                .Include(ut => ut.User)
+                .Include(ut => ut.Ticket).ThenInclude(t => t.Schedule).ThenInclude(s => s.Movie)
+                .Include(ut => ut.Ticket).ThenInclude(t => t.Schedule).ThenInclude(s => s.Room)
+                .Include(ut => ut.Ticket).ThenInclude(t => t.Seat)
+                .OrderByDescending(ut => ut.PurchasedAt)
+                .AsSplitQuery()
+                .Select(ut => ToResponse(ut))
+                .ToList();
+        }
+
         public UserTicketResponse? GetById(Guid id)
         {
             var ut = LoadWithIncludes().FirstOrDefault(ut => ut.Id == id);
@@ -134,7 +148,7 @@ namespace TwinPeaks.API.Services
             {
                 var list = tickets.ToList();
                 var first = list[0];
-                var date = first.ScheduleDay.ToString().Split('T')[0];
+                var date = first.ScheduleDay.ToString("yyyy-MM-dd");
                 var total = list.Sum(t => t.Price);
                 await _emailService.SendAsync(
                     email,

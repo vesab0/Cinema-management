@@ -52,6 +52,7 @@ export default function ProfilePage() {
   // Tickets state
   const [tickets, setTickets] = useState<UserTicketRow[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsError, setTicketsError] = useState<string | null>(null);
 
   // Favorites state
   const [favorites, setFavorites] = useState<FavoriteMovieResponse[]>([]);
@@ -100,11 +101,10 @@ export default function ProfilePage() {
       .then(setFavorites)
       .catch((e: unknown) => setFavsError(String(e)))
       .finally(() => setFavsLoading(false));
-    userTicketsApi.list()
+    userTicketsApi.listMy()
       .then((all) => {
         const now = Date.now()
         const active = all.filter((t) => {
-          if (t.userId !== userId) return false
           const day = t.scheduleDay?.split('T')[0] ?? ''
           const [hh, mm] = (t.startTime ?? '00:00').split(':').map(Number)
           const start = new Date(day)
@@ -114,7 +114,7 @@ export default function ProfilePage() {
         })
         setTickets(active)
       })
-      .catch(() => {})
+      .catch((e: unknown) => setTicketsError(String(e)))
       .finally(() => setTicketsLoading(false));
   }, [userId]);
 
@@ -326,7 +326,10 @@ export default function ProfilePage() {
               {ticketsLoading && (
                 <p className="text-white/50 text-sm tracking-wide">Loading...</p>
               )}
-              {!ticketsLoading && tickets.length === 0 && (
+              {ticketsError && (
+                <p className="text-red-400 text-sm tracking-wide">Error: {ticketsError}</p>
+              )}
+              {!ticketsLoading && !ticketsError && tickets.length === 0 && (
                 <p className="text-white/50 text-sm tracking-wide">No tickets yet.</p>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
