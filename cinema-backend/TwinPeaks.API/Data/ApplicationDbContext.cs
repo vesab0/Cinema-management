@@ -21,6 +21,7 @@ namespace TwinPeaks.API.Data
         public DbSet<UserFavoriteMovie> UserFavoriteMovies { get; set; } = null!;
         public DbSet<Ticket> Tickets { get; set; } = null!;
         public DbSet<UserTicket> UserTickets { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

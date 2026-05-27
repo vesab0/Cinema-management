@@ -5,7 +5,6 @@ import CurtainOpen from "../components/CurtainOpen"
 import AboutUs from "../components/aboutussection"
 import MemorialCard from "../components/memorialcard"
 import FindUs from "../components/findus"
-import Footer from "../components/footer"
 
 export default function Index() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -29,7 +28,6 @@ export default function Index() {
   return (
     <div className="w-full">
       {isMobile ? inner : <CurtainOpen>{inner}</CurtainOpen>}
-      <Footer />
     </div>
   )
 }

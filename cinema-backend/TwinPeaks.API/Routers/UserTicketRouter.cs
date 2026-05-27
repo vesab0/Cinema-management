@@ -1,6 +1,7 @@
 using TwinPeaks.API.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace TwinPeaks.API.Routers
 {
@@ -23,6 +24,24 @@ namespace TwinPeaks.API.Routers
                 }
             })
             .RequireAuthorization("AdminOnly");
+
+            // Authenticated user: get their own tickets
+            group.MapGet("/my", (HttpContext ctx, UserTicketService userTicketService) =>
+            {
+                try
+                {
+                    var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? ctx.User.FindFirst("sub")?.Value;
+                    if (!Guid.TryParse(userIdStr, out var userId))
+                        return Results.Unauthorized();
+                    return Results.Ok(userTicketService.GetByUserId(userId));
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Failed to fetch user tickets", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization();
 
             // Public: ticket verification by confirmation code
             group.MapGet("/confirm/{code}", (string code, UserTicketService userTicketService) =>

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import Footer from './components/footer'
 import ErrorBoundary from './components/ErrorBoundary'
 import AdminRoute from './AdminRoute'
 import ProfilePage from './pages/profile'
@@ -38,6 +39,8 @@ const Movies = lazy(() => import('./pages/dashboard/movies'))
 const Rooms = lazy(() => import('./pages/dashboard/rooms'))
 const Schedules = lazy(() => import('./pages/dashboard/schedule'))
 const UserTickets = lazy(() => import('./pages/dashboard/user-tickets'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 
 function PublicLayout() {
   return (
@@ -46,6 +49,7 @@ function PublicLayout() {
       <main className="w-full">
         <Outlet />
       </main>
+      <Footer />
         <CookieBanner />
     </div>
   )
@@ -102,6 +106,8 @@ export default function App() {
               <Route path="user-tickets" element={<UserTickets />} />
             </Route>
           </Route>
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

@@ -13,7 +13,7 @@ import { stripeApi, userTicketsApi, ticketsApi, schedulesApi } from '../api'
 import { getUserId } from '../auth'
 import type { TicketRow, ScheduleRow } from '../types'
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string)
+const stripePromise = loadStripe("pk_test_51TZD9S3fbY4KMsAO7TAU6D0V66zRIZleCFfbkQuBrGVmURRvDY8ZlAT36b6Bb6SyKuqt2CAnRXUCxdG4PhqTdj9Z00gARYbIR6")
 
 const CARD_STYLE = {
   style: {
@@ -201,9 +201,9 @@ function CardForm({
     }
 
     try {
-      await userTicketsApi.purchaseMulti({ userId, ticketIds, paymentIntentId })
+      const purchases = await userTicketsApi.purchaseMulti({ userId, ticketIds, paymentIntentId })
       navigate(`/booking/${scheduleId}/confirmation`, {
-        state: { ticketIds },
+        state: { purchases },
         replace: true,
       })
     } catch (err: any) {

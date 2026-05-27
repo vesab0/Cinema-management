@@ -1,56 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { userTicketsApi, schedulesApi } from '../api'
-import { getUserId } from '../auth'
+import { schedulesApi } from '../api'
+import { useState } from 'react'
 import type { UserTicketRow, ScheduleRow } from '../types'
 
 export default function ConfirmationPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { scheduleId } = useParams<{ scheduleId: string }>()
-
-  const state = location.state as { ticketIds: string[] } | null
-  const ticketIds: string[] = state?.ticketIds ?? []
-
-  const [purchases, setPurchases] = useState<UserTicketRow[]>([])
+  const state = location.state as { purchases: UserTicketRow[] } | null
+  const purchases: UserTicketRow[] = state?.purchases ?? []
   const [schedule, setSchedule] = useState<ScheduleRow | null>(null)
-  const [loading, setLoading] = useState(true)
-  const userId = getUserId()
 
   useEffect(() => {
-    if (!ticketIds.length || !userId || !scheduleId) {
-      navigate('/')
-      return
-    }
-
-    Promise.all([
-      userTicketsApi.list(),
-      schedulesApi.getById(scheduleId),
-    ])
-      .then(([all, sched]) => {
-        const mine = all.filter((ut) => ticketIds.includes(ut.ticketId) && ut.userId === userId)
-        setPurchases(mine)
-        setSchedule(sched)
-      })
-      .catch(() => navigate('/'))
-      .finally(() => setLoading(false))
+    if (!purchases.length || !scheduleId) { navigate('/'); return }
+    schedulesApi.getById(scheduleId).then(setSchedule).catch(() => {})
   }, [])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-stage flex items-center justify-center">
-        <p className="text-white/50 text-sm uppercase tracking-widest">Loading...</p>
-      </div>
-    )
-  }
+  if (!purchases.length) return null
+
+  const total = purchases.reduce((s, p) => s + p.price, 0)
 
   return (
     <div className="min-h-screen bg-stage text-white flex items-center justify-center p-8">
       <div className="max-w-md w-full text-center space-y-8">
         <div>
-          <div className="text-5xl mb-4"></div>
           <h1 className="text-3xl font-bold uppercase tracking-wide text-[#f5c518]">
-            Booking Confirmed!
+            Booking Confirmed
           </h1>
           {schedule && (
             <p className="text-white/60 mt-2">
@@ -74,7 +50,7 @@ export default function ConfirmationPage() {
                     {p.scheduleDay?.split('T')[0]} · {p.startTime}
                   </p>
                 </div>
-                <span className="text-[#f5c518] font-bold">${p.price.toFixed(2)}</span>
+                <span className="text-[#f5c518] font-bold">€{p.price.toFixed(2)}</span>
               </div>
               <p className="mt-2 text-xs font-mono text-white/40 tracking-widest">
                 #{p.confirmationCode}
@@ -83,8 +59,13 @@ export default function ConfirmationPage() {
           ))}
         </div>
 
+        <div className="flex justify-between items-center px-1">
+          <span className="text-white/40 text-sm">Total</span>
+          <span className="text-[#f5c518] font-bold text-lg">€{total.toFixed(2)}</span>
+        </div>
+
         <p className="text-xs text-white/40">
-          Save your confirmation codes above. You can also view your tickets in your profile.
+          A confirmation email is on its way. Show your code at the door.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
