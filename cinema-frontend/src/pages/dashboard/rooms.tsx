@@ -247,21 +247,21 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
   const seatColor = (s: SeatResponse) => {
     if (!s.isActive) return "bg-white/5 border border-white/10 text-white/20";
     if (s.seatType === "VIP") return "bg-gold/20 border border-gold/50 text-gold";
-    if (s.seatType === "Wheelchair") return "bg-gold/30 border border-gold/60 text-gold";
+    if (s.seatType === "Wheelchair") return "bg-accessible/20 border border-accessible/50 text-accessible";
     return "bg-wine border border-wine/70 text-white";
   };
 
   const seatActiveRing = (s: SeatResponse) => {
     if (!s.isActive) return "ring-white/20";
     if (s.seatType === "VIP") return "ring-gold";
-    if (s.seatType === "Wheelchair") return "ring-gold";
+    if (s.seatType === "Wheelchair") return "ring-accessible";
     return "ring-wine";
   };
 
   const seatTypeButtonClass = (type: SeatType, selectedType: SeatType) => {
     if (type !== selectedType) return "border-dash-border text-white/60 hover:bg-white/10";
     if (type === "VIP") return "bg-gold text-stage border-gold shadow-sm";
-    if (type === "Wheelchair") return "bg-gold/80 text-stage border-gold shadow-sm";
+    if (type === "Wheelchair") return "bg-accessible text-stage border-accessible shadow-sm";
     return "bg-wine text-white border-wine shadow-sm";
   };
 
@@ -290,7 +290,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
         <div className="flex gap-4 mb-4 text-xs text-white/50 mt-3">
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-wine inline-block" /> Standard</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gold/20 border border-gold/50 inline-block" /> VIP</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gold/30 border border-gold/60 inline-block" /> Wheelchair</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-accessible/20 border border-accessible/50 inline-block" /> Wheelchair</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white/5 border border-white/10 inline-block" /> Removed</span>
         </div>
 

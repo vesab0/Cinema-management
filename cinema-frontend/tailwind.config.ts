@@ -45,6 +45,7 @@ export default {
         wine: '#410101',
         'wine-dark': '#300000',
         gold: '#E7C050',
+        accessible: '#4A9EE0',
         'dash-bg': '#0a0806',
         'dash-card': '#141210',
         'dash-surface': '#1c1a18',

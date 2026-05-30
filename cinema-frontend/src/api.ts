@@ -253,6 +253,8 @@ export const schedulesApi = {
   remove: (id: string) => api.delete(`/api/schedules/${id}`, { headers: getAuthHeaders() }),
   getByDate: (date: string) => api.get<ScheduleRow[]>(`/api/schedules/date/${date}`, { headers: getAuthHeaders() }).then(r => r.data),
   getByMovie: (movieId: string) => api.get<ScheduleRow[]>(`/api/schedules/movie/${movieId}`, { headers: getAuthHeaders() }).then(r => r.data),
+  getByMoviePaged: (movieId: string, page: number, pageSize: number, date?: string) =>
+    api.get<import('./types').PagedSchedulesResponse>(`/api/schedules/movie/${movieId}`, { params: { page, pageSize, ...(date ? { date } : {}) }, headers: getAuthHeaders() }).then(r => r.data),
 }
 
 export const movieSearchApi = {

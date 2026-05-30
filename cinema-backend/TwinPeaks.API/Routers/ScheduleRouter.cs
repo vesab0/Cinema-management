@@ -39,12 +39,17 @@ namespace TwinPeaks.API.Routers
                 }
             });
 
-            group.MapGet("/movie/{movieId:guid}", (Guid movieId, ScheduleService scheduleService) =>
+            group.MapGet("/movie/{movieId:guid}", (Guid movieId, int page, int pageSize, string? date, ScheduleService scheduleService) =>
             {
                 try
                 {
-                    var schedules = scheduleService.GetByMovieId(movieId);
-                    return Results.Ok(schedules);
+                    if (page < 1) page = 1;
+                    if (pageSize < 1 || pageSize > 100) pageSize = 4;
+                    DateTime? dateFilter = null;
+                    if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
+                        dateFilter = parsedDate;
+                    var result = scheduleService.GetByMovieIdPaged(movieId, page, pageSize, dateFilter);
+                    return Results.Ok(result);
                 }
                 catch (Exception ex)
                 {

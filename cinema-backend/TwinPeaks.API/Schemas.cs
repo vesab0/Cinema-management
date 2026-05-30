@@ -104,6 +104,15 @@ namespace TwinPeaks.API
         bool IsActive
     );
 
+    public record PagedSchedulesResponse(
+        List<MovieScheduleResponse> Items,
+        int TotalDays,
+        int Page,
+        int PageSize,
+        int TotalPages,
+        List<string> AvailableDates
+    );
+
     public record CreateMovieScheduleRequest(
         Guid MovieId,
         Guid RoomId,

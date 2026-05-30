@@ -42,6 +42,79 @@ namespace TwinPeaks.API.Services
                 .ToList();
         }
 
+        public PagedSchedulesResponse GetByMovieIdPaged(Guid movieId, int page, int pageSize, DateTime? dateFilter = null)
+        {
+            var today = DateTime.UtcNow.Date;
+            var nowTime = DateTime.UtcNow.TimeOfDay;
+
+            var baseQuery = _db.MovieSchedules
+                .Include(s => s.Movie)
+                .Include(s => s.Room)
+                .Where(s => s.MovieId == movieId && s.IsActive &&
+                    (s.ScheduleDay > today || (s.ScheduleDay == today && s.StartTime > nowTime)));
+
+            // Collect all distinct future dates for the dropdown (evaluated in memory after SQL query)
+            var allDates = baseQuery
+                .Select(s => s.ScheduleDay)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            var availableDates = allDates
+                .Select(d => d.Date.ToString("yyyy-MM-dd"))
+                .Distinct()
+                .ToList();
+
+            if (dateFilter.HasValue)
+            {
+                var dayStart = dateFilter.Value.Date;
+                var dayEnd = dayStart.AddDays(1);
+                var items = baseQuery
+                    .Where(s => s.ScheduleDay >= dayStart && s.ScheduleDay < dayEnd)
+                    .OrderBy(s => s.StartTime)
+                    .Select(s => ToResponse(s))
+                    .ToList();
+
+                return new PagedSchedulesResponse(
+                    Items: items,
+                    TotalDays: 1,
+                    Page: 1,
+                    PageSize: 1,
+                    TotalPages: 1,
+                    AvailableDates: availableDates
+                );
+            }
+
+            var totalDays = availableDates.Count;
+            var pageDays = availableDates.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            List<MovieScheduleResponse> pagedItems;
+            if (pageDays.Count == 0)
+            {
+                pagedItems = new List<MovieScheduleResponse>();
+            }
+            else
+            {
+                var minDay = DateTime.Parse(pageDays.First());
+                var maxDay = DateTime.Parse(pageDays.Last()).AddDays(1);
+                pagedItems = baseQuery
+                    .Where(s => s.ScheduleDay >= minDay && s.ScheduleDay < maxDay)
+                    .OrderBy(s => s.ScheduleDay)
+                    .ThenBy(s => s.StartTime)
+                    .Select(s => ToResponse(s))
+                    .ToList();
+            }
+
+            return new PagedSchedulesResponse(
+                Items: pagedItems,
+                TotalDays: totalDays,
+                Page: page,
+                PageSize: pageSize,
+                TotalPages: (int)Math.Ceiling((double)totalDays / pageSize),
+                AvailableDates: availableDates
+            );
+        }
+
         public List<MovieScheduleResponse> GetByRoomId(Guid roomId)
         {
             return _db.MovieSchedules

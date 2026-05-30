@@ -158,6 +158,15 @@ export type UpdateSeatPayload = {
   isActive?: boolean;
 };
 
+export type PagedSchedulesResponse = {
+  items: ScheduleRow[];
+  totalDays: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  availableDates: string[];
+};
+
 export type ScheduleRow = {
   [key: string]: unknown;
   id: string;
