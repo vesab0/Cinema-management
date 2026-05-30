@@ -15,6 +15,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfService from './pages/TermsOfService'
 import UserTickets from './pages/dashboard/user-tickets'
 import { bootstrapSession } from './auth'
+import CookieBanner from './components/CookieBanner'
 
 // Eagerly loaded (public, always needed)
 import Index from './pages/index'
@@ -49,6 +50,7 @@ function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+        <CookieBanner />
     </div>
   )
 }

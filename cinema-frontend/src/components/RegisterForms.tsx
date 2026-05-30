@@ -57,9 +57,9 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 		try {
 			await authApi.register(data)
 			setSuccessMessage('Account created! You can sign in now.')
-			setMode('login')
-			registerForm.reset()
-		} catch (error) {
+			await authApi.login({ email: data.email, password: data.password })
+        	onLoginSuccess?.()
+		} catch (error: unknown) {
 			setServerError(extractApiError(error) || 'Registration failed. Please try again.')
 		}
 	})
