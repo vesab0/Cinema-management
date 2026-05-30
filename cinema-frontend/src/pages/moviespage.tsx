@@ -102,7 +102,7 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
             <p className="text-white/50 text-sm tracking-wide">No movies found.</p>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
             {filtered.map((movie) => (
               <MovieCard
                 key={movie.id}
