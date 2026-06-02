@@ -3,7 +3,7 @@ import DataTable, { type Column } from "../../components/Table";
 import { castMembersApi, genresApi, moviesApi, uploadsApi } from "../../api";
 import type { CastMemberOption, GenreOption, MovieRow } from "../../types";
 
-const inputClass = "w-full text-sm text-white bg-dash-surface border border-dash-border rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
+const inputClass = "w-full text-sm text-white bg-dash-surface border border-dash-border px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
 
 function SearchSelect({
   selectedIds,
@@ -77,7 +77,7 @@ function SearchSelect({
           {selectedOptions.map((o) => (
             <span
               key={o.id}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm bg-wine text-white"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-sm bg-wine text-white"
             >
               {o[labelKey]}
               <button
@@ -104,7 +104,7 @@ function SearchSelect({
 
         {/* Dropdown */}
         {open && (query.length > 0 || filtered.length > 0) && (
-          <div className="absolute z-50 mt-1 w-full bg-dash-card border border-dash-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-50 mt-1 w-full bg-dash-card border border-dash-border shadow-lg max-h-48 overflow-y-auto">
             {filtered.length === 0 && !canCreate && (
               <div className="px-3 py-2 text-sm text-white/40">No results</div>
             )}
@@ -135,6 +135,63 @@ function SearchSelect({
   );
 }
 
+// tmdbId anchors each demo movie to a user's existing favourite so the backend
+// calls /similar/by-tmdb with that film's RICH pre-built vector.
+// The sparse injected vector (only 7 dims) would land in the wrong cluster;
+// the existing film's dense vector reliably returns the user's other favourites
+// as neighbours → guaranteed notification.
+//
+// vesa   → anchor: Inception (27205)  → neighbours include Dark Knight (155)   ← favourite ✓
+// bledi  → anchor: LOTR I  (120)      → neighbours include LOTR II/III (121/122) ← favourite ✓
+// lowfi  → anchor: Up      (14160)    → neighbours include Inside Out (150540) ← favourite ✓
+const DEMO_MOVIES = [
+  {
+    // → notifies vesa
+    name: "Steel Veil",
+    description: "When a black-ops soldier discovers that the surveillance state he helped build is being used to erase entire identities, he must navigate fractured realities and phantom memories to expose the truth — before he becomes the next one erased.",
+    director: "Christopher Nolan",
+    durationMinutes: 143,
+    releaseDate: "2025-07-18",
+    ageRating: "PG-13",
+    posterUrl: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+    trailerUrl: "",
+    isActive: true,
+    genres: ["Action", "Science Fiction", "Thriller"],
+    tmdbId: 27205, // anchor: Inception — neighbours include Dark Knight (vesa's fav)
+  },
+  {
+    // → notifies bledi
+    name: "The Emerald Throne",
+    description: "In a world where ancient magic is fading, a reluctant young heir must unite warring kingdoms and brave cursed forests to reclaim the last seat of power — before the Shadow King's undying army swallows the final free realm.",
+    director: "Peter Jackson",
+    durationMinutes: 161,
+    releaseDate: "2025-12-05",
+    ageRating: "PG-13",
+    posterUrl: "https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg",
+    trailerUrl: "",
+    isActive: true,
+    genres: ["Fantasy", "Adventure", "Drama"],
+    tmdbId: 120, // anchor: LOTR Fellowship — neighbours include LOTR II & III (bledi's favs)
+  },
+  {
+    // → notifies lowfi
+    name: "Sunny Skies",
+    description: "When a small cloud named Nim accidentally breaks the wind currents that keep his floating island village aloft, he and a ragtag crew of misfit animals must sail across the open sky to find the legendary Sky Core — learning that the bravest journeys begin with the softest hearts.",
+    director: "Pete Docter",
+    durationMinutes: 97,
+    releaseDate: "2025-06-20",
+    ageRating: "PG",
+    posterUrl: "https://image.tmdb.org/t/p/w500/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg",
+    trailerUrl: "",
+    isActive: true,
+    genres: ["Animation", "Family", "Adventure"],
+    tmdbId: 150540, // anchor: Inside Out — neighbours include Up (14160, lowfi's fav)
+                    // + backend fix adds 150540 itself (also lowfi's fav) to similar list
+  },
+];
+
+type Filter = "all" | "now_playing" | "upcoming";
+
 export default function Movies() {
   const [rows, setRows] = useState<MovieRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,6 +199,8 @@ export default function Movies() {
   const [genreOptions, setGenreOptions] = useState<GenreOption[]>([]);
   const [castOptions, setCastOptions] = useState<CastMemberOption[]>([]);
   const [isPosterUploading, setIsPosterUploading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
 
   const loadData = async () => {
     const [movies, genres, cast] = await Promise.all([
@@ -304,6 +363,42 @@ export default function Movies() {
   if (loading) return <div className="p-8 text-gray-500">Loading...</div>;
   if (error)   return <div className="p-8 text-red-500">Error: {error}</div>;
 
+  const today = new Date().toISOString().split("T")[0];
+  const filteredRows = rows.filter((r) => {
+    if (searchQuery && !r.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (filter === "now_playing") return r.releaseDate <= today;
+    if (filter === "upcoming")   return r.releaseDate > today;
+    return true;
+  });
+
+  const filterBtn = (label: string, value: Filter) => (
+    <button
+      onClick={() => setFilter(value)}
+      className={`text-sm px-3 py-1.5 border transition-all ${
+        filter === value
+          ? "bg-wine border-wine text-white"
+          : "border-dash-border text-white/50 hover:text-white hover:border-white/30"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <input
+        type="search"
+        placeholder="Search movies…"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="text-sm text-white bg-dash-surface border border-dash-border px-3 py-1.5 w-44 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all placeholder:text-white/30"
+      />
+      {filterBtn("All", "all")}
+      {filterBtn("Now Playing", "now_playing")}
+      {filterBtn("Upcoming", "upcoming")}
+    </div>
+  );
+
   const validateMovie = (row: MovieRow): string | null => {
     if (isPosterUploading) return "Poster is still uploading, please wait…";
     if (!String(row.name ?? "").trim()) return "Name is required";
@@ -314,12 +409,32 @@ export default function Movies() {
     return null;
   };
 
+  const demoPresets = DEMO_MOVIES.map((movie) => ({
+    label: movie.name,
+    meta: `${movie.director} · ${movie.durationMinutes} min`,
+    fill: {
+      name: movie.name,
+      description: movie.description,
+      director: movie.director,
+      durationMinutes: movie.durationMinutes,
+      releaseDate: movie.releaseDate,
+      ageRating: movie.ageRating,
+      posterUrl: movie.posterUrl,
+      trailerUrl: movie.trailerUrl,
+      isActive: movie.isActive,
+      genres: movie.genres,
+      cast: [] as { fullName: string }[],
+      tmdbId: movie.tmdbId,
+    } as Partial<MovieRow>,
+  }));
+
   return (
     <DataTable<MovieRow>
       showCreate
       title="Movies"
       columns={columns}
-      rows={rows}
+      rows={filteredRows}
+      headerActions={headerActions}
       keyField="id"
       validate={validateMovie}
       defaultRow={{
@@ -331,6 +446,7 @@ export default function Movies() {
       onSave={handleSave}
       onDelete={handleDelete}
       onCreate={handleCreate}
+      createPresets={demoPresets}
     />
   );
 }

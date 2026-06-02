@@ -41,6 +41,7 @@ namespace TwinPeaks.API.Services
 
             if (!string.IsNullOrWhiteSpace(req.FirstName)) user.FirstName = req.FirstName.Trim();
             if (!string.IsNullOrWhiteSpace(req.LastName))  user.LastName  = req.LastName.Trim();
+            if (!string.IsNullOrWhiteSpace(req.Email))     user.Email     = req.Email.Trim();
             if (!string.IsNullOrWhiteSpace(req.Phone))     user.PhoneNumber = req.Phone.Trim();
             if (!string.IsNullOrWhiteSpace(req.AvatarPath)) user.AvatarPath = req.AvatarPath.Trim();
 

@@ -59,7 +59,7 @@ namespace TwinPeaks.API.Routers
                     ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = true,
+                        Secure = app.Environment.IsProduction(),
                         SameSite = SameSiteMode.Lax,
                         MaxAge = TimeSpan.FromDays(7),
                         Path = "/"
@@ -92,7 +92,7 @@ namespace TwinPeaks.API.Routers
                     ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = true,
+                        Secure = app.Environment.IsProduction(),
                         SameSite = SameSiteMode.Lax,
                         MaxAge = TimeSpan.FromDays(7),
                         Path = "/"
@@ -160,7 +160,7 @@ namespace TwinPeaks.API.Routers
                 ctx.Response.Cookies.Append("refresh_token", res.RefreshToken, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
+                    Secure = app.Environment.IsProduction(),
                     SameSite = SameSiteMode.Lax,
                     MaxAge = TimeSpan.FromDays(7),
                     Path = "/"

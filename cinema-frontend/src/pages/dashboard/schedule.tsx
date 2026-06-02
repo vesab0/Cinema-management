@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { moviesApi, roomsApi, schedulesApi, ticketsApi } from "../../api";
@@ -7,7 +8,7 @@ import type { ScheduleRow, RoomOption } from "../../types";
 import ConfirmModal from "../../components/ConfirmModal";
 
 const inputClass =
-  "w-full text-sm text-white bg-[#1c1a18] rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
+  "w-full text-sm text-white bg-[#1c1a18] px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
 const labelClass =
   "block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1";
 
@@ -75,13 +76,13 @@ function EditModal({
       onClick={onClose}
     >
       <form
-        className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-md mx-4 p-6"
+        className="bg-[#141210] shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-md mx-4 p-6"
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">Edit Schedule</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
+          <button type="button" onClick={onClose} className="p-1.5 text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -139,8 +140,8 @@ function EditModal({
         {serverError && <p className="mt-3 text-sm text-red-400">{serverError}</p>}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button type="button" onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">Cancel</button>
-          <button type="submit" disabled={isSubmitting} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all">
+          <button type="button" onClick={onClose} className="text-sm font-medium px-4 py-2 text-white/70 hover:bg-white/5">Cancel</button>
+          <button type="submit" disabled={isSubmitting} className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all">
             {isSubmitting ? "Saving..." : "Save"}
           </button>
         </div>
@@ -173,7 +174,7 @@ function ScheduleDetail({
         onClick={onClose}
       >
         <div
-          className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-xs mx-4 p-5"
+          className="bg-[#141210] shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-xs mx-4 p-5"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-start justify-between mb-3">
@@ -181,7 +182,7 @@ function ScheduleDetail({
               <p className="font-semibold text-white text-sm">{schedule.movieName}</p>
               <p className="text-xs text-white/40 mt-0.5">{schedule.roomName}</p>
             </div>
-            <button onClick={onClose} className="p-1 rounded text-white/40 hover:bg-white/10">
+            <button onClick={onClose} className="p-1 text-white/40 hover:bg-white/10">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -191,13 +192,13 @@ function ScheduleDetail({
             <span>{String(schedule.scheduleDay).split("T")[0]}</span>
             <span className="font-medium text-white/80">{schedule.startTime}</span>
             <span className="text-white/40">{duration}m</span>
-            <span className={`px-2 py-0.5 rounded-full font-medium ${schedule.isActive ? "bg-gold/20 text-gold" : "bg-white/10 text-white/40"}`}>
+            <span className={`px-2 py-0.5 font-medium ${schedule.isActive ? "bg-gold/20 text-gold" : "bg-white/10 text-white/40"}`}>
               {schedule.isActive ? "Active" : "Inactive"}
             </span>
           </div>
           <div className="flex gap-2">
-            <button onClick={onEdit} className="flex-1 text-xs font-medium px-3 py-2 rounded-lg text-white/70 hover:bg-white/5 transition-all">Edit</button>
-            <button onClick={() => setConfirming(true)} className="flex-1 text-xs font-medium px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all">Delete</button>
+            <button onClick={onEdit} className="flex-1 text-xs font-medium px-3 py-2 text-white/70 hover:bg-white/5 transition-all">Edit</button>
+            <button onClick={() => setConfirming(true)} className="flex-1 text-xs font-medium px-3 py-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all">Delete</button>
           </div>
         </div>
       </div>
@@ -220,11 +221,13 @@ function findConflicts(
   roomName: string,
   date: string,
   startTime: string,
-  newDuration: number
+  newDuration: number,
+  excludeId?: string
 ): ScheduleRow[] {
   const newStart = timeToMinutes(startTime);
   const newEnd = newStart + newDuration;
   return schedules.filter((s) => {
+    if (excludeId && s.id === excludeId) return false;
     if (String(s.scheduleDay).split("T")[0] !== date) return false;
     if (s.roomName !== roomName) return false;
     const existStart = timeToMinutes(s.startTime);
@@ -264,7 +267,7 @@ function RangeCreateModal({
   const [toDate, setToDate] = useState(initialDate ?? today);
   const [activeDays, setActiveDays] = useState([0, 1, 2, 3, 4, 5, 6]);
   const [times, setTimes] = useState([initialTime ?? "14:00"]);
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState<number | "">("");
   const [vipPrice, setVipPrice] = useState<number | "">("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -296,9 +299,9 @@ function RangeCreateModal({
   const totalCount = scheduleDates.length * validTimes.length;
 
   const handleSubmit = async () => {
-    const parseResult = rangeCreateSchema.safeParse({ movieName, roomName, fromDate, toDate, price, vipPrice: vipPrice === "" ? undefined : vipPrice });
+    const parseResult = rangeCreateSchema.safeParse({ movieName, roomName, fromDate, toDate, price: price === "" ? undefined : price, vipPrice: vipPrice === "" ? undefined : vipPrice });
     if (!parseResult.success) {
-      setError(parseResult.error.errors[0].message);
+      setError(parseResult.error.issues[0]?.message ?? "Invalid input");
       return;
     }
     if (validTimes.length === 0) { setError("Add at least one time slot"); return; }
@@ -343,7 +346,16 @@ function RangeCreateModal({
       onCreated();
       onClose();
     } catch (e) {
-      setError(String(e));
+      if (axios.isAxiosError(e)) {
+        const data = e.response?.data;
+        const msg =
+          data?.message ??
+          (data?.errors ? Object.values(data.errors as Record<string, string[]>).flat().join("\n") : null) ??
+          e.message;
+        setError(msg);
+      } else {
+        setError(String(e));
+      }
     } finally {
       setSaving(false);
     }
@@ -355,12 +367,12 @@ function RangeCreateModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        className="bg-[#141210] shadow-[0_4px_24px_rgba(0,0,0,0.6)] w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">Create Schedules</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
+          <button onClick={onClose} className="p-1.5 text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -404,7 +416,7 @@ function RangeCreateModal({
                   key={day}
                   type="button"
                   onClick={() => toggleDay(i)}
-                  className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition-all ${
+                  className={`flex-1 text-xs font-medium py-1.5 border transition-all ${
                     activeDays.includes(i)
                       ? "bg-wine text-white border-wine"
                       : "bg-[#1c1a18] text-white/50 border-dash-border hover:border-white/30"
@@ -436,7 +448,7 @@ function RangeCreateModal({
                     <button
                       type="button"
                       onClick={() => removeTime(i)}
-                      className="flex-shrink-0 p-1.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+                      className="flex-shrink-0 p-1.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -456,7 +468,8 @@ function RangeCreateModal({
                 min="0"
                 step="0.01"
                 value={price}
-                onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                placeholder="e.g. 9.99"
+                onChange={(e) => setPrice(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
                 className={inputClass}
               />
             </div>
@@ -475,7 +488,7 @@ function RangeCreateModal({
           </div>
 
           {totalCount > 0 && (
-            <div className="text-xs text-white/50 bg-[#1c1a18] rounded-lg px-3 py-2">
+            <div className="text-xs text-white/50 bg-[#1c1a18] px-3 py-2">
               Will create{" "}
               <span className="font-semibold text-white">{totalCount}</span>{" "}
               schedule{totalCount !== 1 ? "s" : ""} across{" "}
@@ -486,19 +499,19 @@ function RangeCreateModal({
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-red-400 whitespace-pre-line bg-red-500/10 rounded-lg px-3 py-2">
+          <p className="mt-3 text-sm text-red-400 whitespace-pre-line bg-red-500/10 px-3 py-2">
             {error}
           </p>
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">
+          <button onClick={onClose} className="text-sm font-medium px-4 py-2 text-white/70 hover:bg-white/5">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving || totalCount === 0}
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all"
+            className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 disabled:opacity-40 transition-all"
           >
             {saving
               ? `Creating ${totalCount}…`
@@ -622,7 +635,7 @@ function CalendarGrid({
               {/* "Click to add" hint */}
               {roomSchedules.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/col:opacity-100 transition-opacity pointer-events-none">
-                  <span className="text-xs text-gold font-medium bg-gold/10 px-2 py-1 rounded-md">
+                  <span className="text-xs text-gold font-medium bg-gold/10 px-2 py-1">
                     Click to add
                   </span>
                 </div>
@@ -647,7 +660,7 @@ function CalendarGrid({
                       e.stopPropagation();
                       onScheduleClick(s);
                     }}
-                    className={`absolute inset-x-1 rounded-md text-left overflow-hidden transition-all hover:brightness-110 hover:shadow-sm active:scale-[0.98] border ${
+                    className={`absolute inset-x-1 text-left overflow-hidden transition-all hover:brightness-110 hover:shadow-sm active:scale-[0.98] border ${
                       s.isActive
                         ? "bg-wine/40 text-white border-wine/60"
                         : "bg-white/5 text-white/40 border-white/10"
@@ -673,7 +686,7 @@ function CalendarGrid({
                       )}
                     </div>
                     {/* Color bar on left edge */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-md ${s.isActive ? "bg-gold" : "bg-white/20"}`} />
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${s.isActive ? "bg-gold" : "bg-white/20"}`} />
                   </button>
                 );
               })}
@@ -756,6 +769,11 @@ export default function Schedules() {
     const movieId = movieOptions.find((m) => m.name === form.movieName)?.id;
     const roomId = roomOptions.find((r) => r.name === form.roomName)?.id;
     if (!movieId || !roomId) throw new Error("Invalid movie or room");
+    const newDuration = movieMetas.find((m) => m.name === form.movieName)?.durationMinutes ?? 90;
+    const hits = findConflicts(rows, movieMetas, form.roomName, form.scheduleDay, form.startTime, newDuration, editingRow.id);
+    if (hits.length > 0) {
+      throw new Error(`Overlap detected: conflicts with "${hits[0].movieName}" (${hits[0].startTime})`);
+    }
     await schedulesApi.update(editingRow.id, {
       movieId,
       roomId,
@@ -807,19 +825,19 @@ export default function Schedules() {
           <h1 className="text-2xl font-semibold text-white tracking-tight">Schedules</h1>
           <button
             onClick={() => setRangeInitial({})}
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all"
+            className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all"
           >
             Create Schedules
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 bg-[#141210] shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
           {/* Date navigation */}
           <div className="flex items-center justify-between px-5 py-3 bg-[#1c1a18]">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => shiftDate(-1)}
-                className="p-1.5 rounded-md text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                className="p-1.5 text-white/40 hover:bg-white/10 hover:text-white transition-colors"
                 title="Previous day"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -835,7 +853,7 @@ export default function Schedules() {
               <span className="text-sm text-white/40 hidden sm:block">{displayDate}</span>
               <button
                 onClick={() => shiftDate(1)}
-                className="p-1.5 rounded-md text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                className="p-1.5 text-white/40 hover:bg-white/10 hover:text-white transition-colors"
                 title="Next day"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -846,14 +864,14 @@ export default function Schedules() {
 
             <div className="flex items-center gap-3">
               {dayCount > 0 && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gold/20 text-gold">
+                <span className="text-xs font-medium px-2 py-0.5 bg-gold/20 text-gold">
                   {dayCount} showing{dayCount !== 1 ? "s" : ""}
                 </span>
               )}
               {!isToday && (
                 <button
                   onClick={() => setSelectedDate(todayStr)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg text-white/60 hover:bg-white/5 transition-all"
+                  className="text-xs font-medium px-3 py-1.5 text-white/60 hover:bg-white/5 transition-all"
                 >
                   Today
                 </button>

@@ -13,6 +13,12 @@ export type Column<T> = {
   width?: string;
 };
 
+export type CreatePreset<T> = {
+  label: string;
+  meta?: string;
+  fill: Partial<T>;
+};
+
 type TableProps<T extends Record<string, unknown>> = {
   title?: string;
   columns: Column<T>[];
@@ -27,6 +33,8 @@ type TableProps<T extends Record<string, unknown>> = {
   keyField?: keyof T;
   validate?: (row: T) => string | null;
   noEdit?: boolean;
+  headerActions?: React.ReactNode;
+  createPresets?: CreatePreset<T>[];
 };
 
 
@@ -44,6 +52,8 @@ export default function Table<T extends Record<string, unknown>>({
   keyField,
   validate,
   noEdit = false,
+  headerActions,
+  createPresets,
 }: TableProps<T>) {
   const [rows, setRows] = useState<T[]>(initialRows);
   const [editingRow, setEditingRow] = useState<T | null>(null);
@@ -118,17 +128,20 @@ export default function Table<T extends Record<string, unknown>>({
       <div className="p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-white tracking-tight">{title}</h1>
-          {showCreate && (
-            <button
-              onClick={onCreateClick ?? openCreateModal}
-              className="text-sm font-medium bg-wine text-white px-4 py-2 rounded-lg hover:bg-wine/80 active:scale-95 transition-all"
-            >
-              + Create
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {headerActions}
+            {showCreate && (
+              <button
+                onClick={onCreateClick ?? openCreateModal}
+                className="text-sm font-medium bg-wine text-white px-4 py-2 hover:bg-wine/80 active:scale-95 transition-all"
+              >
+                + Create
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="bg-[#141210] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden">
+        <div className="bg-[#141210] rounded-sm shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-[#1c1a18]">
@@ -154,7 +167,7 @@ export default function Table<T extends Record<string, unknown>>({
                       <td key={String(col.key)} style={col.width ? { width: col.width } : undefined} className="px-5 py-2.5">
                         {col.type === "select" ? (
                           <select
-                            className="w-full bg-transparent text-sm text-white border border-transparent rounded px-1.5 py-1 hover:border-dash-border focus:border-gold focus:bg-dash-surface outline-none cursor-pointer transition-all"
+                            className="w-full bg-transparent text-sm text-white border border-transparent px-1.5 py-1 hover:border-dash-border focus:border-gold focus:bg-dash-surface outline-none cursor-pointer transition-all"
                             value={String(row[col.key] ?? "")}
                             onChange={(e) => updateDropdown(rowIndex, col.key, e.target.value)}
                           >
@@ -177,14 +190,14 @@ export default function Table<T extends Record<string, unknown>>({
                           <span className="text-xs text-gold font-medium mr-1">Saved ✓</span>
                         )}
                         {!noEdit && (
-                          <button onClick={() => onEditOverride ? onEditOverride(rows[rowIndex]) : openEditModal(rowIndex)} title="Edit" className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors active:scale-95">
+                          <button onClick={() => onEditOverride ? onEditOverride(rows[rowIndex]) : openEditModal(rowIndex)} title="Edit" className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 transition-colors active:scale-95">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                         )}
 
-                        <button onClick={() => handleDelete(rowIndex)} title="Delete" className="p-1.5 rounded-md text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95">
+                        <button onClick={() => handleDelete(rowIndex)} title="Delete" className="p-1.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -222,6 +235,8 @@ export default function Table<T extends Record<string, unknown>>({
           onConfirm={handleCreateSave}
           confirmLabel="Create"
           validate={validate}
+          presets={createPresets}
+          onPresetSelect={(fill) => setCreatingRow((prev) => prev ? { ...prev, ...fill } : prev)}
         />
       )}
 
@@ -244,12 +259,16 @@ type ModalProps<T extends Record<string, unknown>> = {
   onConfirm: () => void;
   confirmLabel: string;
   validate?: (row: T) => string | null;
+  presets?: CreatePreset<T>[];
+  onPresetSelect?: (fill: Partial<T>) => void;
 };
 
 function Modal<T extends Record<string, unknown>>({
-  title, columns, row, onChange, onCancel, onConfirm, confirmLabel, validate,
+  title, columns, row, onChange, onCancel, onConfirm, confirmLabel, validate, presets, onPresetSelect,
 }: ModalProps<T>) {
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [activePreset, setActivePreset] = useState<number | null>(null);
+  const [presetsOpen, setPresetsOpen] = useState(false);
 
   const handleConfirm = () => {
     if (validate) {
@@ -262,17 +281,61 @@ function Modal<T extends Record<string, unknown>>({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onCancel}>
-      <div className="bg-dash-card rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-dash-card shadow-xl w-full max-w-lg mx-4 p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <button onClick={onCancel} className="p-1.5 rounded-md text-white/50 hover:bg-white/10 transition-colors">
+          <button onClick={onCancel} className="p-1.5 text-white/50 hover:bg-white/10 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        {presets && presets.length > 0 && (
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => setPresetsOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-white/40 uppercase tracking-widest mb-2 hover:text-white/60 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-3 h-3 transition-transform ${presetsOpen ? "rotate-90" : ""}`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+              Demo presets
+            </button>
+            {presetsOpen && (
+              <div className="flex flex-col gap-1.5">
+                {presets.map((preset, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setActivePreset(i);
+                      onPresetSelect?.(preset.fill);
+                    }}
+                    className={`text-left w-full px-3 py-2.5 border text-sm transition-all ${
+                      activePreset === i
+                        ? "border-gold/60 bg-gold/5 text-white"
+                        : "border-dash-border text-white/70 hover:bg-white/5 hover:border-white/20"
+                    }`}
+                  >
+                    <span className="font-semibold text-white">{preset.label}</span>
+                    {preset.meta && (
+                      <span className="text-white/40 ml-2 text-xs">{preset.meta}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="border-t border-dash-border mt-5 mb-1" />
+          </div>
+        )}
+
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           {columns.map((col) => (
             <div key={String(col.key)}>
               <label className="block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">
@@ -284,7 +347,7 @@ function Modal<T extends Record<string, unknown>>({
                 <select
                   value={String(row[col.key] ?? "")}
                   onChange={(e) => onChange(col.key, e.target.value)}
-                  className="w-full text-sm text-white bg-dash-surface border border-dash-border rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+                  className="w-full text-sm text-white bg-dash-surface border border-dash-border px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
                 >
                   {(col.options ?? []).map((opt) => (
                     <option key={opt} value={opt} className="bg-dash-card text-white">{opt}</option>
@@ -295,7 +358,7 @@ function Modal<T extends Record<string, unknown>>({
                   type={col.type ?? "text"}
                   value={String(row[col.key] ?? "")}
                   onChange={(e) => onChange(col.key, e.target.value)}
-                  className="w-full text-sm text-white bg-dash-surface border border-dash-border rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+                  className="w-full text-sm text-white bg-dash-surface border border-dash-border px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
                 />
               )}
             </div>
@@ -307,10 +370,10 @@ function Modal<T extends Record<string, unknown>>({
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg border border-dash-border text-white/70 hover:bg-white/5 transition-all">
+          <button onClick={onCancel} className="text-sm font-medium px-4 py-2 border border-dash-border text-white/70 hover:bg-white/5 transition-all">
             Cancel
           </button>
-          <button onClick={handleConfirm} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all">
+          <button onClick={handleConfirm} className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all">
             {confirmLabel}
           </button>
         </div>

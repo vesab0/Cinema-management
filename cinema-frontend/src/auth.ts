@@ -148,18 +148,27 @@ export async function bootstrapSession() {
 	if (_bootstrapPromise) return _bootstrapPromise
 
 	_bootstrapPromise = (async () => {
-		const currentToken = getAccessToken()
-		if (currentToken) {
-			const user = await fetchCurrentUser()
-			if (user) return user
-		}
-
 		try {
-			const { data } = await api.post('/auth/refresh')
-			setAccessToken(data.accessToken)
-			api.defaults.headers.common.Authorization = `Bearer ${data.accessToken}`
-			return await fetchCurrentUser()
-		} catch {
+			let currentToken = getAccessToken()
+
+			if (!currentToken) {
+				try {
+					const { data } = await api.post('/auth/refresh')
+					currentToken = data.accessToken
+					if (currentToken) {
+						setAccessToken(currentToken)
+						api.defaults.headers.common.Authorization = `Bearer ${currentToken}`
+					}
+				} catch {
+					// no valid refresh token cookie
+				}
+			}
+
+			if (currentToken) {
+				const user = await fetchCurrentUser()
+				if (user) return user
+			}
+
 			useAuthStore.getState().clearAuth()
 			delete api.defaults.headers.common.Authorization
 			return null

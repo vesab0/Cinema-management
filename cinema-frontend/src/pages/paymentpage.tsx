@@ -10,7 +10,7 @@ import {
   useStripe,
 } from '@stripe/react-stripe-js'
 import { stripeApi, userTicketsApi, ticketsApi, schedulesApi } from '../api'
-import { getUserId } from '../auth'
+import { useAuthStore } from '../store/authStore'
 import type { TicketRow, ScheduleRow } from '../types'
 
 const stripePromise = loadStripe("pk_test_51TZD9S3fbY4KMsAO7TAU6D0V66zRIZleCFfbkQuBrGVmURRvDY8ZlAT36b6Bb6SyKuqt2CAnRXUCxdG4PhqTdj9Z00gARYbIR6")
@@ -33,9 +33,19 @@ export default function PaymentPage() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const state = location.state as { ticketIds: string[] } | null
-  const ticketIds: string[] = state?.ticketIds ?? []
-  const userId = getUserId()
+  const [ticketIds] = useState<string[]>(() => {
+    const fromState = (location.state as { ticketIds: string[] } | null)?.ticketIds
+    if (fromState?.length) return fromState
+    try {
+      const pending = JSON.parse(sessionStorage.getItem('pendingBooking') ?? 'null')
+      if (pending?.ticketIds?.length) {
+        sessionStorage.removeItem('pendingBooking')
+        return pending.ticketIds
+      }
+    } catch {}
+    return []
+  })
+  const userId = useAuthStore((s) => s.user?.id ?? null)
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)

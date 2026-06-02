@@ -36,6 +36,7 @@ export type BackendUserResponse = {
 export type UpdateUserPayload = {
   firstName?: string;
   lastName?: string;
+  email?: string;
   phone?: string;
   avatarPath?: string;
   role?: string;
@@ -101,6 +102,7 @@ export type CreateMoviePayload = {
   createdAt?: string;
   genreIds: string[];
   cast: { fullName: string }[];
+  tmdbId?: number;
 };
 
 export type UpdateMoviePayload = {

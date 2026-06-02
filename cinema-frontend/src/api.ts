@@ -177,7 +177,7 @@ function toUpdatePayload(row: UserRow): UpdateUserPayload {
   const parts = row.fullName.trim().split(/\s+/).filter(Boolean)
   const firstName = parts[0] ?? ''
   const lastName = parts.slice(1).join(' ')
-  return { firstName, lastName, phone: row.phone, role: row.role }
+  return { firstName, lastName, email: row.email, phone: row.phone, role: row.role }
 }
 
 export const usersApi = {

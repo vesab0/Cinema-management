@@ -1,25 +1,15 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { Outlet, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react'
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/footer'
 import ErrorBoundary from './components/ErrorBoundary'
 import AdminRoute from './AdminRoute'
-import ProfilePage from './pages/profile'
-import MoviesPage from './pages/moviespage'
-import MovieDetailsPage from './pages/moviedetails'
-import SeatSelectionPage from './pages/seatselection'
-import PaymentPage from './pages/paymentpage'
-import ConfirmationPage from './pages/confirmationpage'
-import NotFound from './components/NotFound'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import TermsOfService from './pages/TermsOfService'
-import UserTickets from './pages/dashboard/user-tickets'
 import { bootstrapSession } from './auth'
-import CookieBanner from './components/CookieBanner'
+import CookieBanner from './components/Cookiebanner'
 
 // Eagerly loaded (public, always needed)
 import Index from './pages/index'
-import RegisterForms from './components/RegisterForms'
+import AuthPage from './pages/AuthPage'
 
 // Lazily loaded (heavy or infrequently visited)
 const MovieDetailsPage = lazy(() => import('./pages/moviedetails'))
@@ -55,6 +45,16 @@ function PublicLayout() {
   )
 }
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation()
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname, search])
+
+  return null
+}
+
 function PageSpinner() {
   return (
     <div className="min-h-screen bg-stage text-white flex items-center justify-center">
@@ -83,10 +83,11 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<PageSpinner />}>
+        <ScrollToTop />
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Index />} />
-            <Route path="/register" element={<RegisterForms />} />
+            <Route path="/register" element={<AuthPage />} />
             <Route path="/movies" element={<MoviesPage mode="now-playing" />} />
             <Route path="/upcoming" element={<MoviesPage mode="upcoming" />} />
             <Route path="/profile" element={<ProfilePage />} />

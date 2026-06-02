@@ -13,7 +13,7 @@ namespace backend.TwinPeaks.API.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260320111907_initialmigration")]
-    partial class initialmigration
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

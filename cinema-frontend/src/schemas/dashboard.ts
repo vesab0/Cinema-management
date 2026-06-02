@@ -31,8 +31,8 @@ export const rangeCreateSchema = z
 		roomName: z.string().min(1, 'Room is required'),
 		fromDate: z.string().min(1, 'From date is required'),
 		toDate: z.string().min(1, 'To date is required'),
-		price: z.number().min(0, 'Price must be ≥ 0').max(10000, 'Price must be ≤ 10,000'),
-		vipPrice: z.number().min(0, 'VIP price must be ≥ 0').max(10000, 'VIP price must be ≤ 10,000').optional(),
+		price: z.number({ required_error: 'Ticket price is required', invalid_type_error: 'Ticket price is required' }).min(0.01, 'Ticket price must be greater than 0').max(10000, 'Price must be ≤ 10,000'),
+		vipPrice: z.number().min(0.01, 'VIP ticket price must be greater than 0').max(10000, 'VIP price must be ≤ 10,000').optional(),
 	})
 	.refine((d) => d.fromDate <= d.toDate, {
 		message: 'From date must be before or equal to to date',
