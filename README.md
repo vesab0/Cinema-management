@@ -1,4 +1,4 @@
-# Marquee
+# Twin Peaks
 
 A cinema booking platform built with React, .NET, and MySQL. Browse movies, select seats, and pay online. Admins can manage movies, rooms, schedules, and users through a built-in dashboard.
 
