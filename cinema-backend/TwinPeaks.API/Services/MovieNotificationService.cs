@@ -145,6 +145,12 @@ namespace TwinPeaks.API.Services
 
                 var recs = await resp.Content.ReadFromJsonAsync<List<PredictorResult>>();
                 var ids = recs?.Where(r => r.TmdbId.HasValue).Select(r => r.TmdbId!.Value).ToList() ?? new();
+
+                // The movie's own anchor TMDB ID is an explicit similarity claim:
+                // "this film is like <tmdbId>". Include it so fans of that film are notified.
+                if (movie.TmdbId.HasValue && !ids.Contains(movie.TmdbId.Value))
+                    ids.Add(movie.TmdbId.Value);
+
                 _logger.LogInformation("Predictor returned {Count} similar movies for '{Name}'", ids.Count, movie.Name);
                 return ids;
             }

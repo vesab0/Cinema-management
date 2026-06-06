@@ -14,7 +14,7 @@ function CreateBookingModal({
   onClose: () => void;
   onCreated: (row: UserTicketRow) => void;
 }) {
-  const inputClass = "w-full text-sm text-white bg-[#1c1a18] rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
+  const inputClass = "w-full text-sm text-white bg-[#1c1a18] px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all";
   const labelClass = "block text-xs font-semibold text-white/50 uppercase tracking-widest mb-1";
 
   const [users,     setUsers]     = useState<UserRow[]>([]);
@@ -88,10 +88,10 @@ function CreateBookingModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div className={`bg-[#141210] rounded-xl shadow-xl w-full mx-4 p-6 transition-all ${step === "seat" ? "max-w-2xl max-h-[90vh] overflow-y-auto" : "max-w-md"}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-[#141210] shadow-xl w-full mx-4 p-6 transition-all ${step === "seat" ? "max-w-2xl max-h-[90vh] overflow-y-auto" : "max-w-md"}`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">New Booking</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10 transition-colors">
+          <button onClick={onClose} className="p-1.5 text-white/50 hover:bg-white/10 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -101,7 +101,7 @@ function CreateBookingModal({
         <div className="flex items-center gap-2 mb-6">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+              <div className={`w-6 h-6 flex items-center justify-center text-xs font-semibold ${
                 i < stepIndex ? "bg-white/20 text-white" :
                 i === stepIndex ? "bg-gold text-stage ring-2 ring-gold/30" :
                 "bg-white/10 text-white/30"
@@ -179,7 +179,7 @@ function CreateBookingModal({
         <div className="flex justify-between gap-2 mt-6">
           <button
             onClick={() => stepIndex > 0 ? setStep(steps[stepIndex - 1]) : onClose()}
-            className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5 transition-all"
+            className="text-sm font-medium px-4 py-2 text-white/70 hover:bg-white/5 transition-all"
           >
             {stepIndex === 0 ? "Cancel" : "Back"}
           </button>
@@ -188,7 +188,7 @@ function CreateBookingModal({
             <button
               onClick={() => setStep(steps[stepIndex + 1])}
               disabled={!canAdvance[step]}
-              className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
               Next
             </button>
@@ -196,7 +196,7 @@ function CreateBookingModal({
             <button
               onClick={handleCreate}
               disabled={!canAdvance.seat || loading}
-              className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
               {loading ? "Creating…" : "Create Booking"}
             </button>
@@ -235,14 +235,14 @@ function SeatMap({ tickets, selectedTicketId, onSelect }: {
   return (
     <div>
       <div className="flex gap-4 mb-3 text-xs text-white/50">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-wine inline-block" /> Standard</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gold/20 border border-gold/50 inline-block" /> VIP</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gold/30 border border-gold/60 inline-block" /> Wheelchair</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white/5 border border-white/10 inline-block" /> Sold</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-wine inline-block" /> Standard</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-gold/20 border border-gold/50 inline-block" /> VIP</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-gold/30 border border-gold/60 inline-block" /> Wheelchair</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-white/5 border border-white/10 inline-block" /> Sold</span>
       </div>
 
       <div className="text-center mb-3">
-        <div className="mx-auto h-1.5 w-40 bg-white/20 rounded-full" />
+        <div className="mx-auto h-1.5 w-40 bg-white/20" />
         <span className="text-xs text-white/40 tracking-widest uppercase mt-1 block">Screen</span>
       </div>
 
@@ -257,7 +257,7 @@ function SeatMap({ tickets, selectedTicketId, onSelect }: {
                   disabled={t.status !== "Available"}
                   onClick={() => onSelect(selectedTicketId === t.id ? "" : t.id)}
                   title={`${t.rowLabel}${t.colNumber} · ${t.seatType} · €${t.price}${t.status !== "Available" ? " · Sold" : ""}`}
-                  className={`w-6 h-6 rounded-sm text-[10px] font-medium transition-all active:scale-90
+                  className={`w-6 h-6 text-[10px] font-medium transition-all active:scale-90
                     ${seatColor(t)}
                     ${selectedTicketId === t.id ? `ring-2 ring-offset-1 ring-offset-dash-card ${ringColor(t)} scale-110` : ""}
                   `}
@@ -281,7 +281,7 @@ function SeatMap({ tickets, selectedTicketId, onSelect }: {
 
 function Chip({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/70">
+    <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium bg-white/10 text-white/70">
       {label}
     </span>
   );
@@ -320,16 +320,13 @@ const SEAT_TYPE_COLORS: Record<string, string> = {
 
 function MovieFinancialCard({
   group,
-  onDelete,
 }: {
   group: MovieGroup;
-  onDelete: (row: UserTicketRow) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<UserTicketRow | null>(null);
 
   return (
-    <div className="bg-[#141210] rounded-xl overflow-hidden">
+    <div className="bg-[#141210] overflow-hidden">
       {/* Card header */}
       <button
         onClick={() => setExpanded((v) => !v)}
@@ -369,7 +366,6 @@ function MovieFinancialCard({
                 <th className="px-4 py-2 text-left font-medium">Type</th>
                 <th className="px-4 py-2 text-right font-medium">Price</th>
                 <th className="px-4 py-2 text-left font-medium">Purchased</th>
-                <th className="px-4 py-2" />
               </tr>
             </thead>
             <tbody>
@@ -382,23 +378,12 @@ function MovieFinancialCard({
                   <td className="px-4 py-2.5 text-white/60">{t.roomName}</td>
                   <td className="px-4 py-2.5 text-white/60">{t.rowLabel}{t.colNumber}</td>
                   <td className="px-4 py-2.5">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${SEAT_TYPE_COLORS[t.seatType] ?? "bg-white/10 text-white/60"}`}>
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium ${SEAT_TYPE_COLORS[t.seatType] ?? "bg-white/10 text-white/60"}`}>
                       {t.seatType}
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-right font-semibold text-gold">€{t.price.toFixed(2)}</td>
                   <td className="px-4 py-2.5 text-white/40 text-xs">{String(t.purchasedAt).split("T")[0]}</td>
-                  <td className="px-4 py-2.5">
-                    <button
-                      onClick={() => setPendingDelete(t)}
-                      className="p-1 rounded text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                      title="Cancel booking"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -406,13 +391,6 @@ function MovieFinancialCard({
         </div>
       )}
 
-      {pendingDelete && (
-        <ConfirmModal
-          message="Are you sure you want to cancel this booking?"
-          onConfirm={() => { onDelete(pendingDelete); setPendingDelete(null); }}
-          onCancel={() => setPendingDelete(null)}
-        />
-      )}
     </div>
   );
 }
@@ -433,15 +411,6 @@ export default function UserTickets() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (row: UserTicketRow) => {
-    try {
-      await userTicketsApi.cancel(row.id);
-      setRows((prev) => prev.filter((r) => r.id !== row.id));
-    } catch (e) {
-      setError(String(e));
-    }
-  };
-
   const handleCreated = (row: UserTicketRow) => {
     setRows((prev) => [row, ...prev]);
   };
@@ -458,28 +427,19 @@ export default function UserTickets() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-white tracking-tight">Financials</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          New Booking
-        </button>
       </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-[#141210] rounded-xl px-5 py-4">
+        <div className="bg-[#141210] px-5 py-4">
           <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Total Revenue</p>
           <p className="text-3xl font-bold text-gold">€{totalRevenue.toFixed(2)}</p>
         </div>
-        <div className="bg-[#141210] rounded-xl px-5 py-4">
+        <div className="bg-[#141210] px-5 py-4">
           <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Tickets Sold</p>
           <p className="text-3xl font-bold text-white">{totalTickets}</p>
         </div>
-        <div className="bg-[#141210] rounded-xl px-5 py-4">
+        <div className="bg-[#141210] px-5 py-4">
           <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Movies</p>
           <p className="text-3xl font-bold text-white">{groups.length}</p>
         </div>
@@ -491,7 +451,7 @@ export default function UserTickets() {
       ) : (
         <div className="space-y-3">
           {groups.map((g) => (
-            <MovieFinancialCard key={g.movieName} group={g} onDelete={handleDelete} />
+            <MovieFinancialCard key={g.movieName} group={g} />
           ))}
         </div>
       )}

@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { favoritesApi, movieSearchApi, uploadsApi, usersApi, api, userTicketsApi } from "../api";
 import type { FavoriteMovieResponse, PredictorMovie, UserTicketRow } from "../types";
 import SecondaryNav from "../components/SecondaryNav";
-import { getUserId, getUserName, getUserEmail, getUser, setUser } from "../auth";
+import { getUserName, getUserEmail, setUser } from "../auth";
+import { useAuthStore } from "../store/authStore";
 import { resolvePosterUrl } from "../lib/posters";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
@@ -34,9 +35,9 @@ function fallbackToPredictorPoster(
 }
 
 export default function ProfilePage() {
-  const userId = getUserId();
+  const currentUser = useAuthStore((s) => s.user);
+  const userId = currentUser?.id ?? null;
   const userEmail = getUserEmail();
-  const currentUser = getUser();
 
   const [editFirstName, setEditFirstName] = useState(currentUser?.firstName ?? "");
   const [editLastName, setEditLastName] = useState(currentUser?.lastName ?? "");
@@ -158,9 +159,10 @@ export default function ProfilePage() {
 
   const handleToggleFavorite = async (movie: PredictorMovie) => {
     if (!userId) return;
-    if (favoriteTmdbIds.has(movie.tmdbId)) {
-      setFavorites((prev) => prev.filter((f) => f.tmdbId !== movie.tmdbId));
-      await favoritesApi.remove(userId, movie.tmdbId).catch(() => {
+    const effectiveId = movie.tmdbId ?? -(movie.movieLensId);
+    if (favoriteTmdbIds.has(effectiveId)) {
+      setFavorites((prev) => prev.filter((f) => f.tmdbId !== effectiveId));
+      await favoritesApi.remove(userId, effectiveId).catch(() => {
         favoritesApi.list(userId).then(setFavorites).catch(() => {});
       });
     } else {
@@ -168,7 +170,7 @@ export default function ProfilePage() {
         posterUrl: movie.posterUrl,
         posterPath: movie.posterPath,
       });
-      await favoritesApi.add(userId, movie.tmdbId, movie.title, poster)
+      await favoritesApi.add(userId, effectiveId, movie.title, poster)
         .then((newFav) => setFavorites((prev) => [...prev, newFav]))
         .catch(() => {});
     }
@@ -486,7 +488,8 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 grid-rows-2 overflow-hidden gap-4 pb-2">
                 {results.map((movie) => {
-                  const isFav = favoriteTmdbIds.has(movie.tmdbId);
+                  const effectiveId = movie.tmdbId ?? -(movie.movieLensId);
+                  const isFav = favoriteTmdbIds.has(effectiveId);
                   const tmdbPosterSrc = resolvePosterUrl({
                     posterUrl: movie.posterUrl,
                     posterPath: movie.posterPath,

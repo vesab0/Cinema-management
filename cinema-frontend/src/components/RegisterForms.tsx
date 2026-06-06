@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
+import { useGoogleLogin } from '@react-oauth/google'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { authApi } from '../api'
@@ -13,6 +14,7 @@ import {
 type Mode = 'login' | 'register' | 'forgot'
 
 interface RegisterFormsProps {
+	initialMode?: Mode
 	onLoginSuccess?: () => void
 }
 
@@ -20,8 +22,8 @@ const inputClass =
 	'block w-full px-4 py-2 mt-2 text-gold bg-stage border border-gold/30 rounded-lg focus:border-gold focus:ring-gold/40 focus:outline-none focus:ring'
 const errorClass = 'mt-1 text-xs text-red-300'
 
-export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
-	const [mode, setMode] = useState<Mode>('login')
+export default function RegisterForms({ initialMode = 'login', onLoginSuccess }: RegisterFormsProps) {
+	const [mode, setMode] = useState<Mode>(initialMode)
 	const [serverError, setServerError] = useState('')
 	const [successMessage, setSuccessMessage] = useState('')
 	const [forgotEmail, setForgotEmail] = useState('')
@@ -32,6 +34,19 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 
 	const activeForm = mode === 'register' ? registerForm : loginForm
 	const isSubmitting = activeForm.formState.isSubmitting
+
+	const googleLogin = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			setServerError('')
+			try {
+				await authApi.googleLogin(tokenResponse.access_token)
+				onLoginSuccess?.()
+			} catch (error: unknown) {
+				setServerError(extractApiError(error) || 'Google sign-in failed. Please try again.')
+			}
+		},
+		onError: () => setServerError('Google sign-in failed. Please try again.'),
+	})
 
 	const switchMode = (to: Mode) => (e: React.MouseEvent<HTMLAnchorElement>) => {
 		e.preventDefault()
@@ -208,6 +223,7 @@ export default function RegisterForms({ onLoginSuccess }: RegisterFormsProps) {
 					<div className="flex items-center mt-4 -mx-2">
 						<button
 							type="button"
+							onClick={() => googleLogin()}
 							className="flex items-center justify-center w-full px-6 py-2 mx-2 text-sm font-medium text-gold transition-colors duration-300 transform bg-stage border border-gold/40 rounded-lg hover:bg-stage/80 focus:outline-none"
 						>
 							<svg className="w-4 h-4 mx-2 fill-current" viewBox="0 0 24 24">

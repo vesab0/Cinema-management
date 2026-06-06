@@ -43,6 +43,7 @@ builder.Services.AddOpenApi();
 builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
 });
 
 // CORS — env-configurable; set Cors__AllowedOrigins in env for staging/prod
@@ -87,7 +88,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.Cookie.Name = "refresh_token";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
@@ -160,18 +161,24 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<TwinPeaks.API.Data.ApplicationDbContext>();
-    var migrated = false;
+// Automatic database migrations are disabled by default to avoid startup
+// failures when the EF model has unapplied changes. To enable automatic
+// migration at startup set the environment variable `AUTO_MIGRATE=true` or
+// add `AutoMigrate=true` to configuration.
+var autoMigrateEnv = builder.Configuration["AutoMigrate"]
+    ?? Environment.GetEnvironmentVariable("AUTO_MIGRATE");
+var autoMigrate = string.Equals(autoMigrateEnv, "true", StringComparison.OrdinalIgnoreCase);
 
+if (autoMigrate)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<TwinPeaks.API.Data.ApplicationDbContext>();
     for (var attempt = 1; attempt <= 10; attempt++)
     {
         try
         {
             db.Database.Migrate();
             app.Logger.LogInformation("Database migrations applied successfully.");
-            migrated = true;
             break;
         }
         catch (Exception ex)
@@ -186,11 +193,10 @@ using (var scope = app.Services.CreateScope())
             Thread.Sleep(TimeSpan.FromSeconds(3));
         }
     }
-
-    if (!migrated)
-    {
-        throw new InvalidOperationException("Database migration did not complete successfully.");
-    }
+}
+else
+{
+    app.Logger.LogInformation("Automatic database migration is disabled. To enable set AUTO_MIGRATE=true and restart the app, or run migrations manually with 'dotnet ef migrations' and 'dotnet ef database update'.");
 }
 
 app.UseResponseCompression();
@@ -229,12 +235,6 @@ app.MapScheduleRoutes();
 app.MapTicketRoutes();
 app.MapUserTicketRoutes();
 app.MapStripeRoutes();
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
 
 app.Run();
 

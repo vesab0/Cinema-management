@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { moviesApi, favoritesApi } from "../api";
+import { moviesApi } from "../api";
 import type { MovieRow } from "../types";
 import MovieCard from "../components/MovieCard";
 import SecondaryNav from "../components/SecondaryNav";
-import { getUserId } from "../auth";
 
 interface MoviesPageProps {
   mode?: "now-playing" | "upcoming";
@@ -11,12 +10,9 @@ interface MoviesPageProps {
 
 export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
   const [movies, setMovies] = useState<MovieRow[]>([]);
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const userId = getUserId();
 
   useEffect(() => {
     moviesApi
@@ -25,30 +21,6 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
       .catch((e: unknown) => setError(String(e)))
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (!userId) return;
-    favoritesApi.list(userId).then((favs) => {
-      setFavorites(new Set(favs.map((f) => f.tmdbId)));
-    }).catch(() => {});
-  }, [userId]);
-
-  const handleToggleFavorite = async (movie: MovieRow) => {
-    if (!userId || movie.tmdbId == null) return;
-    const tmdbId = movie.tmdbId;
-
-    if (favorites.has(tmdbId)) {
-      setFavorites((prev) => { const next = new Set(prev); next.delete(tmdbId); return next; });
-      await favoritesApi.remove(userId, tmdbId).catch(() => {
-        setFavorites((prev) => new Set([...prev, tmdbId]));
-      });
-    } else {
-      setFavorites((prev) => new Set([...prev, tmdbId]));
-      await favoritesApi.add(userId, tmdbId, movie.name, movie.posterUrl ?? '').catch(() => {
-        setFavorites((prev) => { const next = new Set(prev); next.delete(tmdbId); return next; });
-      });
-    }
-  };
 
   const d = new Date();
   const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -107,17 +79,10 @@ export default function MoviesPage({ mode = "now-playing" }: MoviesPageProps) {
               <MovieCard
                 key={movie.id}
                 movie={movie}
-                isFavorite={movie.tmdbId != null && favorites.has(movie.tmdbId)}
-                onToggleFavorite={userId ? handleToggleFavorite : undefined}
               />
             ))}
           </div>
 
-          {!userId && movies.length > 0 && (
-            <p className="mt-8 text-white/40 text-xs tracking-wide">
-              Sign in to save your favorite movies.
-            </p>
-          )}
         </div>
       </div>
     </div>

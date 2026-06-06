@@ -13,7 +13,7 @@ const columns: Column<RoomRow>[] = [
   { key: "rows",      label: "Rows" },
   { key: "cols",      label: "Cols" },
   { key: "isActive",  label: "Active", renderCell: (v) => (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${v ? "bg-gold/20 text-gold" : "bg-white/10 text-white/40"}`}>
+    <span className={`text-xs font-medium px-2 py-0.5 ${v ? "bg-gold/20 text-gold" : "bg-white/10 text-white/40"}`}>
       {v ? "Yes" : "No"}
     </span>
   )},
@@ -107,7 +107,7 @@ export default function Rooms() {
 
       {loadingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-dash-card rounded-xl p-8 text-white/50">Loading room...</div>
+          <div className="bg-dash-card p-8 text-white/50">Loading room...</div>
         </div>
       )}
 
@@ -147,13 +147,13 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60" onClick={onCancel}>
       <form
-        className="bg-dash-card rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        className="bg-dash-card shadow-xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">{isEdit ? "Edit Room" : "New Room"}</h2>
-          <button type="button" onClick={onCancel} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
+          <button type="button" onClick={onCancel} className="p-1.5 text-white/50 hover:bg-white/10">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -167,7 +167,7 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
               type="text"
               {...register("name")}
               placeholder="e.g. Hall 1"
-              className="w-full text-sm text-white bg-dash-surface rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+              className="w-full text-sm text-white bg-dash-surface px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
             />
             {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name.message}</p>}
           </div>
@@ -177,7 +177,7 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
               <input
                 type="number" min={1} max={50}
                 {...register("rows", { valueAsNumber: true })}
-                className="w-full text-sm text-white bg-dash-surface rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                className="w-full text-sm text-white bg-dash-surface px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
               />
               {errors.rows && <p className="mt-1 text-xs text-red-400">{errors.rows.message}</p>}
             </div>
@@ -186,7 +186,7 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
               <input
                 type="number" min={1} max={50}
                 {...register("cols", { valueAsNumber: true })}
-                className="w-full text-sm text-white bg-dash-surface rounded-lg px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                className="w-full text-sm text-white bg-dash-surface px-3 py-2 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
               />
               {errors.cols && <p className="mt-1 text-xs text-red-400">{errors.cols.message}</p>}
             </div>
@@ -196,7 +196,7 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
         <div className="mb-2">
           <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-3">Preview</p>
           <div className="text-center mb-3">
-            <div className="mx-auto h-1 w-40 bg-white/20 rounded-full" />
+            <div className="mx-auto h-1 w-40 bg-white/20" />
             <span className="text-xs text-white/40 tracking-widest uppercase mt-1 block">Screen</span>
           </div>
           <div className="space-y-1.5 overflow-x-auto">
@@ -205,7 +205,7 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
                 <span className="text-xs text-white/40 w-4 text-right">{label}</span>
                 <div className="flex gap-1">
                   {Array.from({ length: watchedCols }, (_, c) => (
-                    <div key={c} className="w-5 h-5 rounded-sm bg-white/10" />
+                    <div key={c} className="w-5 h-5 bg-white/10" />
                   ))}
                 </div>
               </div>
@@ -214,12 +214,12 @@ function RoomFormModal({ initial, onCancel, onConfirm }: {
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <button type="button" onClick={onCancel} className="text-sm font-medium px-4 py-2 rounded-lg text-white/70 hover:bg-white/5">
+          <button type="button" onClick={onCancel} className="text-sm font-medium px-4 py-2 text-white/70 hover:bg-white/5">
             Cancel
           </button>
           <button
             type="submit"
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40"
+            className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all disabled:opacity-40"
           >
             {isEdit ? "Save Changes" : "Create Room"}
           </button>
@@ -268,7 +268,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div
-        className="bg-dash-card rounded-xl shadow-xl w-full max-w-3xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
+        className="bg-dash-card shadow-xl w-full max-w-3xl mx-4 p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-1">
@@ -279,7 +279,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
             </p>
           </div>
           <div className="flex items-center">
-            <button onClick={onClose} className="p-1.5 rounded-md text-white/50 hover:bg-white/10">
+            <button onClick={onClose} className="p-1.5 text-white/50 hover:bg-white/10">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -288,14 +288,14 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
         </div>
 
         <div className="flex gap-4 mb-4 text-xs text-white/50 mt-3">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-wine inline-block" /> Standard</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gold/20 border border-gold/50 inline-block" /> VIP</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-accessible/20 border border-accessible/50 inline-block" /> Wheelchair</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white/5 border border-white/10 inline-block" /> Removed</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-wine inline-block" /> Standard</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-gold/20 border border-gold/50 inline-block" /> VIP</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-accessible/20 border border-accessible/50 inline-block" /> Wheelchair</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-white/5 border border-white/10 inline-block" /> Removed</span>
         </div>
 
         <div className="text-center mb-4">
-          <div className="mx-auto h-1.5 w-48 bg-white/20 rounded-full" />
+          <div className="mx-auto h-1.5 w-48 bg-white/20" />
           <span className="text-xs text-white/40 tracking-widest uppercase mt-1 block">Screen</span>
         </div>
 
@@ -309,7 +309,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
                     key={seat.id}
                     onClick={() => setSelectedId(selectedId === seat.id ? null : seat.id)}
                     title={`${seat.rowLabel}${seat.colNumber} · ${seat.seatType}`}
-                    className={`w-6 h-6 rounded-sm text-[10px] font-medium transition-all active:scale-90
+                    className={`w-6 h-6 text-[10px] font-medium transition-all active:scale-90
                       ${seatColor(seat)}
                       ${selectedId === seat.id ? `ring-2 ring-offset-1 ring-offset-dash-card ${seatActiveRing(seat)} scale-110` : ""}
                     `}
@@ -323,14 +323,14 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
         </div>
 
         {selected && (
-          <div className="mt-5 p-4 bg-dash-surface rounded-xl">
+          <div className="mt-5 p-4 bg-dash-surface">
             <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-3">
               Seat {selected.rowLabel}{selected.colNumber} · {selected.seatType}
             </p>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onSeatToggle(room.id, selected)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all active:scale-95
+                className={`text-xs font-medium px-3 py-1.5 border transition-all active:scale-95
                   ${selected.isActive
                     ? "border-red-500/30 text-red-400 hover:bg-red-500/10"
                     : "border-gold/30 text-gold hover:bg-gold/10"}`}
@@ -341,7 +341,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
                 <button
                   key={type}
                   onClick={() => onSeatTypeChange(room.id, selected, type)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-all active:scale-95
+                  className={`text-xs font-medium px-3 py-1.5 border transition-all active:scale-95
                     ${seatTypeButtonClass(type, selected.seatType)}`}
                 >
                   {type}
@@ -352,7 +352,7 @@ function SeatEditorModal({ room, onClose, onSeatToggle, onSeatTypeChange }: {
         )}
 
         <div className="flex justify-end mt-5">
-          <button onClick={onClose} className="text-sm font-medium px-4 py-2 rounded-lg bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all">
+          <button onClick={onClose} className="text-sm font-medium px-4 py-2 bg-wine text-white hover:bg-wine/80 active:scale-95 transition-all">
             Done
           </button>
         </div>

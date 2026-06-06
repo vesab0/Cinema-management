@@ -23,6 +23,7 @@ namespace TwinPeaks.API
     public record UpdateUserRequest(
         string? FirstName,
         string? LastName,
+        string? Email,
         string? Phone,
         string? AvatarPath,
         string? Role

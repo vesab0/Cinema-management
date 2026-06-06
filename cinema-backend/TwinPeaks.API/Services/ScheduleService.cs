@@ -252,6 +252,13 @@ namespace TwinPeaks.API.Services
             var schedule = _db.MovieSchedules.FirstOrDefault(s => s.Id == id);
             if (schedule == null) throw new ArgumentException("Schedule not found");
 
+            var tickets = _db.Tickets.Where(t => t.ScheduleId == id).ToList();
+
+            var hasSoldTickets = _db.UserTickets.Any(ut => tickets.Select(t => t.Id).Contains(ut.TicketId));
+            if (hasSoldTickets)
+                throw new ArgumentException("Cannot delete a schedule with purchased tickets");
+
+            _db.Tickets.RemoveRange(tickets);
             _db.MovieSchedules.Remove(schedule);
             _db.SaveChanges();
         }

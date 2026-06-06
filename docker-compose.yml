@@ -7,6 +7,8 @@ services:
       - "5000:5000"
     volumes:
       - ./cinema-backend:/app
+      - backend_bin:/app/bin
+      - backend_obj:/app/obj
     env_file:
       - ./.env
     environment:
@@ -54,6 +56,8 @@ services:
 
 volumes:
   mysql_data:
+  backend_bin:
+  backend_obj:
 
 networks:
   marquee-network:

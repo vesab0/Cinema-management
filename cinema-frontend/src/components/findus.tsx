@@ -1,7 +1,6 @@
 export default function FindUs() {
   const lat = 42.6533769
   const lon = 21.1468247
-  const zoom = 15
   const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.007}%2C${lat - 0.005}%2C${lon + 0.007}%2C${lat + 0.005}&layer=mapnik&marker=${lat}%2C${lon}`
 
   return (

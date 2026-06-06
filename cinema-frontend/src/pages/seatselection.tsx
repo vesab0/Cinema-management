@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { schedulesApi, ticketsApi, moviesApi } from '../api'
-import { isAuthenticated } from '../auth'
+import { useAuthStore } from '../store/authStore'
 import type { ScheduleRow, TicketRow, MovieRow } from '../types'
 
 export default function SeatSelectionPage() {
+  const user = useAuthStore((s) => s.user)
   const { scheduleId } = useParams<{ scheduleId: string }>()
   const navigate = useNavigate()
 
@@ -18,7 +19,6 @@ export default function SeatSelectionPage() {
 
   useEffect(() => {
     if (!scheduleId) return
-    if (!isAuthenticated()) { navigate('/register'); return }
 
     Promise.all([schedulesApi.getById(scheduleId), ticketsApi.getBySchedule(scheduleId)])
       .then(([sched, tkts]) => {
@@ -54,6 +54,11 @@ export default function SeatSelectionPage() {
 
   function handleContinue() {
     if (!canProceed || !scheduleId) return
+    if (!user) {
+      sessionStorage.setItem('pendingBooking', JSON.stringify({ ticketIds: selectedIds, scheduleId }))
+      navigate(`/register?redirect=/booking/${scheduleId}/payment&reason=booking`)
+      return
+    }
     navigate(`/booking/${scheduleId}/payment`, {
       state: { ticketIds: selectedIds, scheduleId },
     })
